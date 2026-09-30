@@ -41,7 +41,7 @@ El conflicto ecológico funciona como contexto.
 
 La mudanza, las físicas, los accidentes y la personalidad imperturbable de Don Tortuga llevan el protagonismo.
 
-El tono debe ser divertido antes que educativo.
+El tono debe ser primeramente divertido, y luego educativo.
 
 ---
 
