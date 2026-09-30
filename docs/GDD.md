@@ -282,13 +282,13 @@ El humor se dirige hacia:
 
 > **Si cabe sobre el caparazón, cabe en la mudanza.**
 
-> **No prometemos rapidez. Prometemos seguir avanzando.**
+> **Rapidez no, lo siguiente.**
 
 > **Especialistas en mudanzas que se hacen cuesta arriba.**
 
 > **Su hogar está en buenas patas.**
 
-> **Con cuidado, con cariño y con un centro de gravedad razonable.**
+> **Con cuidado, con cariño y con un centro de gravedad relativamente bajo.**
 
 ---
 
