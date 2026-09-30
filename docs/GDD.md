@@ -2049,7 +2049,7 @@ Añadir:
 Añadir:
 
 - arte vectorial final;
-- marca Mudanzas Tortuga;
+- marca Mudanzas Tortuga, S.L.;
 - portada;
 - comunicación;
 - feedback visual;
