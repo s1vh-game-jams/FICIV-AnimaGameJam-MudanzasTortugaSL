@@ -2,7 +2,7 @@
 
 ## Game Design Document
 
-**Título de trabajo:** *Mudanzas Tortuga*  
+**Título de trabajo:** *Mudanzas Tortuga, S.L.*  
 **Nombre diegético del servicio:** *Servicio de Mudanzas de Don Tortuga para criaturillas del bosque desahuciadas*  
 **Formato:** videojuego 2D para navegador  
 **Género:** juego de físicas simplificadas / *endless runner* lento / equilibrio y conducción de carga  
@@ -235,7 +235,7 @@ No se trata solamente de que el personaje haga mudanzas.
 
 El título corto y reconocible es:
 
-# MUDANZAS TORTUGA
+# MUDANZAS TORTUGA, S.L.
 
 La denominación larga utilizada en cartelería puede ser:
 
