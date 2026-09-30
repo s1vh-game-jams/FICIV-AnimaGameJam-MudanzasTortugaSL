@@ -1,4 +1,4 @@
-# MUDANZAS TORTUGA
+# MUDANZAS TORTUGA, S.L.
 
 ## Game Design Document
 
@@ -2156,7 +2156,7 @@ rectángulo + centro de gravedad desplazado
 
 # 58. LO QUE NO ES EL JUEGO
 
-*Mudanzas Tortuga* no es:
+*Mudanzas Tortuga, S.L.* no es:
 
 - un simulador realista de mudanzas;
 - un juego de construcción de torres;
@@ -2220,7 +2220,7 @@ Si la respuesta es no, probablemente no pertenece al núcleo del juego.
 
 # 62. RESUMEN EJECUTIVO
 
-**Mudanzas Tortuga** es un juego 2D de físicas simplificadas para navegador protagonizado por una Tortuga que ayuda a las criaturas de un bosque amenazado a trasladar sus pertenencias.
+**Mudanzas Tortuga, S.L.** es un juego 2D de físicas simplificadas para navegador protagonizado por una Tortuga que ayuda a las criaturas de un bosque amenazado a trasladar sus pertenencias.
 
 La Tortuga avanza constantemente hacia la derecha.
 
@@ -2249,7 +2249,7 @@ Existen dos modos:
 
 La comunicación se presenta como la publicidad de un servicio de mudanzas ficticio:
 
-# MUDANZAS TORTUGA
+# MUDANZAS TORTUGA, S.L.
 
 ### Servicio de Mudanzas de Don Tortuga para criaturillas del bosque desahuciadas.
 
