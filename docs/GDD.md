@@ -35,7 +35,7 @@ Una gran corporación está destruyendo progresivamente el hábitat de las criat
 
 **una Tortuga que lleva toda la vida haciéndolo.**
 
-La situación tiene un trasfondo ecologista reconocible, pero no se plantea como una lección ni como el centro discursivo de la experiencia. El juego no pretende detener la acción para explicar al público infantil qué debe pensar sobre la destrucción del bosque.
+La situación tiene un trasfondo ecologista reconocible, pero no se plantea como una lección moral ni como el centro discursivo de la experiencia. El juego no pretende detener la acción para explicar al público infantil qué debe pensar sobre la destrucción del bosque.
 
 El conflicto ecológico funciona como contexto.
 
