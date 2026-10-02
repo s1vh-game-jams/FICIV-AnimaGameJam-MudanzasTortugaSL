@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Initial Game Jam backlog  
+**Status:** Prototype 1 implementation in progress
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -96,7 +96,7 @@ Jam release on main
 
 ### BOOT-001 — Scaffold Vite + TypeScript project
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** none
 - **Acceptance:**
   - Vite project runs with `npm run dev`.
@@ -106,7 +106,7 @@ Jam release on main
 
 ### BOOT-002 — Install/configure PixiJS 8
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - Pixi application initializes.
@@ -115,7 +115,7 @@ Jam release on main
 
 ### BOOT-003 — Install/configure Rapier2D
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `@dimforge/rapier2d` initializes correctly.
@@ -124,7 +124,7 @@ Jam release on main
 
 ### BOOT-004 — Implement fixed-step game/physics loop
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-002, BOOT-003
 - **Acceptance:**
   - Physics targets 60 Hz fixed timestep.
@@ -133,7 +133,7 @@ Jam release on main
 
 ### BOOT-005 — Add public asset URL helper
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - Uses `import.meta.env.BASE_URL`.
@@ -142,7 +142,7 @@ Jam release on main
 
 ### BOOT-006 — Establish baseline npm checks
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `npm run typecheck`
@@ -153,7 +153,7 @@ Jam release on main
 
 ### BOOT-007 — Add initial repository branch protections/workflow conventions
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** repository availability
 - **Acceptance:**
   - `dev` exists as development integration branch.
@@ -167,7 +167,7 @@ Jam release on main
 
 ### PHYS-001 — Add physics-playground routing/access
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `Shift + P` opens it from the main screen.
@@ -176,7 +176,7 @@ Jam release on main
 
 ### PHYS-002 — Prototype Don Tortuga body and shell collider
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-003, BOOT-004
 - **Acceptance:**
   - Placeholder visual exists.
@@ -186,7 +186,7 @@ Jam release on main
 
 ### PHYS-003 — Implement dry-land turtle speed control
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-002
 - **Acceptance:**
   - right input accelerates;
@@ -197,7 +197,7 @@ Jam release on main
 
 ### PHYS-004 — Implement shell tilt control
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-002
 - **Acceptance:**
   - up/down adjust shell angle progressively;
@@ -207,7 +207,7 @@ Jam release on main
 
 ### PHYS-005 — Add four representative cargo archetypes
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-002
 - **Objects:**
   - Sofa
@@ -222,7 +222,7 @@ Jam release on main
 
 ### PHYS-006 — Centralize tuning configuration
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-003, PHYS-004, PHYS-005
 - **Acceptance:**
   - physics/game-feel constants are not scattered;
@@ -231,7 +231,7 @@ Jam release on main
 
 ### PHYS-007 — Implement active cargo contact graph
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-005
 - **Acceptance:**
   - detects direct/indirect physical connection to shell;
@@ -240,7 +240,7 @@ Jam release on main
 
 ### PHYS-008 — Implement contact-loss hysteresis
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-007
 - **Acceptance:**
   - one brief loss of contact does not instantly lose an object;
@@ -249,7 +249,7 @@ Jam release on main
 
 ### PHYS-009 — Disable gameplay interaction from definitively lost cargo
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-008
 - **Acceptance:**
   - lost objects no longer block Don Tortuga;
@@ -259,7 +259,7 @@ Jam release on main
 
 ### PHYS-010 — Add playground reset
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-002, PHYS-005
 - **Acceptance:**
   - restores deterministic baseline turtle/cargo state;
@@ -267,7 +267,7 @@ Jam release on main
 
 ### PHYS-011 — Add collider/debug visualization
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BOOT-002, BOOT-003
 - **Acceptance:**
   - toggleable;
@@ -276,7 +276,7 @@ Jam release on main
 
 ### PHYS-012 — Tune first viable cargo behavior
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-003 through PHYS-011
 - **Acceptance:**
   - acceleration/braking visibly transfer motion;
@@ -288,7 +288,7 @@ Jam release on main
 
 ### PHYS-013 — Add playground pause/single-step controls
 - **Priority:** P1
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-010
 - **Acceptance:**
   - pause does not corrupt state;
@@ -296,7 +296,7 @@ Jam release on main
 
 ### PHYS-014 — Add live high-value tuning controls
 - **Priority:** P1
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-006
 - **Acceptance:**
   - only parameters that materially accelerate tuning;
@@ -349,7 +349,7 @@ Jam release on main
 - **Priority:** P0
 - **Status:** TODO
 - **Depends on:** PHYS-012
-- **Note:** choose sand or rock based on designed-level needs.
+- **Note:** rock selected by the human for the first playable prototype; sand remains optional.
 
 ### BIOME-007 — Implement remaining fourth biome
 - **Priority:** P1
@@ -528,7 +528,7 @@ Jam release on main
 
 ### CAM-001 — Implement constant camera progression + turtle safe window
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-003
 - **Acceptance:** boundary pressure smoothly reduces speed advantage/disadvantage; no teleport clamps.
 
@@ -649,12 +649,12 @@ Jam release on main
 
 ### ART-001 — Create placeholder sprite hierarchy
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Acceptance:** `/public/sprites/{entity}/` convention exists and is used.
 
 ### ART-002 — Add two turtle walk keyframes
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** ART-001
 - **Acceptance:** animation system represents 60 logical frames/1 second while reusing two unique prototype keyframes.
 
@@ -888,7 +888,7 @@ Jam release on main
 | Exact repository name / GitHub Pages base | placeholder | repository created/finalized |
 | Exact Node version | current LTS | project scaffold/CI |
 | Exact linter/test configuration | TypeScript + Vite-compatible tools; Vitest preferred | BOOT-006 |
-| Third required biome choice | TBD between sand/rock depending on level | level/blockout needs |
+| Third required biome choice | rock approved; grass/rock/water are the required playable-prototype set | sand remains optional for this phase |
 | Contextual-help duration | 3–5 seconds per message, tuned for child-readable content | playtesting/readability tuning |
 | Remote leaderboard provider | none | LB-004 starts |
 | Final software license | unresolved | before public release |

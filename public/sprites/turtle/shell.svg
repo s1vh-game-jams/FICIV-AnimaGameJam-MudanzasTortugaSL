@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60" role="img" aria-labelledby="title">
+  <title id="title">Caparazón: plataforma curva de la carga</title>
+  <path d="M1 59 C1 19 47 1 110 1 C173 1 219 19 219 59 Z" fill="#4d8d5b" stroke="#23372c" stroke-width="2" stroke-linejoin="round"/>
+  <text x="110" y="43" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#f8f5df">CAPARAZÓN</text>
+</svg>
