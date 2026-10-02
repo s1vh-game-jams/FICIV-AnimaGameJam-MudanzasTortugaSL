@@ -1,368 +1,121 @@
 # Deployment — Mudanzas Tortuga, S.L.
 
-> **PLACEHOLDER DOCUMENT**
->
-> This file contains only the deployment decisions known at project bootstrap.
-> It **must evolve** as the repository name, Vite configuration, GitHub Actions workflow, domain, leaderboard service, or hosting platform becomes concrete.
->
-> Current target: **GitHub Pages**
->
-> Current release branch: **`main`**
->
-> Development integration branch: **`dev`**
+Local production serving and repository-subpath builds are implemented. GitHub Pages publication and its workflow remain pending; this document does not certify a live deployment.
 
----
+## 1. Build and branch contract
 
-## 1. Current deployment goals
-
-The jam build should deploy as a static site:
-
-```text
-TypeScript/Pixi/Rapier source
-          ↓
-      Vite build
-          ↓
-        dist/
-          ↓
-     GitHub Pages
-```
-
-No backend is required for the core game.
-
-A future leaderboard may call an external service, but gameplay and build deployment must remain independently functional.
-
----
-
-## 2. Release branch rule
-
-Expected relationship:
-
-```text
-feature/* ── squash ──▶ dev ── explicit human approval ──▶ main ──▶ Pages
-```
-
-**Agents must not promote `dev` into `main` without explicit human authorization.**
-
-GitHub Pages deployment should ultimately trigger from `main`, not from every experimental `dev` change.
-
----
-
-## 3. Vite base path
-
-The final value depends on the repository URL.
-
-### User/organization root site or custom domain
-
-If deployed to:
-
-```text
-https://<USERNAME>.github.io/
-```
-
-or a custom domain, Vite normally uses:
-
-```ts
-base: "/"
-```
-
-### Project Pages site
-
-If deployed to:
-
-```text
-https://<USERNAME>.github.io/<REPOSITORY>/
-```
-
-configure:
-
-```ts
-base: "/<REPOSITORY>/"
-```
-
-Do not finalize this placeholder until the actual repository name/location is known.
-
----
-
-## 4. Public assets
-
-Assets stored physically under:
-
-```text
-/public/sprites/...
-```
-
-are copied into the Vite build.
-
-Runtime code must not assume site-root hosting.
-
-Use a shared helper based on:
-
-```ts
-import.meta.env.BASE_URL
-```
-
-Example shape:
-
-```ts
-export function publicAsset(path: string): string {
-  const base = import.meta.env.BASE_URL;
-  return `${base}${path.replace(/^\/+/, "")}`;
-}
-```
-
-Then:
-
-```ts
-publicAsset("sprites/turtle/walk-01.png")
-```
-
-Do not scatter:
-
-```ts
-"/sprites/turtle/walk-01.png"
-```
-
-through the codebase.
-
----
-
-## 5. Local development
-
-Expected:
+Use Node.js **22.12 or newer** and npm. The lockfile pins the reviewed dependency set.
 
 ```bash
-npm install
-npm run dev
-```
-
----
-
-## 6. Production build
-
-Expected:
-
-```bash
+npm ci
 npm run typecheck
 npm run lint
 npm run test
 npm run build
 ```
 
-Output is expected at:
+The default build writes `dist/` and uses Vite base `/`. It contains static HTML, CSS, JavaScript, public SVGs and a hashed Rapier WASM asset. No backend or secret is required.
 
-```text
-/dist
-```
+`dev` is the integration/testing branch. Auxiliary branches are preserved after squash integration. Only an explicitly human-approved promotion to `main` may become a release; see [CONTRIBUTING](../CONTRIBUTING.md).
 
-unless the Vite configuration deliberately changes `build.outDir`.
+## 2. Serve the production build locally
 
----
-
-## 7. Production preview
-
-Preferred:
+Preferred Vite preview:
 
 ```bash
+npm run build
 npm run preview
 ```
 
-Alternative helper:
+Open `http://127.0.0.1:4173/?mode=physics`. Vite preview is a local verification server.
+
+The standard-library Python helper is an alternative:
 
 ```bash
-python scripts/localServer.py --directory dist --port 4173
+npm run build
+python scripts/localServer.py --port 4173
 ```
 
-The Python helper is also a **placeholder utility** and may evolve.
+Without `--directory`, the helper serves the repository's `dist/`, regardless of the shell's working directory. An explicit relative directory resolves from the shell's working directory.
 
-Do not use `vite preview` as a production server; it is only for local preview of the built site.
+Supported options:
 
----
+| Option | Default / meaning |
+|---|---|
+| `--directory PATH` | Repository `dist/`; serve an existing build directory. |
+| `--host HOST` | `127.0.0.1`; bind to loopback. |
+| `--port PORT` | `4173`; `0` requests an available port and prints its actual URL. |
+| `--base-path PATH` | `/`; mount files at a normalized URL prefix. |
 
-## 8. GitHub Pages configuration — planned
+The helper prints a ready URL, preserves WASM MIME handling, disables local caching and refuses traversal/symlink escapes from its document root. A mount without its trailing slash redirects while preserving the query string. Missing directories and occupied ports produce an explanatory error. Stop with `Ctrl+C`.
 
-When deployment is implemented:
+Its tests require Python 3:
 
-1. Open repository **Settings → Pages**.
-2. Select **GitHub Actions** as the Pages source.
-3. Add a Pages workflow under:
-
-```text
-/.github/workflows/deploy.yml
+```bash
+python -m unittest discover -s tests/python -v
 ```
 
-4. Configure it to build/deploy on pushes to:
+Changing the mount only changes where files are served. Build Vite with the matching base first.
 
-```text
-main
+## 3. Repository-subpath build
+
+The verified Git remote is:
+
+`https://github.com/s1vh-game-jams/FICIV-AnimaGameJam-MudanzasTortugaSL.git`
+
+For a project Pages site, its expected subpath is:
+
+`/FICIV-AnimaGameJam-MudanzasTortugaSL/`
+
+Build and emulate that mount locally:
+
+```bash
+npm run build:pages
+python scripts/localServer.py --directory dist --port 4173 --base-path /FICIV-AnimaGameJam-MudanzasTortugaSL/
 ```
 
-5. Use `npm ci` in CI when `package-lock.json` is present.
-6. Upload `/dist` as the Pages artifact.
-7. Deploy using GitHub's Pages actions.
+Open:
 
-Exact action versions should be selected/updated when the workflow is actually created rather than frozen in this placeholder.
+`http://127.0.0.1:4173/FICIV-AnimaGameJam-MudanzasTortugaSL/?mode=physics`
 
-Conceptual workflow:
+`build:pages` passes the repository base to Vite; it overwrites the normal `dist/`. Run `npm run build` again to return to a root build. A custom static-host base can be supplied with `npm run build -- --base=/chosen-prefix/`.
 
-```yaml
-name: Deploy to GitHub Pages
+Public asset metadata uses relative paths through `src/utils/publicAsset.ts`, based on `import.meta.env.BASE_URL`. Rapier's WASM URL is resolved by Vite. Do not hardcode root sprite paths. Query-based routing needs no server-side route rewrites.
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+The expected Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-MudanzasTortugaSL/`, subject to actual repository Pages configuration. That live site/settings have not been verified or enabled by this milestone.
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+## 4. Prototype 1 browser smoke check
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@<CURRENT_VERSION>
-      - uses: actions/setup-node@<CURRENT_VERSION>
-        with:
-          node-version: lts/*
-          cache: npm
+After building, use a real browser:
 
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run test
-      - run: npm run build
+1. Open the root/title page; it must not advertise a normal physics menu entry.
+2. Press `Shift+P`; verify the playground opens.
+3. Direct-load and refresh `?mode=physics`.
+4. Verify visible textures, collider drawing and a moving physical stack. An HTTP 200 alone does not prove WASM initialization.
+5. Pause; simulation time and body poses must freeze. Single-step must add one fixed tick; resume must not catch up paused wall time.
+6. Reset, change scenario/load, edit a valid parameter and restore baseline. Reset should preserve pause.
+7. Repeat on the repository subpath, including direct access and refresh.
+8. Inspect browser errors and asset/WASM requests.
 
-      - uses: actions/configure-pages@<CURRENT_VERSION>
-      - uses: actions/upload-pages-artifact@<CURRENT_VERSION>
-        with:
-          path: dist
+Automated physics and Python helper coverage complement this smoke check. Human partial-loss/game-feel testing remains necessary. Designed-level completion, results, onboarding and full navigation cannot be certified by the physics-only milestone.
 
-      - id: deployment
-        uses: actions/deploy-pages@<CURRENT_VERSION>
-```
+## 5. Future GitHub Pages release
 
-Before committing the real workflow, verify current official GitHub/Vite guidance and pin appropriate action versions.
+No deployment workflow is installed in Prototype 1. When RELEASE-001 begins:
 
----
+- verify current official GitHub/Vite guidance and pin supported action versions;
+- select GitHub Actions as the repository Pages source;
+- install using `npm ci`, run all checks, build with `npm run build:pages`, upload `dist/`;
+- trigger publication from `main` after the human's release authorization;
+- do not auto-deploy `dev` or delete preserved auxiliary branches;
+- inspect the actual live root and physics route, textures and WASM after deployment.
 
-## 9. Rapier/WASM deployment checks
+Before releasing Prototype 2, also verify designed-level completion, pause/results/navigation, onboarding/readability, absence of P0 softlocks, licensing/credits, updated backlog and human playtest approval. Record the actual release commit and URL.
 
-Rapier2D is WebAssembly-backed.
+## 6. Service and migration boundaries
 
-Production smoke testing must verify:
+The game remains playable without a backend. A future leaderboard must document provider, versioned score model, CORS, abuse limits, score trust, fallback and secret handling. Never put private credentials into client Vite variables.
 
-- the `.wasm` asset/module loads successfully;
-- GitHub Pages serves it correctly;
-- initialization is awaited before physics-dependent game startup;
-- refreshing/direct-loading supported routes/query modes does not break initialization.
+A hosting migration must update this document and the README, preserve static deployment where practical, and register any additional migration document in AGENTS.
 
-Because routing is expected to remain a single-page static entry with query/state navigation, avoid introducing server-side route requirements.
-
----
-
-## 10. Physics-playground deployment check
-
-The production build should support:
-
-```text
-https://<site>/?mode=physics
-```
-
-and the main-menu shortcut:
-
-```text
-Shift + P
-```
-
-This provides a useful post-build diagnostic without exposing the playground as a normal menu option.
-
----
-
-## 11. Leaderboard deployment boundary
-
-MVP:
-
-```text
-no remote backend required
-```
-
-Optional future:
-
-```text
-GitHub Pages frontend
-        ↓ HTTPS
-external leaderboard API
-```
-
-Any future backend configuration must document:
-
-- provider;
-- API base URL strategy;
-- CORS;
-- authentication if any;
-- abuse/rate limits;
-- score trust model;
-- secrets handling;
-- failure fallback.
-
-**Never place private backend secrets in Vite client environment variables**, because client-side Vite values are bundled for users.
-
----
-
-## 12. Release checklist — placeholder
-
-Before requesting human approval to promote `dev` to `main`:
-
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run lint` passes.
-- [ ] `npm run test` passes.
-- [ ] `npm run build` passes.
-- [ ] Production build opens locally.
-- [ ] `?mode=physics` opens.
-- [ ] Pixi assets load with configured `base`.
-- [ ] Rapier initializes.
-- [ ] Designed level completes.
-- [ ] Results return to main menu.
-- [ ] No known P0 softlock remains.
-- [ ] License/third-party asset audit is current.
-- [ ] `/docs/BACKLOG.md` is current.
-- [ ] `/README.md` matches player-facing build state.
-- [ ] Human performs local playtest on `dev`.
-- [ ] Human explicitly authorizes promotion.
-
-After authorization/deploy:
-
-- [ ] Verify live site.
-- [ ] Verify direct `?mode=physics` URL.
-- [ ] Verify asset/WASM network requests.
-- [ ] Verify game flow.
-- [ ] Record release commit/tag if the project adopts tagging.
-
----
-
-## 13. Migration rule
-
-If hosting moves away from GitHub Pages:
-
-1. update this document first/as part of the migration;
-2. update `/AGENTS.md` if the deployment responsibility/path changes;
-3. update `/README.md` simplified instructions;
-4. preserve static deployment where possible;
-5. add `/docs/MIGRATION.md` if the change is complex, and register it in `/AGENTS.md`.
-
----
-
-## 14. Placeholder status
-
-The following are intentionally unresolved:
-
-- GitHub owner/account;
-- repository name;
-- final Pages URL;
-- final Vite `base`;
-- action versions;
-- optional custom domain;
-- remote leaderboard provider;
-- release/tag naming convention.
-
-Replace placeholders only with verified project values.
+Still unresolved: live Pages settings/workflow, custom domain, release/tag convention, remote leaderboard provider and final project licensing.

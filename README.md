@@ -77,7 +77,7 @@ El diseño completo vive en [`/docs/GDD.md`](docs/GDD.md).
 
 ---
 
-## 🕹️ Controles previstos
+## 🕹️ Controles
 
 ### Terreno seco
 
@@ -136,7 +136,18 @@ Su objetivo es probar rápidamente:
 - flotación y corrientes;
 - parámetros de cámara y física.
 
-**El primer build funcional del proyecto estará dedicado a este modo** antes de construir el nivel de la jam.
+**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y cinco tramos diagnósticos de hierba, roca y agua. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
+
+| Herramienta | Tecla |
+|---|---|
+| Reiniciar el tramo | `R` |
+| Pausa / continuar | `Esc` |
+| Avanzar un tick estando en pausa | `N` |
+| Mostrar/ocultar colliders, contactos y centros de masa | `D` |
+
+Los selectores permiten cambiar de escenario y comparar la mudanza completa con solo el sofá. Cambiar un parámetro reinicia la simulación conservando la pausa; «Restaurar valores base» deshace el tuning de la sesión. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
+
+La guía de físicas y pruebas está en [docs/PHYSICS.md](docs/PHYSICS.md).
 
 ---
 
@@ -170,7 +181,9 @@ El backend **no es obligatorio** para jugar. El leaderboard remoto se considera 
 │   ├── GDD.md            # fuente de verdad del diseño
 │   ├── PRD.md            # requisitos técnicos y alcance
 │   ├── BACKLOG.md        # tareas, prioridades y trazabilidad
-│   └── DEPLOYMENT.md     # despliegue (placeholder inicial)
+│   ├── DEPLOYMENT.md     # builds, servidor y futuro despliegue
+│   ├── PHYSICS.md        # arquitectura y guía de tuning
+│   └── ASSETS.md         # contrato para repintar los placeholders
 │
 ├── public/
 │   └── sprites/
@@ -188,7 +201,7 @@ El backend **no es obligatorio** para jugar. El leaderboard remoto se considera 
 
 ## 🖍️ Arte de prototipo
 
-En el primer prototipo se utilizarán gráficos deliberadamente simples:
+El prototipo utiliza gráficos deliberadamente simples:
 
 - formas de color sólido;
 - etiquetas de texto;
@@ -203,7 +216,9 @@ Los assets públicos se guardan físicamente en:
 
 Vite los copiará al build sin mantener una segunda copia en `/src`.
 
-La idea es que estos placeholders sirvan también como guía para que el arte final pueda sustituirlos o «pintarse encima» sin rehacer las físicas.
+Los siete SVG originales combinan formas simples: la lámpara y el vaso tienen varios colliders; el sofá y la TV mantienen geometrías físicas sencillas. El fondo con parallax y el laboratorio usan formas de Pixi y HTML/CSS.
+
+La artista puede repintar los placeholders conservando dimensiones y anclajes sin cambiar los colliders. El contrato de tamaños, pivotes y animación está en [docs/ASSETS.md](docs/ASSETS.md).
 
 ### Don Tortuga
 
@@ -213,7 +228,7 @@ Para el prototipo solo son necesarios **dos keyframes distintos**. El sistema pu
 
 ---
 
-## 🔁 Flujo mínimo del juego
+## 🔁 Flujo previsto para el siguiente prototipo
 
 ```mermaid
 flowchart TD
@@ -232,16 +247,14 @@ flowchart TD
 
 ### Requisitos
 
-- Node.js LTS
+- Node.js **22.12 o posterior**
 - npm
 - Python 3 únicamente si se desea utilizar el servidor auxiliar de `/scripts/`
 
 ### Instalación
 
-Cuando el proyecto de Vite esté inicializado:
-
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -252,8 +265,6 @@ http://localhost:5173/
 ```
 
 ### Checks
-
-Cuando los scripts correspondientes estén definidos en `package.json`:
 
 ```bash
 npm run typecheck
@@ -278,7 +289,22 @@ npm run build
 python scripts/localServer.py --directory dist --port 4173
 ```
 
-`localServer.py` nace como helper/placeholder y puede evolucionar según las necesidades del proyecto.
+El servidor ya es funcional. Sin `--directory` sirve el `dist/` del repositorio; con una ruta relativa usa el directorio actual. Se enlaza a `127.0.0.1` por defecto y se detiene con `Ctrl+C`. `--port 0` elige un puerto libre y muestra la URL.
+
+Para simular la ruta de GitHub Pages:
+
+```bash
+npm run build:pages
+python scripts/localServer.py --directory dist --port 4173 --base-path /FICIV-AnimaGameJam-MudanzasTortugaSL/
+```
+
+Abre `http://127.0.0.1:4173/FICIV-AnimaGameJam-MudanzasTortugaSL/?mode=physics`. Este comando sobrescribe `dist/`; vuelve a ejecutar `npm run build` para servir desde la raíz.
+
+Los tests del helper son independientes de npm:
+
+```bash
+python -m unittest discover -s tests/python -v
+```
 
 ---
 
@@ -293,10 +319,10 @@ feature/* ── squash ──▶ dev ── autorización humana ──▶ main
 - `dev` es la rama experimental de integración.
 - `main` es la rama estable destinada al despliegue.
 - los agentes **no deben llevar cambios de `dev` a `main` sin autorización expresa**;
-- el `base` de Vite deberá adaptarse a la URL real del repositorio;
+- `npm run build:pages` configura el subdirectorio de este repositorio;
 - los assets de `/public/sprites/` se resolverán mediante una ruta compatible con `import.meta.env.BASE_URL`.
 
-La guía detallada está en [`/docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+El workflow de publicación en GitHub Pages queda pendiente para la fase de release. La guía detallada está en [`/docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ---
 
@@ -320,7 +346,9 @@ Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de trabajar con ramas, commi
 - [`docs/GDD.md`](docs/GDD.md) — diseño del juego y fuente de verdad.
 - [`docs/PRD.md`](docs/PRD.md) — arquitectura, stack, requisitos y alcance.
 - [`docs/BACKLOG.md`](docs/BACKLOG.md) — prioridades y seguimiento.
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — despliegue/hosting.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — builds, servidor y despliegue.
+- [`docs/PHYSICS.md`](docs/PHYSICS.md) — arquitectura de físicas y tuning.
+- [`docs/ASSETS.md`](docs/ASSETS.md) — guía de repintado para la artista.
 - [`AGENTS.md`](AGENTS.md) — mapa operativo completo para Codex y otros agentes.
 
 ---
