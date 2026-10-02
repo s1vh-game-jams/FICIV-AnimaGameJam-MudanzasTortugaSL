@@ -1669,9 +1669,299 @@ COMBINAR TODO
 
 Las primeras secciones deberán evitar exigir simultáneamente todos los sistemas antes de que el jugador haya tenido oportunidad de experimentar con ellos.
 
+Los mensajes de ayuda contextuales que acompañan este tramo inicial se definen en la sección 41.7.
+
 ---
 
-# 41. SOFTLOCKS
+# 41. INTERFAZ Y EXPERIENCIA DE USUARIO (UI/UX)
+
+## 41.1. Principios
+
+La interfaz compite con la acción.
+
+Durante la partida, la mirada del jugador está en Don Tortuga y en la mudanza, no en los bordes de la pantalla.
+
+Por tanto:
+
+- nada interrumpe la partida salvo la pausa voluntaria;
+- la información importante aparece donde el jugador ya está mirando;
+- las reglas se aprenden pulsando y viendo qué ocurre;
+- el texto es mínimo, grande y prescindible;
+- iconos, teclas dibujadas y animación sustituyen a las explicaciones.
+
+Ningún personaje detiene la acción para explicar los controles.
+
+---
+
+## 41.2. Tipos de interfaz
+
+| Tipo | Qué es | Uso en el juego |
+|---|---|---|
+| Diegética | Existe dentro del mundo del juego | carteles, señales del bosque, la propia marca |
+| Espacial | Pertenece al mundo y va ligada a algo concreto | mensajes de controles bajo Don Tortuga |
+| No diegética | Superpuesta a la pantalla | HUD: indicador de carga, cronómetro |
+
+Siempre que sea posible, la marca **Mudanzas Tortuga, S.L.** se apropia de la interfaz:
+
+- los menús se presentan como folletos o carteles de la empresa;
+- la pantalla de resultados se presenta como un **albarán de entrega**;
+- la pérdida de objetos se comunica mediante **llamadas de clientes, mensajes de texto, animación del icono del objeto caído**, etc.
+
+---
+
+## 41.3. Flujo de navegación (Game Flow)
+
+```mermaid
+flowchart TD
+    A[Portada / Menú principal] --> B[Selector de modo]
+    A --> CR[Créditos]
+    CR --> A
+    B --> C[Niveles diseñados]
+    B -.-> D[Carrera Infinita<br/>Próximamente]
+    C --> E[Selector de niveles]
+    E --> F[Partida]
+    F <--> P[Pausa]
+    P -->|Reiniciar| F
+    P -->|Salir| A
+    F --> G[Resultados<br/>albarán de entrega]
+    G -->|Reintentar| F
+    G -->|Menú principal| A
+```
+
+Reglas:
+
+- **Esc** vuelve a la pantalla anterior en los menús.
+- **Esc** abre y cierra la pausa durante la partida.
+- La Carrera Infinita aparece visible pero desactivada, con el rótulo **«Próximamente»**, mientras no esté implementada.
+- El selector de niveles existe aunque solo haya un nivel.
+- **Reintentar** lanza de nuevo el mismo nivel directamente, sin pasar por los menús.
+
+---
+
+## 41.4. Navegación en menús
+
+Todo el juego puede jugarse sin ratón.
+
+- **↑ / ↓** (y **← / →** donde proceda): mover la selección.
+- **Enter**: confirmar.
+- **Esc**: volver atrás.
+- El ratón también puede usarse en los menús.
+
+La opción seleccionada debe destacarse con claridad, sin depender únicamente del color (por ejemplo: tamaño, marco, flecha **►** o pequeña animación).
+
+Cada pantalla se abre con una opción ya seleccionada: la más probable.
+
+---
+
+## 41.5. Pantallas
+
+### 41.5.1. Portada / Menú principal
+
+Se presenta como un anuncio de la empresa (ver sección 6.5).
+
+Opciones:
+
+- **► EMPEZAR MUDANZA** (seleccionada por defecto) → selector de modo;
+- **Créditos** (recomendado para la jam).
+
+---
+
+### 41.5.2. Selector de modo
+
+- **Niveles diseñados.**
+- **Carrera Infinita — Próximamente** (desactivada hasta su implementación).
+
+---
+
+### 41.5.3. Selector de niveles
+
+Cada nivel muestra:
+
+- nombre;
+- mejor puntuación guardada en el navegador, si existe.
+
+Debe funcionar con un único nivel y poder crecer sin rediseñarse.
+
+---
+
+### 41.5.4. Pausa
+
+Se abre con **Esc**.
+
+Mientras está abierta, la física y el cronómetro quedan congelados.
+
+Opciones:
+
+1. **Continuar** (seleccionada por defecto).
+2. **Reiniciar recorrido.**
+3. **Ver los controles otra vez.**
+4. **Salir al menú principal.**
+
+*Reiniciar* y *Salir* piden una confirmación breve, porque se pierde el recorrido en curso.
+
+*Ver los controles otra vez* restablece los mensajes de ayuda (sección 41.7) para que vuelvan a mostrarse.
+
+Si los *playtests* muestran que el jugador pierde objetos nada más reanudar, se añadirá una cuenta atrás breve al continuar.
+
+---
+
+### 41.5.5. Resultados — albarán de entrega
+
+La pantalla de resultados imita el albarán que firma el cliente al recibir la mudanza.
+
+Contenido:
+
+- tiempo realizado;
+- objetos entregados, como iconos (los perdidos aparecen tachados o apagados);
+- desglose de puntos: tiempo, carga y bonus de mudanza perfecta;
+- puntuación total;
+- mejor marca guardada en el navegador, destacando si se ha superado.
+
+Sello sobre el albarán, según el porcentaje del valor de la mudanza entregado (`Vₑ / V₀`, ver sección 15):
+
+| Valor entregado | Sello |
+|---|---|
+| 100 % | **«¡MUDANZA PERFECTA!»** |
+| 90 – 99 % | **«¡Casi, casi!»** |
+| 60 – 89 % | **«Mudanza entregada»** |
+| 40 – 59 % | **«Uff, entregado»** |
+| 10 – 39 % | **«Entregado a medias»** |
+| 0 – 9 % | **«Don Tortuga ha llegado. La mudanza, no del todo.»** |
+
+Se calcula sobre el valor en puntos y no sobre el número de objetos, de modo que salvar los objetos más difíciles pesa más en el sello.
+
+Opciones:
+
+- **Reintentar** (seleccionada por defecto);
+- **Menú principal.**
+
+Si se implementa la Carrera Infinita, sus resultados muestran en su lugar: banderines superados, puntuación, tiempo y el último objeto en caer.
+
+---
+
+## 41.6. HUD (interfaz durante la partida)
+
+### Indicador de carga
+
+Fila de iconos con todos los objetos de la mudanza inicial.
+
+- Cuando un objeto se pierde definitivamente, su icono se apaga o se tacha con una pequeña animación.
+- Opcional: el icono puede tambalearse mientras el objeto está en separación temporal (sección 48).
+
+El indicador permite saber de un vistazo cuánto de la mudanza sigue en pie.
+
+### Cronómetro
+
+Mide el tiempo transcurrido desde la salida hasta la meta.
+
+No es una cuenta atrás ni un límite de tiempo.
+
+### Puntuación
+
+En el nivel diseñado, la puntuación no se muestra durante la partida: se calcula y se presenta en el albarán de resultados.
+
+En la Carrera Infinita, el HUD muestra el número de banderín (multiplicador) y la puntuación acumulada.
+
+### Colocación
+
+El terreno, las trampas y las bifurcaciones llegan por la **derecha** de la pantalla.
+
+Esa zona debe quedar libre.
+
+Recomendación de partida:
+
+- HUD en la franja superior, preferiblemente a la izquierda;
+- llamadas y mensajes del cliente (sección 41.8) en una esquina inferior;
+- zona bajo Don Tortuga reservada a los mensajes de ayuda (sección 41.7).
+
+La colocación definitiva se decide en los *mockups*.
+
+---
+
+## 41.7. Mensajes de ayuda contextuales (onboarding)
+
+Existen únicamente tres mensajes.
+
+| # | Cuándo aparece | Contenido | Cuándo desaparece |
+|---|---|---|---|
+| 1 | Nada más empezar el recorrido | teclas **← →** dibujadas + «velocidad» | cuando el jugador ha usado ← / → unos instantes |
+| 2 | Justo después de desaparecer el 1 | teclas **↑ ↓** dibujadas + «equilibrar caparazón» | cuando el jugador ha usado ↑ / ↓ unos instantes |
+| 3 | La primera vez que Don Tortuga entra en el agua | teclas **↑ ↓** dibujadas + «nadar» | cuando el jugador ha usado ↑ / ↓ en el agua |
+
+Reglas:
+
+- aparecen **debajo de Don Tortuga**, en grande, y lo acompañan mientras avanza;
+- el texto se limita a una o dos palabras; las teclas dibujadas hacen el trabajo;
+- nunca detienen la partida;
+- solo se muestra un mensaje a la vez; si el mensaje 2 sigue visible al entrar en el agua, lo sustituye el 3;
+- si el jugador no pulsa las teclas, el mensaje se desvanece tras un tiempo máximo (parámetro de *tuning*);
+- al salir del agua no aparece ningún mensaje: el jugador ya sabe que fuera del agua ↑ / ↓ equilibran el caparazón.
+
+El tramo inicial del recorrido es llano y sin amenazas mientras se muestran los mensajes 1 y 2 (ver sección 40).
+
+### Persistencia
+
+Cada mensaje se marca como visto de forma independiente y el navegador lo recuerda.
+
+- Una vez visto, no vuelve a aparecer en partidas posteriores.
+- Si el jugador aún no ha llegado al agua, el mensaje 3 sigue pendiente para cuando ocurra.
+- La opción **Ver los controles otra vez** del menú de pausa restablece los tres.
+- Si el navegador no permite guardar esta información, los mensajes se muestran en cada partida: es preferible repetirlos a no mostrarlos.
+
+---
+
+## 41.8. Feedback de pérdida: llamadas y mensajes del cliente
+
+Cuando la mudanza pierde objetos, el cliente se queja a la empresa.
+
+Para dar variedad, unas veces **llama** y otras **escribe un mensaje de texto**. Ambos formatos comparten las mismas reglas y el mismo copy.
+
+Forma:
+
+- **llamada:** retrato pequeño del cliente con un bocadillo, en una esquina de la pantalla;
+- **mensaje de texto:** pequeña notificación tipo móvil, con el avatar del cliente, en la misma esquina;
+- incluye el icono y el nombre del objeto perdido;
+- breve, no bloquea nada y desaparece solo.
+
+Al mismo tiempo, el icono del objeto se apaga en el indicador de carga (sección 41.6).
+
+Frecuencia:
+
+- **un aviso por accidente, no por objeto**: las pérdidas ocurridas en un intervalo corto se agrupan en una única llamada o mensaje;
+- tiempo mínimo de espera entre avisos (parámetro de *tuning*);
+- la misma frase no se repite dos veces seguidas.
+
+Tono:
+
+- el cliente se lamenta con humor;
+- la broma recae sobre el servicio de mudanzas, nunca sobre la desgracia de los animales;
+- no debe hacer sentir mal al jugador.
+
+### Copy provisional
+
+Objeto individual:
+
+> «¡Mi {objeto}! ¡Que era de mi abuela!»
+
+> «Don Tortuga… ¿eso que ha caído era mi {objeto}?»
+
+> «Voy a poner una reclamación por mi {objeto}.»
+
+> «¡Mi {objeto}! Bueno… lo demás sigue ahí, ¿verdad?»
+
+> «¿Mi {objeto} también se muda? ¿Por su cuenta?»
+
+Varios objetos a la vez:
+
+> «¡Mis cosas! ¡Todas mis cosas!»
+
+Usar «mi {objeto}» evita problemas de género gramatical (*el* sofá / *la* lámpara).
+
+El copy definitivo se ajustará durante la producción.
+
+---
+
+# 42. SOFTLOCKS
 
 La Tortuga siempre debe poder continuar.
 
@@ -1688,7 +1978,7 @@ Los objetos perdidos dejan de interferir con el desplazamiento precisamente para
 
 ---
 
-# 42. NIVEL DE GAME JAM
+# 43. NIVEL DE GAME JAM
 
 La versión inicial contará con:
 
@@ -1706,7 +1996,7 @@ La versión inicial contará con:
 
 ---
 
-# 43. CARRERA INFINITA EN LA JAM
+# 44. CARRERA INFINITA EN LA JAM
 
 La Carrera Infinita se considera objetivo de implementación condicionado a que el núcleo principal quede funcionando correctamente.
 
@@ -1721,7 +2011,7 @@ Si se implementa:
 
 ---
 
-# 44. CONFIGURACIONES FUTURAS DE TORTUGA
+# 45. CONFIGURACIONES FUTURAS DE TORTUGA
 
 Después de la Game Jam podrán existir varias configuraciones iniciales.
 
@@ -1738,7 +2028,7 @@ Esto permite que el generador pueda tener en cuenta la configuración escogida e
 
 ---
 
-# 45. CONTENIDO COMUNITARIO FUTURO
+# 46. CONTENIDO COMUNITARIO FUTURO
 
 La arquitectura modular está concebida para evolucionar hacia:
 
@@ -1755,9 +2045,9 @@ La lógica de módulos sirve como estructura base, no como limitación absoluta 
 
 ---
 
-# 46. MODELO DE DATOS CONCEPTUAL
+# 47. MODELO DE DATOS CONCEPTUAL
 
-## 46.1. CargoItem
+## 47.1. CargoItem
 
 ```text
 CargoItem
@@ -1772,7 +2062,7 @@ CargoItem
 
 ---
 
-## 46.2. Module
+## 47.2. Module
 
 ```text
 Module
@@ -1789,7 +2079,7 @@ Module
 
 ---
 
-## 46.3. Biome
+## 47.3. Biome
 
 ```text
 Biome
@@ -1803,7 +2093,7 @@ Biome
 
 ---
 
-# 47. ESTADOS CONCEPTUALES DE UN OBJETO
+# 48. ESTADOS CONCEPTUALES DE UN OBJETO
 
 ```mermaid
 stateDiagram-v2
@@ -1824,7 +2114,7 @@ La separación temporal evita que un pequeño rebote sea interpretado inmediatam
 
 ---
 
-# 48. ESTADO DEL NIVEL DISEÑADO
+# 49. ESTADO DEL NIVEL DISEÑADO
 
 ```mermaid
 stateDiagram-v2
@@ -1839,7 +2129,7 @@ No existe estado de muerte.
 
 ---
 
-# 49. ESTADO DE CARRERA INFINITA
+# 50. ESTADO DE CARRERA INFINITA
 
 ```mermaid
 stateDiagram-v2
@@ -1852,7 +2142,7 @@ stateDiagram-v2
 
 ---
 
-# 50. GAME FEEL
+# 51. GAME FEEL
 
 La Tortuga debe sentirse:
 
@@ -1878,7 +2168,7 @@ La carga debe sentirse:
 
 ---
 
-# 51. PARÁMETROS DE TUNING PRINCIPALES
+# 52. PARÁMETROS DE TUNING PRINCIPALES
 
 Los siguientes valores deberán permanecer expuestos y fáciles de modificar durante el prototipo:
 
@@ -1922,37 +2212,37 @@ Los siguientes valores deberán permanecer expuestos y fáciles de modificar dur
 
 ---
 
-# 52. CRITERIOS DE TUNING
+# 53. CRITERIOS DE TUNING
 
 Las pruebas deben buscar principalmente:
 
-## 52.1. Pérdida parcial
+## 53.1. Pérdida parcial
 
 ¿Los errores pequeños tienden a costar uno o pocos objetos en vez de destruirlo todo?
 
-## 52.2. Lectura
+## 53.2. Lectura
 
 ¿Puede identificarse hacia dónde está cayendo la carga?
 
-## 52.3. Agencia
+## 53.3. Agencia
 
 ¿Una buena corrección salva realmente objetos?
 
-## 52.4. Anticipación
+## 53.4. Anticipación
 
 ¿El jugador entiende las amenazas antes del impacto?
 
-## 52.5. Ritmo
+## 53.5. Ritmo
 
 ¿La lentitud genera tensión y no aburrimiento?
 
-## 52.6. Agua
+## 53.6. Agua
 
 ¿Conservar carga produce una ventaja perceptible sin convertir automáticamente la ruta profunda en la única ruta correcta?
 
 ---
 
-# 53. PRUEBAS CRÍTICAS DE GAME JAM
+# 54. PRUEBAS CRÍTICAS DE GAME JAM
 
 El primer prototipo funcional debe comprobar:
 
@@ -1969,7 +2259,7 @@ El primer prototipo funcional debe comprobar:
 
 ---
 
-# 54. PLAN DE PRODUCCIÓN RECOMENDADO
+# 55. PLAN DE PRODUCCIÓN RECOMENDADO
 
 ## Fase 1 — Vertical Slice física
 
@@ -2053,7 +2343,7 @@ Añadir:
 - portada;
 - comunicación;
 - feedback visual;
-- interfaz.
+- interfaz (ver sección 41).
 
 ---
 
@@ -2071,7 +2361,7 @@ Añadir:
 
 ---
 
-# 55. REPARTO FUNCIONAL DEL EQUIPO
+# 56. REPARTO FUNCIONAL DEL EQUIPO
 
 La producción parte de tres fuentes principales de trabajo:
 
@@ -2091,7 +2381,7 @@ y no como justificación para multiplicar mecánicas innecesarias.
 
 ---
 
-# 56. TESTEO AUTOMATIZABLE
+# 57. TESTEO AUTOMATIZABLE
 
 El sistema modular permite pruebas especialmente útiles.
 
@@ -2129,7 +2419,7 @@ comprobar que objetos perdidos no bloqueen a Tortuga
 
 ---
 
-# 57. PRINCIPIOS DE PERFORMANCE
+# 58. PRINCIPIOS DE PERFORMANCE
 
 Plataforma principal:
 
@@ -2154,7 +2444,7 @@ rectángulo + centro de gravedad desplazado
 
 ---
 
-# 58. LO QUE NO ES EL JUEGO
+# 59. LO QUE NO ES EL JUEGO
 
 *Mudanzas Tortuga, S.L.* no es:
 
@@ -2169,7 +2459,7 @@ rectángulo + centro de gravedad desplazado
 
 ---
 
-# 59. LO QUE SÍ ES EL JUEGO
+# 60. LO QUE SÍ ES EL JUEGO
 
 Es un juego sobre:
 
@@ -2184,7 +2474,7 @@ Es un juego sobre:
 
 ---
 
-# 60. FUTURO DEL PROYECTO
+# 61. FUTURO DEL PROYECTO
 
 Después de la Game Jam, el sistema queda preparado conceptualmente para crecer mediante:
 
@@ -2202,7 +2492,7 @@ El crecimiento debe producirse principalmente aumentando **contenido combinable*
 
 ---
 
-# 61. FRASE GUÍA DE PRODUCCIÓN
+# 62. FRASE GUÍA DE PRODUCCIÓN
 
 Cuando aparezca una nueva idea, debe poder responder favorablemente al menos a una de estas preguntas:
 
@@ -2218,7 +2508,7 @@ Si la respuesta es no, probablemente no pertenece al núcleo del juego.
 
 ---
 
-# 62. RESUMEN EJECUTIVO
+# 63. RESUMEN EJECUTIVO
 
 **Mudanzas Tortuga, S.L.** es un juego 2D de físicas simplificadas para navegador protagonizado por una Tortuga que ayuda a las criaturas de un bosque amenazado a trasladar sus pertenencias.
 
