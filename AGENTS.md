@@ -58,25 +58,55 @@ Do not skip documentation because a task looks small. The repository intentional
 
 ---
 
-## 3. Authority and conflict resolution
+## 3. Authority, operational scope, and conflict resolution
 
 When documents overlap, use this hierarchy:
 
 1. **The human's latest explicit instruction for the current task.**
-2. **`/docs/GDD.md`** for game-design truth and intended player experience.
-3. **`/docs/PRD.md`** for implementation architecture, jam scope, technical constraints, diagnostics, and explicitly documented technical extensions.
+2. **`/docs/GDD.md`** for the complete game design and intended player experience.
+3. **`/docs/PRD.md`** for the technical realization and the operational scope of the current prototype/release phase.
 4. **`/CONTRIBUTING.md`** for branch/commit/merge/push/authorship workflow.
-5. **`/docs/BACKLOG.md`** for current work state and scheduling.
+5. **`/docs/BACKLOG.md`** for current work state, priority, sequencing, and tracked deferrals.
 6. **`/docs/DEPLOYMENT.md`** for deployment and environment-specific procedure.
 7. **`/README.md`** as the public-facing summary.
 
-Important interpretation rules:
+### 3.1 Complete design vs. current implementation scope
 
-- The **GDD is the source of truth for game design**.
-- The **PRD may introduce development-only facilities** that intentionally do not belong in the GDD: `physics-playground`, diagnostics, debug shortcuts, test hooks, build rules, and service boundaries.
-- The PRD must **not silently redefine player-facing rules** from the GDD.
-- If an implementation constraint appears to require a design change, document the discrepancy and request/record a design decision rather than quietly changing the GDD.
-- Never rewrite the GDD merely to make current code easier to justify.
+The GDD and PRD have different jobs:
+
+- The **GDD is the source of truth for the complete game design**: rules, intended experience, UX, content model, scoring, modes, biomes, hazards, and long-term behavior.
+- The **PRD is a phase-specific projection of that design**: it defines which subset must be implemented now, which systems are development-only, which complete-game features are stretch goals, and which are intentionally deferred.
+- Therefore, **a feature being present in the GDD but omitted or deferred by the PRD is not a contradiction**.
+- Example: the complete design contains four biomes and leaderboards; the Game Jam prototype may require only three biomes including water and may ship without a remote leaderboard.
+- Even when a complete-game feature is out of scope, current architecture should remain compatible with it when doing so does not add disproportionate complexity.
+
+Operational rule:
+
+> **Use the GDD to decide what the game means; use the PRD to decide what this phase must build.**
+
+Do not expand the current prototype merely because the GDD describes a later/full-game feature.
+
+### 3.2 Technical extensions and approved clarifications
+
+The PRD may define development-only facilities that intentionally do not belong in the player-facing GDD, including:
+
+- `physics-playground`;
+- diagnostics/debug shortcuts;
+- test hooks;
+- build/deployment rules;
+- service boundaries;
+- prototype-specific acceptance criteria.
+
+The PRD may also contain an explicitly labelled **approved clarification** when the human has resolved an ambiguity or refined wording that has not yet been synchronized back into the GDD. Such a clarification is deliberate; it is not permission for agents to invent design changes.
+
+Do not silently reinterpret the GDD. If code constraints appear to require a genuine design change:
+
+1. document the discrepancy;
+2. keep the implementation reversible where practical;
+3. obtain/record a human design decision;
+4. update the appropriate source document only when authorized.
+
+Never rewrite the GDD merely to make current code easier to justify.
 
 ---
 
@@ -104,8 +134,8 @@ This table is mandatory project metadata.
 | `/README.md` | Spanish | Public repository cover; concise game overview; local setup/testing; simplified deployment; tester access to `physics-playground`. | Keep attractive and concise. Update when public setup, controls, modes, or top-level structure materially changes. |
 | `/CONTRIBUTING.md` | English | Development methodology; branch hierarchy; preserved auxiliary-branch history; squash workflow; testing; documentation; attribution. | Read before Git operations. Never delete auxiliary branches as routine cleanup. Never promote `dev` to `main` without explicit human authorization. |
 | `/LICENSE.md` | English | Provisional licensing notice and licensing boundaries. | Do not alter licensing intent without explicit approval. Check all third-party asset/audio licenses before inclusion. |
-| `/docs/GDD.md` | Spanish | **Game Design Document; source of truth for game design.** | Read before gameplay changes. Do not edit unless explicitly requested or an approved design change (including pending UX work) must be incorporated. |
-| `/docs/PRD.md` | English | Product/technical requirements: architecture, jam scope, build stages, `physics-playground`, assets, service boundaries, acceptance criteria. | Read before implementation. Update only when approved product/technical requirements change. Never use it to silently override the GDD. |
+| `/docs/GDD.md` | Spanish | **Complete Game Design Document; source of truth for game design and UI/UX.** | Read before gameplay/player-facing changes, especially section 41 for UI/UX. Do not edit unless explicitly requested or an approved design change must be incorporated. |
+| `/docs/PRD.md` | English | Product/technical requirements: architecture, phase-specific scope, build stages, `physics-playground`, approved implementation clarifications, assets, service boundaries, acceptance criteria. | Read before implementation. Use it to determine what the current phase must build while preserving compatibility with the complete GDD. |
 | `/docs/BACKLOG.md` | English | Living task pool, priorities, dependencies, status, commit references, regression provenance, post-jam deferrals. | Updating it is part of development. Close tasks with commit hashes when known. Record suspected bug-introducing commits when useful and evidenced. |
 | `/docs/DEPLOYMENT.md` | English | **Initial placeholder** for GitHub Pages/release deployment. | Read before deployment work. Replace assumptions with verified repository-specific instructions as deployment is implemented. |
 
@@ -454,10 +484,12 @@ Once definitively lost:
 
 ### Biomes
 
-Jam minimum:
+**Game Jam prototype scope (PRD):**
 
 - at least **three of the four** GDD biomes;
 - **water is mandatory**.
+
+The complete-game design still contains all four biomes. Omitting one from the jam prototype is a scope decision, not a design change.
 
 Water must preserve the GDD's special relationship among retained mass, depth, buoyancy, and stronger deep current.
 
@@ -478,36 +510,115 @@ The jam does not require examples of all sixteen abstract biome transition combi
 
 ---
 
-## 11. Application/game flow
+## 11. Application flow and UI/UX implementation rules
 
 Do not introduce React/Vue/Svelte or another UI framework merely for menus. HTML/CSS is the default UI layer.
 
-Minimum player-facing flow:
+The complete UI/UX design is defined in **GDD section 41**. For the Game Jam prototype, implement the PRD-scoped subset while keeping behavior compatible with that section.
+
+### 11.1 Player-facing flow
 
 ```text
 Main Menu
-  ↓
-Mode Select
-  ├── Designed Levels
-  │     ↓
-  │   Level Select
-  │     ↓
-  │   Level 1
-  │     ↓
-  │   Results
-  │     ↓
-  │   Main Menu
+  ├── Credits (recommended for the jam)
+  │     └── back to Main Menu
   │
-  └── Endless Run — "Próximamente"
+  └── Mode Select
+        ├── Designed Levels
+        │     ↓
+        │   Level Select
+        │     ↓
+        │   Level 1
+        │     ↕
+        │   Pause
+        │     ↓
+        │   Results / delivery note
+        │     ├── Retry same level
+        │     └── Main Menu
+        │
+        └── Endless Run — "Próximamente"
 ```
 
 If Endless Run is implemented, replace the disabled/coming-soon state without changing the overall navigation contract unnecessarily.
 
 `physics-playground` is a hidden development route, not a normal mode selector entry.
 
+### 11.2 Menu and pause behavior
+
+The Game Jam UI should be fully operable without a mouse:
+
+- arrows move selection;
+- `Enter` confirms;
+- `Esc` returns to the previous menu;
+- during gameplay, `Esc` opens/closes pause;
+- mouse input may also be supported in menus;
+- selected options must not rely on color alone.
+
+While paused:
+
+- physics is frozen;
+- the run timer is frozen;
+- **Continue** is selected by default;
+- restart/exit require brief confirmation;
+- selecting **Show controls again** resets contextual-help state but **does not unpause the game**;
+- contextual help resumes only after the player explicitly leaves pause.
+
+### 11.3 HUD
+
+Designed-level gameplay HUD:
+
+- initial-cargo icon row;
+- lost objects become visually disabled/crossed out;
+- run timer;
+- no live designed-level score.
+
+Keep the right side visually clear enough for upcoming terrain, hazards, and branches.
+
+### 11.4 Approved contextual-help clarification
+
+For implementation, use these approved rules for GDD section 41.7:
+
+- there are three help messages: speed, shell balance, and swimming;
+- each message has a fixed configurable display duration of approximately **3–5 seconds**, chosen according to text density/readability;
+- the message disappears on its timer; **input is not required to dismiss it**;
+- once its display period completes, it is considered seen **for the current run/level instance only**;
+- help state is **not persisted across runs, browser sessions, or accounts**;
+- replaying the same level starts with fresh help state;
+- swimming help appears the first time Don Tortuga enters water during that run;
+- the authored jam level must not place reachable water so early that speed/balance onboarding can overlap with swimming onboarding;
+- specifically, water should not be immediately after the start and should be unreachable before the first two messages have completed at the fastest permitted early-run traversal;
+- if malformed/community content nevertheless creates an overlap, the swimming message preempts the shell-balance message;
+- future user-created levels are required to remain technically completable, but the engine cannot guarantee that user-authored onboarding layout is good design.
+
+### 11.5 Results delivery note
+
+The designed-level results screen follows GDD section 41.5.5.
+
+For the delivery-status stamp:
+
+1. compute delivered-value percentage from `Vₑ / V₀`;
+2. convert it to percentage;
+3. **round to the nearest integer**;
+4. select the documented stamp range using that integer.
+
+This stamp calculation is separate from the GDD's perfect-move bonus rule.
+
+### 11.6 Loss feedback
+
+Loss notifications must remain brief and non-blocking.
+
+Where implemented in the jam build:
+
+- group several near-simultaneous object losses into one accident notification;
+- do not repeat the same line twice in a row;
+- update the cargo HUD immediately when an object becomes definitively lost;
+- keep the joke aimed at the moving service/logistics rather than at displaced animals or the player.
+
 ---
 
 ## 12. Leaderboard service boundary
+
+The complete GDD includes level leaderboards. The **Game Jam prototype PRD may defer the remote/global implementation**; this is an operational scope decision, not removal of the feature from the complete game.
 
 A remote leaderboard is desirable, not mandatory for jam completion.
 
@@ -592,6 +703,9 @@ Prioritize deterministic logic:
 - active-cargo graph;
 - contact-loss hysteresis;
 - game screen/state transitions;
+- pause freezes physics and timer;
+- contextual-help timer/priority/reset behavior;
+- results-stamp rounding/range selection;
 - content/config validation;
 - softlock-prevention invariants where feasible.
 

@@ -51,6 +51,17 @@ fixed-by: `def5678`
 
 Do not invent hashes. Use `unknown` when provenance cannot be established confidently.
 
+### Scope interpretation
+
+The complete game is defined by `/docs/GDD.md`; this backlog schedules the phase-specific implementation defined by `/docs/PRD.md`.
+
+Therefore:
+
+- deferring a GDD feature from Prototype 1 or Prototype 2 does not remove it from the game design;
+- Prototype 1 is the physics-tuning/`physics-playground` phase;
+- Prototype 2 is the Game Jam playable prototype;
+- remote leaderboards, the fourth biome, Endless Run, or other complete-game features may remain pending/deferred without creating a design contradiction when the PRD does not require them for the current phase.
+
 ---
 
 ## 2. Current critical path
@@ -72,7 +83,7 @@ Designed level
         ↓
 Scoring/results/navigation
         ↓
-Art/UX/polish
+UI/UX baseline + art/polish
         ↓
 Jam release on main
 ```
@@ -503,8 +514,13 @@ Jam release on main
 ### APP-005 — Validate full MVP navigation loop
 - **Priority:** P0
 - **Status:** TODO
-- **Depends on:** APP-001 through APP-004, LEVEL-001
-- **Flow:** Main → Mode → Level Select → Level → Results → Main.
+- **Depends on:** APP-001 through APP-004, LEVEL-001, UX-001, UX-002
+- **Flow:** Main → Mode → Level Select → Level ↔ Pause → Results → Retry/Main.
+- **Acceptance:**
+  - `Esc` returns through menus;
+  - `Esc` opens/closes pause during gameplay;
+  - retry launches the same level directly;
+  - Endless Run remains visible as `Próximamente` until implemented.
 
 ---
 
@@ -522,11 +538,114 @@ Jam release on main
 - **Depends on:** LEVEL-001
 - **Acceptance:** hazards and branches can be read at standard zoom.
 
-### UX-001 — Integrate Clara's UX specification
+### UX-001 — Implement keyboard menu navigation and focus states
 - **Priority:** P0
-- **Status:** BLOCKED
-- **Blocked by:** UX section pending
-- **Acceptance:** GDD/implementation updated only after approved UX material is available.
+- **Status:** TODO
+- **Depends on:** APP-001
+- **Acceptance:**
+  - arrows move selection;
+  - `Enter` confirms;
+  - `Esc` returns to previous menu;
+  - sensible option selected by default on each screen;
+  - selected state does not depend on color alone;
+  - mouse menu input may coexist without breaking keyboard use.
+
+### UX-002 — Implement pause flow
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** LEVEL-001
+- **Acceptance:**
+  - `Esc` opens/closes pause;
+  - physics freezes;
+  - run timer freezes;
+  - Continue selected by default;
+  - Restart and Exit require brief confirmation;
+  - Show controls again does not unpause;
+  - optional resume countdown added only if playtests justify it.
+
+### UX-003 — Implement designed-level HUD
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** PHYS-007, LEVEL-002
+- **Acceptance:**
+  - displays all initial cargo icons;
+  - definitively lost cargo is disabled/crossed out;
+  - displays run timer;
+  - does not display live designed-level score;
+  - keeps right-side incoming-play space visually clear.
+
+### UX-004 — Implement contextual onboarding messages
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** PHYS-003, PHYS-004, BIOME-002, UX-002
+- **Messages:**
+  1. `← →` + `velocidad`
+  2. `↑ ↓` + `equilibrar caparazón`
+  3. `↑ ↓` + `nadar`
+- **Acceptance:**
+  - each message uses a fixed tunable lifetime of approximately 3–5 seconds;
+  - input is not required for dismissal;
+  - each becomes seen only for the current run after its timer completes;
+  - help state is not persisted across runs/browser sessions/accounts;
+  - replaying/restarting the level starts fresh help state;
+  - swimming message appears on first water entry;
+  - Show controls again resets all three flags while the game remains paused;
+  - messages resume only after leaving pause;
+  - swimming message preempts shell-balance message if malformed/future community content causes overlap.
+
+### UX-005 — Protect authored opening from onboarding overlap
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** UX-004, LEVEL-001
+- **Acceptance:**
+  - opening terrain is flat/safe while speed and balance messages display;
+  - first water cannot be reached before both initial messages complete at maximum permitted early-run speed;
+  - no immediate water body is placed after the start;
+  - validation is applied to the jam-authored level, while future community levels only receive the runtime preemption fallback.
+
+### UX-006 — Implement delivery-note results presentation
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** APP-004, SCORE-001
+- **Acceptance:**
+  - shows run time;
+  - shows delivered/lost cargo icons;
+  - shows time/cargo/perfect-bonus breakdown and total;
+  - computes `round((Vₑ / V₀) × 100)` before selecting the delivery-status stamp band;
+  - Retry is selected by default and directly reloads the same level;
+  - Main Menu returns to title flow.
+
+### UX-007 — Persist local per-level personal best
+- **Priority:** P1
+- **Status:** TODO
+- **Depends on:** SCORE-001
+- **Acceptance:**
+  - stores best score/time locally when browser storage is available;
+  - level selector/results can display it;
+  - failure/unavailability of local storage never blocks play.
+- **Note:** this is not the remote Top 100 leaderboard.
+
+### UX-008 — Implement grouped client loss notifications
+- **Priority:** P1
+- **Status:** TODO
+- **Depends on:** PHYS-009, UX-003
+- **Acceptance:**
+  - brief non-blocking call/text presentation;
+  - includes lost object name/icon;
+  - one notification per accident window rather than one per object;
+  - tunable cooldown;
+  - same phrase not repeated consecutively;
+  - humor targets service/logistics and does not shame the player.
+
+### UX-009 — Add Credits screen
+- **Priority:** P1
+- **Status:** TODO
+- **Depends on:** APP-001
+- **Acceptance:**
+  - accessible from main menu;
+  - returns cleanly to main menu;
+  - supports required human/agent/art/audio attribution.
+- **Note:** recommended for the jam; must not block core playability under schedule pressure.
 
 ### ART-001 — Create placeholder sprite hierarchy
 - **Priority:** P0
@@ -548,7 +667,7 @@ Jam release on main
 ### PRESENT-001 — Apply Mudanzas Tortuga brand to main presentation
 - **Priority:** P1
 - **Status:** TODO
-- **Depends on:** APP-001, UX-001 where applicable
+- **Depends on:** APP-001, UX-001, UX-006
 
 ### FEEDBACK-001 — Add readable wobble/impact/loss feedback
 - **Priority:** P1
@@ -566,11 +685,12 @@ Jam release on main
 - **Depends on:** SCORE-001
 - **Acceptance:** score system is persistence-agnostic.
 
-### LB-002 — Implement localStorage leaderboard
+### LB-002 — Implement localStorage leaderboard/history
 - **Priority:** P1
 - **Status:** TODO
-- **Depends on:** LB-001
-- **Acceptance:** local top scores survive reload; includes level/physics version metadata.
+- **Depends on:** LB-001, UX-007
+- **Acceptance:** optional local ranking/history survives reload and includes level/physics version metadata.
+- **Note:** UX-007 owns the simpler per-level personal-best requirement; this task expands beyond it.
 
 ### LB-003 — Add leaderboard screen/panel for local records
 - **Priority:** P2
@@ -665,6 +785,28 @@ Jam release on main
 - **Status:** TODO
 - **Acceptance:** controls/threats/cargo direction are understandable with minimal text.
 
+### TEST-007 — Test pause invariants
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** UX-002
+- **Acceptance:** physics and timer remain unchanged while paused; resume does not inject a simulation jump.
+
+### TEST-008 — Test contextual onboarding state
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** UX-004
+- **Acceptance:**
+  - timed dismissal without input;
+  - seen state resets on a fresh run;
+  - Show controls again resets state without unpausing;
+  - swim-message preemption fallback behaves deterministically.
+
+### TEST-009 — Test delivery-stamp rounding
+- **Priority:** P0
+- **Status:** TODO
+- **Depends on:** UX-006
+- **Acceptance:** boundary percentages are rounded to integers before band selection.
+
 ### RELEASE-001 — Implement GitHub Pages workflow
 - **Priority:** P0
 - **Status:** TODO
@@ -747,10 +889,11 @@ Jam release on main
 | Exact Node version | current LTS | project scaffold/CI |
 | Exact linter/test configuration | TypeScript + Vite-compatible tools; Vitest preferred | BOOT-006 |
 | Third required biome choice | TBD between sand/rock depending on level | level/blockout needs |
+| Contextual-help duration | 3–5 seconds per message, tuned for child-readable content | playtesting/readability tuning |
 | Remote leaderboard provider | none | LB-004 starts |
 | Final software license | unresolved | before public release |
 | Audio license structure | unresolved | first audio asset selected |
-| Final UX | pending Clara | UX specification delivered |
+| UI/UX specification | GDD section 41 approved; implementation clarifications recorded in PRD | revise only after new approved UX/design decision |
 
 ---
 

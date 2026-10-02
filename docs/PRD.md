@@ -40,6 +40,63 @@ The GDD remains the source of truth for:
 
 This PRD adds technical/development requirements, most notably **`physics-playground`**, which is an internal test facility and therefore does not need to appear as a normal player-facing mode in the GDD.
 
+### 1.1 Operational scope model
+
+The GDD and this PRD deliberately operate at different levels:
+
+- **GDD:** describes the complete intended game.
+- **PRD:** defines what must be implemented in a specific development phase/prototype and how that subset is realized technically.
+
+A GDD feature may therefore be intentionally absent from a prototype without being removed from the game design.
+
+This project currently works through two implementation phases:
+
+#### Prototype 1 — Physics-tuning prototype
+
+Primary deliverable:
+
+```text
+physics-playground
+```
+
+Purpose:
+
+- validate Rapier/Pixi integration;
+- tune turtle movement, shell tilt, cargo stability, partial loss, biome response, and water behavior;
+- expose enough diagnostics to iterate quickly;
+- use placeholder graphics;
+- avoid spending jam time on final content before the physical core is proven.
+
+Prototype 1 does **not** need the complete game flow, complete biome set, remote leaderboards, Endless Run, final art, or polished UX.
+
+#### Prototype 2 — Game Jam playable prototype
+
+Primary deliverable:
+
+```text
+one complete playable designed level
+```
+
+It implements the **Game Jam scope** defined by this PRD, including the current UI/UX baseline.
+
+The complete GDD remains the reference for architectural compatibility and later expansion even where Prototype 2 intentionally ships only a subset.
+
+Examples:
+
+- the GDD defines four biomes; Prototype 2 requires at least three, including water;
+- the GDD defines level leaderboards; Prototype 2 may ship without a remote/global leaderboard;
+- the GDD defines Endless Run; Prototype 2 may display it as `Próximamente`.
+
+Operational rule:
+
+> **The GDD defines the complete game. The PRD defines the required projection of that game for the current phase.**
+
+### 1.2 Approved clarifications
+
+When this PRD labels a rule as an **approved clarification**, it records a human-resolved ambiguity or refinement that may not yet have been synchronized back into the GDD wording.
+
+Agents should implement the clarification exactly and must not generalize it into unrelated design changes.
+
 ---
 
 ## 2. Product statement
@@ -474,22 +531,37 @@ Minimum flow:
 
 ```text
 Main Menu
-  ↓
-Mode Select
-  ├─ Designed Levels
-  │    ↓
-  │  Level Select
-  │    ↓
-  │  Level 1
-  │    ↓
-  │  Results
-  │    ↓
-  │  Main Menu
+  ├─ Credits (recommended)
+  │    └─ Main Menu
   │
-  └─ Endless Run — "Próximamente"
+  └─ Mode Select
+       ├─ Designed Levels
+       │    ↓
+       │  Level Select
+       │    ↓
+       │  Level 1
+       │    ↕
+       │  Pause
+       │    ↓
+       │  Results / delivery note
+       │    ├─ Retry Level 1
+       │    └─ Main Menu
+       │
+       └─ Endless Run — "Próximamente"
 ```
 
 The Designed Levels selector must exist even with only one level because it establishes the intended extensible flow.
+
+The jam prototype must support keyboard menu navigation:
+
+- arrows move selection;
+- `Enter` confirms;
+- `Esc` goes back in menus;
+- `Esc` opens/closes pause during gameplay;
+- mouse navigation may also be supported;
+- selected states must not rely on color alone.
+
+Pause freezes both physics and run timer.
 
 ### 9.7 Scoring
 
@@ -627,24 +699,158 @@ Do not optimize for real-world accuracy at the expense of readability/fun.
 
 ---
 
-## 14. UI/UX boundary
+## 14. UI/UX implementation requirements
 
-Clara's UX contribution will be integrated into the GDD/design documentation when available.
+The complete UI/UX design is now defined in **GDD section 41**.
 
-Current technical assumptions:
+The jam implementation should preserve its central principles:
 
-- UI remains lightweight;
-- HTML/CSS is sufficient;
-- no heavy UI framework is required;
-- UI must not become a dependency for physics simulation.
+- UI must not compete with Don Tortuga/cargo for attention;
+- important information stays near the player's existing focus where practical;
+- text is short, large, and non-essential to understanding core physical cause/effect;
+- visual/icon/key feedback does most of the teaching;
+- nothing pauses/intercepts gameplay except voluntary pause;
+- Mudanzas Tortuga, S.L. branding should absorb the menu/results presentation where practical.
 
-Future UX decisions can alter layout/presentation but should not force a rewrite of game simulation systems.
+Technical boundary:
+
+- HTML/CSS remains the default menu/HUD layer;
+- no React/Vue/Svelte dependency is required;
+- UI code must not become authoritative for physics state;
+- gameplay simulation should remain usable by `physics-playground` without the polished player UI.
+
+### 14.1 Menu navigation
+
+Required for Prototype 2:
+
+- keyboard-only navigation is supported;
+- arrows move selection;
+- `Enter` confirms;
+- `Esc` returns to the previous menu;
+- mouse input may also be supported;
+- every screen opens with a sensible default selection;
+- selection must be communicated by more than color alone.
+
+### 14.2 Pause
+
+`Esc` opens/closes pause during gameplay.
+
+While paused:
+
+- Rapier/gameplay simulation is frozen;
+- the run timer is frozen;
+- **Continue** is selected by default;
+- **Restart route** and **Exit to main menu** request brief confirmation;
+- **Show controls again** resets all contextual-help flags but keeps the game paused.
+
+**Approved clarification:** selecting **Show controls again** must not resume gameplay. Help messages only resume once the player explicitly leaves pause, preventing an unexpected return to live physics.
+
+A short resume countdown remains optional and should only be added if playtests show that immediate resume causes frustrating losses.
+
+### 14.3 HUD
+
+Designed-level HUD:
+
+- cargo-status row containing all initial cargo icons;
+- definitively lost objects are disabled/crossed out with a small non-blocking animation;
+- run timer;
+- no live designed-level score.
+
+Optional:
+
+- temporary-separation wobble on the corresponding cargo icon.
+
+Layout constraint:
+
+- preserve clear visual space on the right side for incoming terrain/hazards/branches;
+- keep contextual help close to/below Don Tortuga;
+- client-loss messages should occupy a lower corner rather than the main action area.
+
+### 14.4 Contextual onboarding
+
+There are exactly three gameplay help messages:
+
+1. `← →` + **velocidad**
+2. `↑ ↓` + **equilibrar caparazón**
+3. `↑ ↓` + **nadar**
+
+**Approved clarification of GDD 41.7:**
+
+- each message has a fixed configurable lifetime in the approximate **3–5 second** range;
+- choose the concrete duration according to text density, large child-readable typography, and key illustrations;
+- messages disappear on their timer; **player input is not required for dismissal**;
+- a message is considered seen for the **current run/level instance** once its display interval ends;
+- contextual-help state is **not persisted across runs, browser sessions, or accounts**;
+- restarting/replaying a level starts the onboarding sequence fresh;
+- message 3 remains pending until the first water entry in that run;
+- **Show controls again** resets all three flags while remaining paused; the sequence becomes eligible again only after gameplay resumes.
+
+Prototype 2 authored-level constraint:
+
+- the opening section must be flat/safe enough for messages 1 and 2;
+- water must not be reachable early enough to overlap those two messages;
+- validate this at the maximum permitted early-run speed;
+- in practical composition terms, there should be no immediate water body after the start and the first water body should not be visible/encountered as part of the initial onboarding beat.
+
+Fallback for future malformed/community content:
+
+- if swimming onboarding becomes eligible while message 2 is still visible, swimming onboarding **preempts** message 2;
+- this fallback keeps the level operable but does not make the user-authored level well designed.
+
+### 14.5 Results / delivery note
+
+Prototype 2 results are presented as a **delivery note (`albarán de entrega`)** and include:
+
+- run time;
+- delivered cargo icons;
+- lost cargo disabled/crossed out;
+- score breakdown (time, cargo, perfect bonus);
+- total score;
+- local personal best when local storage is available.
+
+Delivery-status stamp:
+
+```text
+rawPercentage = (Vₑ / V₀) × 100
+displayPercentage = round(rawPercentage)
+```
+
+**Approved clarification:** use the rounded integer `displayPercentage` to choose the GDD's stamp band.
+
+This UI classification does not alter the perfect-bonus rule: `PerfectBonus` still follows the scoring rule defined by the GDD.
+
+Results actions:
+
+- **Retry** is selected by default and reloads the same level directly;
+- **Main Menu** returns to the title flow.
+
+### 14.6 Loss feedback
+
+When implemented for the jam build, cargo-loss feedback follows GDD section 41.8:
+
+- brief client call/message;
+- object icon/name included;
+- never blocks gameplay;
+- several losses from one accident are grouped;
+- minimum cooldown between notifications is tunable;
+- avoid repeating identical copy twice in a row;
+- humor targets the moving service/logistics, never the displaced animals or the player.
+
+The cargo HUD update itself is core feedback and should not depend on whether the richer client-message presentation ships.
+
+### 14.7 Credits
+
+A Credits screen from the main menu is recommended for the jam, especially to preserve human/agent/art/audio attribution.
+
+It is not allowed to block Prototype 2 core playability if schedule pressure forces it to be finished during final presentation/polish.
 
 ---
 
 ## 15. Leaderboards
 
 ### 15.1 Jam priority
+
+The complete GDD includes designed-level leaderboards. Prototype 2 may nevertheless ship without the remote/global leaderboard because the PRD controls current phase scope.
 
 Remote leaderboards are **desirable, not required for MVP**.
 
@@ -764,6 +970,10 @@ P0/P1 tests should cover:
 - pool non-dead-end condition;
 - seeded selection;
 - level state flow;
+- pause freezing physics and timer;
+- contextual-help timer expiry and per-run reset;
+- swimming-message preemption fallback;
+- results-stamp integer rounding and band selection;
 - lost cargo no longer blocking gameplay;
 - public asset URL helper/base-path behavior where practical.
 
@@ -783,6 +993,21 @@ Human playtesting in `physics-playground` remains required for:
 ---
 
 ## 19. Build/milestone plan
+
+The numbered builds are grouped into the two operational prototypes defined in section 1.1:
+
+```text
+Prototype 1
+└── Build 0 — Physics playground
+
+Prototype 2 — Game Jam playable prototype
+├── Build 1 — Biome foundation
+├── Build 2 — Module system
+├── Build 3 — Hazards
+├── Build 4 — Designed level
+├── Build 5 — Application / UI / presentation
+└── Build 6 — Stretch
+```
 
 ### Build 0 — Physics playground
 
@@ -835,14 +1060,21 @@ Exit criterion:
 - scoring;
 - results.
 
-### Build 5 — Application/presentation
+### Build 5 — Application / UI / presentation
 
 - main menu;
 - mode select;
 - level select;
-- return flow;
-- brand presentation;
-- UX integration;
+- keyboard navigation/focus states;
+- pause and confirmations;
+- designed-level HUD;
+- contextual onboarding;
+- results delivery note and rounded delivery-status stamp;
+- retry/return flow;
+- Mudanzas Tortuga, S.L. brand presentation;
+- local personal-best display/storage where available;
+- cargo-loss feedback (richer client-message presentation may be P1 polish);
+- Credits screen if schedule permits;
 - replace prototype art as available;
 - feedback/polish.
 
@@ -875,6 +1107,13 @@ A jam candidate satisfies MVP when:
 - [ ] Water changes controls/behavior according to the GDD.
 - [ ] Designed-level scoring works.
 - [ ] Main → Mode → Level Select → Level → Results → Main works.
+- [ ] `Esc` pause freezes physics and timer and resumes safely.
+- [ ] Menus are fully navigable by keyboard and selected state does not depend only on color.
+- [ ] Designed-level HUD shows cargo state and timer without a live designed-level score.
+- [ ] Contextual help uses fixed 3–5 s timed messages with per-run (not persistent) seen state.
+- [ ] Authored jam level cannot reach first water before initial speed/balance onboarding completes.
+- [ ] `Show controls again` resets help while remaining paused.
+- [ ] Results use the delivery-note presentation and rounded integer percentage for the delivery-status stamp.
 - [ ] Endless Run appears as `Próximamente` if not implemented.
 - [ ] Required threats are telegraphed/readable.
 - [ ] Placeholder/final art loads correctly under the configured Vite base path.
@@ -925,6 +1164,8 @@ Unless explicitly reprioritized:
 - advanced accessibility beyond what can be added without threatening completion.
 
 The **user-created custom level/editor feature must remain recorded in `/docs/BACKLOG.md` for post-jam development**.
+
+Items excluded from the Prototype 2 MVP remain part of the complete design when they exist in the GDD. Their deferral must not be described as removal from the game.
 
 ---
 
