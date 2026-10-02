@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Prototype 1 implemented and agent-verified; integration and human tuning handoff in progress
+**Status:** Prototype 1 ready for human local verification on dev
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -96,7 +96,8 @@ Jam release on main
 
 ### BOOT-001 — Scaffold Vite + TypeScript project
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** none
 - **Acceptance:**
   - Vite project runs with `npm run dev`.
@@ -106,7 +107,8 @@ Jam release on main
 
 ### BOOT-002 — Install/configure PixiJS 8
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - Pixi application initializes.
@@ -115,7 +117,8 @@ Jam release on main
 
 ### BOOT-003 — Install/configure Rapier2D
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `@dimforge/rapier2d` initializes correctly.
@@ -124,7 +127,8 @@ Jam release on main
 
 ### BOOT-004 — Implement fixed-step game/physics loop
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-002, BOOT-003
 - **Acceptance:**
   - Physics targets 60 Hz fixed timestep.
@@ -133,7 +137,8 @@ Jam release on main
 
 ### BOOT-005 — Add public asset URL helper
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - Uses `import.meta.env.BASE_URL`.
@@ -142,7 +147,8 @@ Jam release on main
 
 ### BOOT-006 — Establish baseline npm checks
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `npm run typecheck`
@@ -150,11 +156,6 @@ Jam release on main
   - `npm run test`
   - `npm run build`
   - Missing tool choices are documented before implementation.
-
-### BOOT-008 — Provide a tested production-preview helper
-- **Priority:** P0
-- **Status:** IN PROGRESS
-- **Acceptance:** reusable scripts/localServer.py supports root/subpath mounts, repository-relative default dist, clear option/bind errors and WASM serving; live standard-library tests pass.
 
 ### BOOT-007 — Add initial repository branch protections/workflow conventions
 - **Priority:** P0
@@ -165,6 +166,12 @@ Jam release on main
   - `main` is treated as release/deployment branch.
   - auxiliary branches are preserved after squash integration.
   - no automation auto-deletes them.
+### BOOT-008 — Provide a tested production-preview helper
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
+- **Acceptance:** reusable scripts/localServer.py supports root/subpath mounts, repository-relative default dist, clear option/bind errors and WASM serving; live standard-library tests pass.
+
 
 ---
 
@@ -172,7 +179,8 @@ Jam release on main
 
 ### PHYS-001 — Add physics-playground routing/access
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `Shift + P` opens it from the main screen.
@@ -181,7 +189,8 @@ Jam release on main
 
 ### PHYS-002 — Prototype Don Tortuga body and shell collider
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-003, BOOT-004
 - **Acceptance:**
   - Placeholder visual exists.
@@ -191,7 +200,8 @@ Jam release on main
 
 ### PHYS-003 — Implement dry-land turtle speed control
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002
 - **Acceptance:**
   - right input accelerates;
@@ -202,7 +212,8 @@ Jam release on main
 
 ### PHYS-004 — Implement shell tilt control
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002
 - **Acceptance:**
   - up/down adjust shell angle progressively;
@@ -212,7 +223,8 @@ Jam release on main
 
 ### PHYS-005 — Add four representative cargo archetypes
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002
 - **Objects:**
   - Sofa
@@ -227,7 +239,8 @@ Jam release on main
 
 ### PHYS-006 — Centralize tuning configuration
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-003, PHYS-004, PHYS-005
 - **Acceptance:**
   - physics/game-feel constants are not scattered;
@@ -236,7 +249,8 @@ Jam release on main
 
 ### PHYS-007 — Implement active cargo contact graph
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-005
 - **Acceptance:**
   - detects direct/indirect physical connection to shell;
@@ -245,7 +259,8 @@ Jam release on main
 
 ### PHYS-008 — Implement contact-loss hysteresis
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-007
 - **Acceptance:**
   - one brief loss of contact does not instantly lose an object;
@@ -254,7 +269,8 @@ Jam release on main
 
 ### PHYS-009 — Disable gameplay interaction from definitively lost cargo
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-008
 - **Acceptance:**
   - lost objects no longer block Don Tortuga;
@@ -264,7 +280,8 @@ Jam release on main
 
 ### PHYS-010 — Add playground reset
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002, PHYS-005
 - **Acceptance:**
   - restores deterministic baseline turtle/cargo state;
@@ -272,7 +289,8 @@ Jam release on main
 
 ### PHYS-011 — Add collider/debug visualization
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-002, BOOT-003
 - **Acceptance:**
   - toggleable;
@@ -293,7 +311,8 @@ Jam release on main
 
 ### PHYS-013 — Add playground pause/single-step controls
 - **Priority:** P1
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-010
 - **Acceptance:**
   - pause does not corrupt state;
@@ -301,7 +320,8 @@ Jam release on main
 
 ### PHYS-014 — Add live high-value tuning controls
 - **Priority:** P1
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-006
 - **Acceptance:**
   - only parameters that materially accelerate tuning;
@@ -364,7 +384,8 @@ Jam release on main
 
 ### BIOME-008 — Add biome comparison scenarios to playground
 - **Priority:** P1
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** required biome implementations
 - **Acceptance:** testers can reproduce meaningful surface/impact differences rapidly.
 
@@ -533,7 +554,8 @@ Jam release on main
 
 ### CAM-001 — Implement constant camera progression + turtle safe window
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-003
 - **Acceptance:** boundary pressure smoothly reduces speed advantage/disadvantage; no teleport clamps.
 
@@ -654,12 +676,14 @@ Jam release on main
 
 ### ART-001 — Create placeholder sprite hierarchy
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Acceptance:** `/public/sprites/{entity}/` convention exists and is used.
 
 ### ART-002 — Add two turtle walk keyframes
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** ART-001
 - **Acceptance:** animation system represents 60 logical frames/1 second while reusing two unique prototype keyframes.
 
@@ -769,7 +793,8 @@ Jam release on main
 
 ### TEST-002 — Add cargo graph/hysteresis tests
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 
 ### TEST-003 — Add module compatibility/pool tests
 - **Priority:** P0
@@ -807,11 +832,6 @@ Jam release on main
   - Show controls again resets state without unpausing;
   - swim-message preemption fallback behaves deterministically.
 
-### TEST-010 — Cover the physical core with real Rapier invariants
-- **Priority:** P0
-- **Status:** IN PROGRESS
-- **Acceptance:** fixed-loop/config/controller unit coverage plus real Rapier finite states, repeatable reset, realized traversal/camera bounds, mass properties, lost-body isolation, water weight/rise/current/swim and high-entry cushioning.
-
 ### TEST-009 — Test delivery-stamp rounding
 - **Priority:** P0
 - **Status:** TODO
@@ -845,6 +865,12 @@ Jam release on main
 - **Priority:** P0
 - **Status:** BLOCKED
 - **Depends on:** RELEASE-004
+### TEST-010 — Cover the physical core with real Rapier invariants
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
+- **Acceptance:** fixed-loop/config/controller unit coverage plus real Rapier finite states, repeatable reset, realized traversal/camera bounds, mass properties, lost-body isolation, water weight/rise/current/swim and high-entry cushioning.
+
 
 ---
 
@@ -919,7 +945,7 @@ Agent-side verification on 2026-10-03:
 - Browser checks cover hidden Shift+P access, direct route/refresh, frozen pause/time, one-tick stepping, repeatable reset, scenario/load switching, valid parameter editing and empty-field restoration.
 - The complete stack remains retained through ordinary water traversal with neutral input. This verifies a baseline, not subjective game feel.
 
-The reviewed source implementation is commit `4ddd996` on preserved branch `codex/physics-playground`. Integration provenance will be recorded after squash into dev. No regression-introducing commit is claimed for fixes made before this first implementation commit.
+The reviewed source implementation is commit `4ddd996` on preserved branch `codex/physics-playground`. Squash integration: `2d6e854` on `dev`. Source history and attribution remain on `codex/physics-playground`. No regression-introducing commit is claimed for fixes made before this first implementation commit.
 
 Known limitations / follow-ups:
 
