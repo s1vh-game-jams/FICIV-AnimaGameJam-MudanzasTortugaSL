@@ -4,6 +4,25 @@
 
 ### *Servicio de Mudanzas de Don Tortuga para criaturillas del bosque desahuciadas*
 
+**Equilibra la carga. Lee el terreno. Salva hasta el último vaso.**
+
+<br>
+
+![Estado](https://img.shields.io/badge/estado-game%20jam%20en%20desarrollo-F59E0B?style=for-the-badge)
+![Anima Valencia](https://img.shields.io/badge/Anima%20Valencia-Game%20Jam%202026-6D28D9?style=for-the-badge)
+![Tema](https://img.shields.io/badge/tema-tortuga-16A34A?style=for-the-badge)
+![Plataforma](https://img.shields.io/badge/plataforma-navegador-0284C7?style=for-the-badge)
+
+<br>
+
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![PixiJS](https://img.shields.io/badge/PixiJS-8-E91E63?style=for-the-badge)
+![Rapier2D](https://img.shields.io/badge/Rapier2D-physics-2563EB?style=for-the-badge)
+![Vite](https://img.shields.io/badge/Vite-build-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-planned-222222?style=for-the-badge&logo=github&logoColor=white)
+
+<br><br>
+
 > **«Te llevamos a tu nuevo hogar con la casa a cuestas.»**
 
 **Anima Valencia Game Jam 2026 · FICIV Valencia**
