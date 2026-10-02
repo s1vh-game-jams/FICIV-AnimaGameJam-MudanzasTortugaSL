@@ -137,7 +137,9 @@ This table is mandatory project metadata.
 | `/docs/GDD.md` | Spanish | **Complete Game Design Document; source of truth for game design and UI/UX.** | Read before gameplay/player-facing changes, especially section 41 for UI/UX. Do not edit unless explicitly requested or an approved design change must be incorporated. |
 | `/docs/PRD.md` | English | Product/technical requirements: architecture, phase-specific scope, build stages, `physics-playground`, approved implementation clarifications, assets, service boundaries, acceptance criteria. | Read before implementation. Use it to determine what the current phase must build while preserving compatibility with the complete GDD. |
 | `/docs/BACKLOG.md` | English | Living task pool, priorities, dependencies, status, commit references, regression provenance, post-jam deferrals. | Updating it is part of development. Close tasks with commit hashes when known. Record suspected bug-introducing commits when useful and evidenced. |
-| `/docs/DEPLOYMENT.md` | English | **Initial placeholder** for GitHub Pages/release deployment. | Read before deployment work. Replace assumptions with verified repository-specific instructions as deployment is implemented. |
+| `/docs/DEPLOYMENT.md` | English | Local production serving, root/subpath builds, and pending GitHub Pages release procedure. | Read before build/base/hosting changes. Distinguish verified local serving from pending live publication. |
+| `/docs/PHYSICS.md` | English | Current physical architecture, diagnostic controls, canonical configuration and tuning workflow. | Read for physics/playground changes. Keep implementation facts current; human feel validation remains separate. |
+| `/docs/ASSETS.md` | English | Original placeholder provenance, dimensions, anchors, animation and artist repaint contract. | Read before visual replacements or registration changes. Preserve physics/art separation and record imported licenses. |
 
 ### Future documentation
 

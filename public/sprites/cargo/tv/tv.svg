@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="90" viewBox="0 0 80 90" role="img" aria-labelledby="title">
+  <title id="title">Televisión: carga compacta y pesada</title>
+  <g stroke="#322d49" stroke-width="2" stroke-linejoin="round">
+    <path d="M20 76 L12 89 H27 L32 76 Z" fill="#655177"/>
+    <path d="M48 76 L53 89 H68 L60 76 Z" fill="#655177"/>
+    <rect x="1" y="1" width="78" height="77" rx="5" fill="#9c75c7"/>
+    <rect x="8" y="8" width="56" height="60" rx="3" fill="#d9c9eb"/>
+  </g>
+  <circle cx="71" cy="56" r="3" fill="#322d49"/>
+  <circle cx="71" cy="66" r="3" fill="#322d49"/>
+  <text x="36" y="46" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#322d49">TV</text>
+</svg>

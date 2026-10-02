@@ -97,6 +97,10 @@ When this PRD labels a rule as an **approved clarification**, it records a human
 
 Agents should implement the clarification exactly and must not generalize it into unrelated design changes.
 
+**Approved Prototype 1 scope:** the human approved grass and rock diagnostics plus a compact water basin/high-entry case. These establish the three required Prototype 2 biomes without requiring a real designed level in Prototype 1. Sand remains outside the current mandatory scope. Cargo visuals/colliders may combine a few simple shapes; the artist repaints the registered placeholders while physics geometry stays stable.
+
+Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
+
 ---
 
 ## 2. Product statement
