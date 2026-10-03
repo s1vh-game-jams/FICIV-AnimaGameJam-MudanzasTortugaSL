@@ -42,8 +42,8 @@ Cargo sprites are centred on each object's geometric pose origin. A configured c
 
 Don Tortuga is split into two parts:
 
-- The walking body excludes the shell and stays right-facing. Its visual centre is 0.21 m above the physical body centre in the body's local coordinates, placing its feet at the body's lower boundary. The body follows the simulation-owned terrain pitch.
-- The shell has its own container at the simulation-owned physical shell pivot. Its local offset from the body centre is 0.40 m upward, rotated with terrain pitch. The sprite centre is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
+- The walking body excludes the shell and stays right-facing. Its visual centre is 0.21 m above the corrected body origin (snapshot.turtle.bodyX/bodyY) in the body's local coordinates, placing its feet at the body's lower boundary. The body follows the simulation-owned corrected body origin and terrain pitch, rather than the fixed locomotion proxy's centre.
+- The shell has its own container at the simulation-owned physical shell pivot. Its local offset from that corrected body origin is 0.42 m upward, rotated with terrain pitch. The sprite centre is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
 
 With the current 0.6 m shell image height, its upper centre is 0.42 m above the shell pivot, matching the support's maximum height. The pivot and collider definitions remain canonical in [tuning.ts](../src/game/config/tuning.ts).
 

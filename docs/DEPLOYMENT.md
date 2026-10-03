@@ -16,6 +16,8 @@ npm run build
 
 The default build writes `dist/` and uses Vite base `/`. It contains static HTML, CSS, JavaScript, public SVGs and a hashed Rapier WASM asset. No backend or secret is required.
 
+Root settings.txt is imported as raw text into the application bundle. Editing/replacing it requires a development reload or production rebuild; preview and scripts/localServer.py serve the existing build. The laboratory exports the same configuration schema as a download. There is no extra configuration endpoint, public source duplicate or server writeback.
+
 `dev` is the integration/testing branch. Auxiliary branches are preserved after squash integration. Only an explicitly human-approved promotion to `main` may become a release; see [CONTRIBUTING](../CONTRIBUTING.md).
 
 ## 2. Serve the production build locally
@@ -88,16 +90,19 @@ The expected Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-M
 
 After building, use a real browser:
 
-1. Open the root/title page; it must not advertise a normal physics menu entry.
-2. Press `Shift+P`; verify the playground opens.
-3. Direct-load and refresh `?mode=physics`.
-4. Verify visible textures, collider drawing and a moving physical stack. An HTTP 200 alone does not prove WASM initialization.
-5. Pause; simulation time and body poses must freeze. Single-step must add one fixed tick; resume must not catch up paused wall time.
-6. Reset, change scenario/load, edit a valid parameter and restore baseline. Reset should preserve pause.
-7. Repeat on the repository subpath, including direct access and refresh.
-8. Inspect browser errors and asset/WASM requests.
+1. Verify hidden Shift+P access, direct `?mode=physics` and refresh.
+2. Verify textures, raised shell registration, collider drawing, cargo and Rapier WASM initialization.
+3. Compare arrows/WASD. D must accelerate; C toggles debug.
+4. Hold Space for partial/full/over-cap charges; release must launch once. Check lowered-head pose, no charge GUI, supported cargo and ordinary landing.
+5. Pause/blur during charge, then return: no deferred jump. Pause freezes time and help; neutral single-step advances physics by one tick without advancing onboarding.
+6. Compare empty/sofa/full water behavior, initial dive momentum, swimming and bank exit.
+7. Compare slopes and manual compensation; verify actual shell contact motion and visible feet.
+8. Edit fine decimal values, camera percentages and zoom; check validated reset, pause preservation, matched guides/physical bounds and coherent sprite sizing. Resize the landscape viewport.
+9. Enable help preview: speed/balance/jump sequence, first-water priority and per-run reset.
+10. Export settings while paused: download must preserve time/tick/pause; its text round-trips through the shared codec. Replace source settings and rebuild/reload to verify permanent defaults; restore recovers loaded values.
+11. Repeat root and repository-subpath production access, public/charge textures, refresh and WASM initialization; inspect browser errors.
 
-Automated physics and Python helper coverage complement this smoke check. Human partial-loss/game-feel testing remains necessary. Designed-level completion, results, onboarding and full navigation cannot be certified by the physics-only milestone.
+Automated physics and Python helper coverage complement this smoke check. Human partial-loss/game-feel testing remains necessary. Designed-level completion, results and full navigation cannot be certified by the physics-only milestone.
 
 ## 5. Future GitHub Pages release
 

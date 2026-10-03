@@ -20,7 +20,7 @@ function showMenu(): void {
     <h1>MUDANZAS<br>TORTUGA, S.L.</h1>
     <p class="tagline">Con la casa a cuestas.</p>
     <p class="prototype-note">Estamos preparando nuestra primera ruta.</p>
-    <span class="status-pill">Prototipo de físicas · 0.2</span>
+    <span class="status-pill">Prototipo de físicas · 0.1</span>
   </section>`;
 }
 async function showPlayground(): Promise<void> {
