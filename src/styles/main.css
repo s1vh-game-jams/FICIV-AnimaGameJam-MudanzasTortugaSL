@@ -40,7 +40,9 @@ summary { cursor: pointer; font-weight: 650; }
 .hint { color: #65765d; font-size: .77rem; line-height: 1.5; }
 .tuning-field { display: flex; align-items: center; justify-content: space-between; gap: .4rem; font-size: .75rem; padding: .35rem 0; }
 .tuning-field input { width: 5rem; padding: .3rem; border: 1px solid #bdcbb0; border-radius: .3rem; color: #173e37; }
-#baseline { width: 100%; margin-top: .6rem; }
+#baseline, #export-settings { width: 100%; margin-top: .6rem; }
+.tuning-panel .help-preview { display: flex; align-items: center; gap: .4rem; font-weight: 500; }
+.tuning-error { color: #8a342b; line-height: 1.4; }
 .loading, .error { padding: 2rem; }
 .error h1 { font-size: 2rem; }
 .error pre { white-space: pre-wrap; }

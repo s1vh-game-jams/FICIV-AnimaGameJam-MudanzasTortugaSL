@@ -267,13 +267,25 @@ describe('water weight and entry behavior', () => {
     const simulation = createSimulation(scenarioById('water-drop'));
     const entry = enterWater(simulation);
     expect(entry.fastestFall).toBeLessThan(-4);
+    // Water now preserves entry momentum and amortizes it over fixed ticks.
+    expect(entry.snapshot.turtle.verticalSpeed).toBeLessThan(-simulation.tuning.waterMaxVerticalSpeed);
+    expect(entry.snapshot.turtle.verticalSpeed).toBeGreaterThan(entry.fastestFall);
     assertFullLoad(entry.snapshot);
+    let reachedOrdinarySpeed = false;
+    let previousVerticalSpeed = entry.snapshot.turtle.verticalSpeed;
     for (let tick = 0; tick < simulation.tuning.physicsHz * 2; tick += 1) {
       simulation.step();
       const snapshot = simulation.snapshot();
       assertFullLoad(snapshot);
       assertFinite(simulation, snapshot);
-      expect(Math.abs(snapshot.turtle.verticalSpeed)).toBeLessThanOrEqual(simulation.tuning.waterMaxVerticalSpeed);
+      if (tick === 0) {
+        expect(snapshot.turtle.verticalSpeed).toBeGreaterThan(previousVerticalSpeed);
+        expect(snapshot.turtle.verticalSpeed).toBeLessThan(0);
+      }
+      if (Math.abs(snapshot.turtle.verticalSpeed) <= simulation.tuning.waterMaxVerticalSpeed) reachedOrdinarySpeed = true;
+      if (reachedOrdinarySpeed) expect(Math.abs(snapshot.turtle.verticalSpeed)).toBeLessThanOrEqual(simulation.tuning.waterMaxVerticalSpeed);
+      previousVerticalSpeed = snapshot.turtle.verticalSpeed;
     }
+    expect(reachedOrdinarySpeed).toBe(true);
   });
 });

@@ -17,8 +17,11 @@ Rapier owns physical bodies, colliders, contacts and world stepping. Pixi render
 | `src/main.ts` | Hidden route, laboratory controls, world lifecycle, fixed-loop scheduling and parameter editing. |
 | `src/game/core/fixedLoop.ts` | Accumulate render elapsed time and advance fixed simulation ticks; pause and single-step support. |
 | `src/game/core/input.ts` | Keyboard state and input cleanup. |
-| `src/game/config/tuning.ts` | Canonical tuning, validation, geometry/controller settings and the visible tuning-field list. |
-| `src/game/systems/controller.ts` | Progressive speed changes, camera-window pressure and bounded shell angular motion. |
+| `settings.txt` | Canonical adjustable startup defaults for game and laboratory. |
+| `src/game/config/tuning.ts`, `settingsCodec.ts` | Typed tuning/geometry, camera derivation, validation, parsing/export and laboratory fields. |
+| `src/game/systems/controller.ts` | Progressive speed changes, camera-window pressure and bounded relative shell angular motion. |
+| `src/game/systems/jumpCharge.ts` | Fixed-time dry-grounded charge, capped release-once and cancellation. |
+| `src/game/systems/contextualHelp.ts` | Shared timed per-run speed/balance/jump/swim onboarding and water priority. |
 | `src/game/systems/cargoGraph.ts` | Pure shell-rooted cargo connectivity, separation grace and terminal loss. |
 | `src/game/physics/simulation.ts` | Rapier world, terrain queries, turtle/shell control, cargo bodies, biome response and snapshots. |
 | `src/game/content/cargo.ts` | Cargo dimensions, mass, center of mass and initial placement. |
@@ -39,15 +42,27 @@ The application disposes the previous Rapier world and Pixi scene when leaving o
 
 ### Turtle and shell
 
-The turtle uses a horizontal capsule on a position-based kinematic Rapier body. Rapier's character controller resolves its requested movement against solid convex terrain prisms. The shell is a separate position-based kinematic body with a simplified convex collider: curved sides and a short flat crown provide a useful initial support surface. Its translation follows the carrier while its rotation follows the player's bounded shell control.
+The turtle uses a fixed horizontal capsule as a simplified translation proxy on a position-based kinematic Rapier body. The character controller resolves movement against solid convex terrain. Simulation-owned body pitch follows confirmed physical support with bounded angular motion. An authored top-face angle is used only when the collision normal agrees with that face; corners use their actual normal. Simultaneous contacts prefer the flatter support deterministically, and grounded ticks without a new collision retain the last confirmed pitch. A downward Rapier query of the rotated capsule supplies the corrected body origin; lowering is smooth and upward terrain clearance takes priority. The fixed proxy remains responsible for locomotion, while the corrected origin drives both artwork and real shell support. Snapshots expose bodyX/bodyY alongside proxy x/y. Airborne body offset stays at its departure value and water eases it toward neutral. Airborne pitch keeps its departure orientation; water gently returns the pose toward horizontal.
+
+The shell is a separate position-based kinematic body with the same simplified convex collider: curved sides and a short flat crown. Its pivot is now 0.42 m above the body origin, raised from 0.30 m to expose more leg animation space without shape changes. Initial cargo registration shifts by that same pivot difference. The pivot follows the rotated local body offset. World shell angle combines terrain body pitch and relative manual compensation. The traversable slope limit uses the same canonical shell compensation bound, initially 36 degrees. Physical support motion reaches dynamic cargo through Rapier.
+
+Terrain-clearance queries bound shell angular/translation motion. Rotation uses the convex envelope of departure/arrival hulls, expanded by the angular sagitta to cover the entire intermediate path; pure translation keeps Rapier's native linear sweep. The endpoint requires full numerical clearance, while the swept envelope uses half that gap to avoid trapping recovery through departure rounding. Ramp joins, bank exits and headroom cases require actual traversal tests. The locomotion capsule keeps its horizontal orientation; it is a simplified translation proxy rather than a model of articulated feet.
 
 The character controller preserves numerical clearance through the canonical `controllerOffset` and `controllerNudge` settings. Snap-to-ground is deliberately disabled; gravity provides ground following. During implementation, snapping erased clearance at shallow contacts, allowing zero-time-of-impact normals to block horizontal travel even while the requested speed remained positive. Changes to clearance, nudging, terrain geometry or snapping must repeat the actual forward-traversal tests, not only the target-speed unit tests.
 
 Movement uses Rapier's next-kinematic-transform APIs at the fixed timestep, allowing the solver to convey support movement to dynamic cargo. Ordinary traversal must not reposition cargo through sprite transforms or instant positional clamps.
 
-The horizontal camera advances at a configured constant speed. Front and rear window pressure progressively bring the requested turtle speed toward camera speed. A small inner margin and proportional speed recovery correct realized drift toward either boundary without changing position directly. Acceleration/braking then approach that target. Supporting contact normals orient motion along slopes, with the groundward component applied normal to the support so uphill projection does not consume horizontal intent. Terrain resolution and water transitions must also be tested: a smooth requested speed alone does not prove smooth realized movement.
+The horizontal camera advances at a configured constant speed. Rear/front boundary positions are percentages from the logical viewport's left edge. Effective scale is worldPixelsPerMetre × cameraZoom; simulation and debug guides use the same derived metre boundaries. Initial placement comes from the validated window midpoint. CSS scaling preserves the landscape composition. Zoom is adjustable only in the laboratory and remains fixed for a normal run. Front and rear window pressure progressively bring the requested turtle speed toward camera speed. A small inner margin and proportional speed recovery correct realized drift toward either boundary without changing position directly. Acceleration/braking then approach that target. Supporting contact normals orient motion along slopes, with the groundward component applied normal to the support so uphill projection does not consume horizontal intent. Terrain resolution and water transitions must also be tested: a smooth requested speed alone does not prove smooth realized movement.
 
 The kinematic carrier does not acquire a finite dynamic body mass from the cargo. Retained cargo mass is an explicit gameplay input, used for the water response. The snapshot's `turtle.mass` and the kilogram readout refer to **retained cargo mass**, excluding definitively lost items. A future carrier-controller experiment can change this implementation behind the simulation boundary without changing visual asset definitions.
+
+### Charged jump
+
+Space begins charging only when dry and grounded. Fixed simulation time grows the charge up to jumpMaxChargeSeconds (initially 3 s). Release launches once with a fraction of jumpMaxLaunchSpeed (initially 4.5 m/s), preserving forward motion. The launch intensity is linear in charge; ballistic height is not. Carrier and cargo share gravity, initially 9.81 m/s².
+
+Pause, reset, focus loss, interactive-control focus, water entry and loss of ground eligibility cancel charging. A held key after interruption must not arm a later jump. No automatic launch occurs at the cap. Supported cargo may receive one bounded mass-proportional takeoff impulse based on accepted carrier motion. Temporarily separated/lost cargo receives no remote impulse, and existing relative/rotational motion remains independent. Global contact grace is unchanged.
+
+Two registered head-lowered walking variants communicate concentration. There is no charge GUI. Clearing charge restores the neutral head pose; pause still freezes logical walking animation time.
 
 ### Cargo and loss
 
@@ -75,11 +90,11 @@ Grass provides the permissive reference surface. Rock uses a different contact/l
 
 Water is an authored region with horizontal bounds, a surface and a bottom. It switches vertical input from shell tilt to swimming. There is no oxygen, health or drowning system. Entry/exit tolerance helps avoid rapid control switching near the surface.
 
-The controller derives a weight-dependent preferred depth and upward response from retained cargo mass. Cargo in separation grace still contributes to this calculation. Depth increases the rightward current affecting the carrier; the same camera-window pressure still applies. The resulting advantage should be evaluated over a traversal, including the point where front-window pressure limits further positional gain.
+The controller derives a weight-dependent preferred depth and upward response from retained cargo mass. Water buoyancy gain starts at 8.4 s⁻². Swimming strength starts at 8 m/s² and its separate mass response at 0.05 kg⁻¹. An empty turtle has stronger natural restoration and resists sustained immersion; heavier retained loads reach deeper positions. Up/down modulates descent and return to the surface. Verify both controllable ascent and bank exit across empty, sofa-only and full loads. Cargo in separation grace still contributes to this calculation. Depth increases the rightward current affecting the carrier; the same camera-window pressure still applies. The resulting advantage should be evaluated over a traversal, including the point where front-window pressure limits further positional gain.
 
 Water does not add a lateral fluid force directly to cargo. Current modifies carrier motion. General shell-contact grip can still transmit the carrier's movement. Water entry uses vertical cushioning of retained cargo. Dry landing assistance applies on an air-to-ground transition, rather than repeatedly injecting vertical energy while grounded. This is deliberate gameplay assistance rather than a complete fluid simulation.
 
-Water-entry cushioning, weight/depth behavior and stable transitions are tuning objectives. Verify both ordinary entry and the high-drop diagnostic before considering those behaviors suitable for level production.
+Water entry preserves incoming vertical momentum, then drag and overspeed damping smoothly reduce it toward the normal vertical-speed bound. It does not instantly clip a high-drop entry to that bound. Cargo vertical cushioning still protects the stack. Water-entry cushioning, weight/depth behavior and stable transitions are tuning objectives. Verify both ordinary entry and the high-drop diagnostic before considering those behaviors suitable for level production.
 
 ## 2. Access and laboratory controls
 
@@ -87,17 +102,20 @@ Open the playground with `Shift + P` from the title screen, or navigate directly
 
 | Control | Action |
 |---|---|
-| `→` / `←` | Accelerate / reduce forward speed; no reverse input. |
-| `↑` / `↓` on dry terrain | Progressively raise / lower the shell's front. |
-| `↑` / `↓` in water | Swim upward / downward. |
+| `→/D` / `←/A` | Accelerate / reduce forward speed; no reverse input. |
+| `↑/W` / `↓/S` on dry terrain | Progressively raise / lower the shell relative to terrain pitch. |
+| `Space` on dry ground | Hold to charge; release to jump. |
+| `↑/W` / `↓/S` in water | Modulate upward / downward swimming. |
 | `Esc` | Pause / continue the laboratory. |
 | `R` | Reset the current scenario and selected load. |
 | `N` | Advance one fixed tick while paused, using neutral gameplay controls. |
-| `D` | Toggle collider/contact/camera-window debugging. |
+| `C` | Toggle collider/contact/camera-window debugging. |
 | Scenario selector | Select another diagnostic and reset. |
-| Initial-load selector | Compare the complete stack with the sofa-only load. |
+| Initial-load selector | Compare complete, sofa-only and empty loads. |
 | Parameter field | Apply a valid value and reset, preserving pause. |
-| Restore baseline button | Restore the canonical baseline and reset. |
+| Restore settings button | Restore the loaded settings.txt defaults and reset. |
+| Export settings button | Download current settings.txt without resetting or changing pause. |
+| Preview help checkbox | Test shared onboarding in the diagnostic scene; ordinary level integration remains pending. |
 | Title button | Dispose the playground and return to the title screen. |
 
 Keyboard shortcuts and movement do not intercept editing in the parameter/select fields. Focus the canvas again when returning to keyboard traversal.
@@ -116,13 +134,17 @@ Each diagnostic stops advancing at its authored end. Use reset to repeat it. Thi
 | `water` | Basin traversal: control switching, full/light load depth, natural rise and current. |
 | `water-drop` | Elevated entry: downward speed and vertical cushioning before and after entering water. |
 
-The complete load contains the sofa, television, cocktail glass and floor lamp. The light diagnostic contains only the sofa. These presets investigate a mass relationship; they are development controls, not a player cargo-building or configuration-selection screen.
+Additional diagnostics: jump-obstacle tests a small raised obstacle; slopes-max tests near-limit ramps and compensation; water-jump tests jump entry into a basin.
+
+The complete load contains the sofa, television, cocktail glass and floor lamp. The light diagnostic contains only the sofa. The empty diagnostic contains no cargo and is used to compare buoyancy. These presets investigate a mass relationship; they are development controls, not a player cargo-building or configuration-selection screen.
 
 Scenario definitions use world coordinates and typed terrain strips. Their start/end bounds must stay inside supported terrain. Adjacent strips must meet without positional gaps. Water bounds and bottom/surface values must form a valid region. They are not the reusable module format or a procedural pool.
 
 ## 4. Configuration and tuning
 
-`BASELINE_TUNING`, `PHYSICS_GEOMETRY`, `CARGO`, `SCENARIOS` and `VISUALS` are the current authoritative definitions for their respective responsibilities. Change those sources rather than introducing another playground-only set of physics values.
+Root settings.txt is authoritative for adjustable gameplay defaults. createTuning loads an independent session copy; readonly BASELINE_TUNING reflects the same file. PHYSICS_GEOMETRY, CARGO, SCENARIOS and VISUALS remain authoritative for fixed geometry/content/presentation. Fixed scheduling and logical viewport metrics remain source constants.
+
+The versioned settings codec accepts numeric key=value entries, # comments, LF/CRLF and decimal exponents. It validates required/unknown/duplicate keys, finite bounds and cross-field relationships before applying a complete configuration. Errors identify settings.txt and the affected key/line. Spinner increments are conveniences rather than restrictions on valid fine decimal values.
 
 Physical coordinates use metres with positive Y upward; masses use kilograms, elapsed time uses seconds and angles use radians. Pixi converts physical Y to downward screen coordinates and scales the logical viewport to its host without changing physics.
 
@@ -130,7 +152,9 @@ Physical coordinates use metres with positive Y upward; masses use kilograms, el
 |---|---|
 | `physicsHz`, `maxFrameSeconds`, `maxStepsPerFrame` | Fixed frequency and bounded wall-time catch-up. |
 | `minSpeed`, `baseSpeed`, `maxSpeed`, `acceleration`, `braking` | Dry forward-control range and rate of change. |
-| `cameraSpeed`, `cameraBack`, `cameraFront`, `cameraPressureWidth` | Camera advance, vertical following, safe-window position/pressure and smooth recovery, in world units relative to camera X. |
+| `cameraSpeed`, `cameraVerticalSpeed`, rear/front percentages, `cameraZoom` | Camera advance/following and viewport-relative boundaries; derived cameraBack/Front are metres relative to camera X. |
+| `cameraPressureWidth`, `cameraGuardMargin`, `cameraRecovery` | Smooth boundary pressure and velocity recovery. |
+| `jumpMaxChargeSeconds`, `jumpMaxLaunchSpeed`, `gravity` | Maximum hold time, upward launch speed and shared airborne acceleration. |
 | `shellMaxAngle`, `shellAngularSpeed`, `shellAngularDamping` | Angular bound, requested angular speed and the rate of approaching that speed. |
 | Cargo friction, linear/angular damping, `gripAssistance`, `lossGraceSeconds` | Contact retention, motion damping, gentle carrier-following assistance and temporary-separation duration. |
 | Water depth/rise/weight/drag fields | Preferred depth and natural rise as functions of retained cargo mass. |
@@ -142,9 +166,11 @@ Physical coordinates use metres with positive Y upward; masses use kilograms, el
 
 Some names describe their gameplay purpose rather than a complete physical model. For example, `shellAngularDamping` limits angular-speed change per second in the controller; it is not a dynamic torque law. Water rise is a gain toward a mass-dependent depth, not a simulation of displaced liquid volume.
 
-The visible field list intentionally exposes only high-value parameters: acceleration, braking, shell angular speed, cargo friction, grip assistance, cargo angular damping, separation grace, water weight influence and current. Other values remain editable in canonical source configuration.
+The visible field list exposes 18 high-value parameters: the previous movement/cargo/water controls plus rear/front camera percentages, zoom, jump charge/launch, gravity, buoyancy and swimming strength/mass response. All 37 adjustable settings are exported, including those edited directly in settings.txt. Geometry and scheduling constants are not laboratory controls.
 
-Changing a visible parameter resets the physical state so comparisons begin from the same preparation. It does not modify the baseline source file or persist across leaving/reopening the playground. Tuning export/persistence is not implemented.
+Changing a visible parameter validates a fresh configuration and resets the physical state, preserving pause. Zoom changes also reconfigure cached visual sizes. Export downloads the current complete schema as settings.txt; it does not reset or step the world. Restore settings reinstates the loaded defaults.
+
+To make laboratory changes permanent, replace root settings.txt with the exported file or edit it in a text editor. Reload development or rebuild production. Vite imports the file as raw text into the bundle; the Python helper and preview serve that existing bundle, so repository edits alone cannot change a previously built game. No browser filesystem writeback or backend is required.
 
 ### Suggested tuning sequence
 
@@ -153,9 +179,10 @@ Changing a visible parameter resets the physical state so comparisons begin from
 3. Apply small shell corrections, then deliberately make a larger error. Look for recoverable wobble and individual loss rather than universal collapse or a rigidly glued stack.
 4. Use pause, neutral single-step and collider/contact markers to investigate a separation. Check whether graph state and the grace timer explain the outcome.
 5. Compare grass and rock with the repeated bump geometry. Check control response, landing energy and the direction of visible instability.
-6. Repeat the water basin with complete and sofa-only loads. Compare retained mass, depth, natural rise, swimming response and forward assistance.
+6. Repeat the water basin with complete, sofa-only and empty loads. Compare retained mass, depth, natural rise, swimming response and forward assistance.
 7. Use the high-drop water case to inspect entry. Cargo should not become lost merely because entering water produces an abrupt carrier/cargo mismatch.
-8. Change one high-value parameter at a time, reset and repeat. Record the scenario, load, changed values, control sequence and approximate simulation time when reporting a result.
+8. Try partial/full charge in jump-obstacle and water-jump; inspect takeoff, head posture, landing and cargo connectivity. Compare near-limit ramps with and without manual compensation.
+9. Change one high-value parameter at a time, reset and repeat. Export useful candidates; replace the root file and rebuild to retain them. Record the scenario, load, changed values, control sequence and approximate simulation time when reporting a result.
 
 Subjective corrections and appropriate loss frequency require human playtesting. A numerically stable world is necessary, but does not establish that preserving the stack is understandable or fun.
 
@@ -180,7 +207,7 @@ Record actual automated results and human findings in the backlog and handoff. T
 
 ## 6. Current boundaries and follow-ups
 
-The laboratory intentionally has no designed-level scoring, delivery finish logic, hazard framework, complete menu flow, contextual onboarding, leaderboard, Endless Run, final art or audio. Sand and full authored biome transitions remain later work. These deferrals follow the current PRD phase and do not remove features from the GDD.
+The laboratory intentionally has no designed-level scoring, delivery finish logic, hazard framework, complete menu flow, leaderboard, Endless Run, final art or audio. The shared four-message onboarding controller and optional preview are implemented; normal-level/menu integration remains pending. Sand and full authored biome transitions remain later work. These deferrals follow the current PRD phase and do not remove features from the GDD.
 
 The diagnostic pause/reset behavior is not the final player-facing pause menu with restart/exit confirmations. Early water diagnostics do not satisfy the designed level's onboarding-layout constraint. The finite scenario endpoint must not become a normal no-cargo failure condition.
 

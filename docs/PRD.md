@@ -99,6 +99,8 @@ Agents should implement the clarification exactly and must not generalize it int
 
 **Approved Prototype 1 scope:** the human approved grass and rock diagnostics plus a compact water basin/high-entry case. These establish the three required Prototype 2 biomes without requiring a real designed level in Prototype 1. Sand remains outside the current mandatory scope. Cargo visuals/colliders may combine a few simple shapes; the artist repaints the registered placeholders while physics geometry stays stable.
 
+**Approved Prototype 1 extension (2026-10-03):** configurable viewport-relative camera boundaries and laboratory zoom; canonical root settings.txt with export; Space release-to-jump with a default three-second charge cap; WASD aliases; stronger load-dependent buoyancy; terrain-relative turtle/shell pose and manual compensation. Sol alone has scoped permission to synchronize the affected GDD rules. Builder agents/subagents cannot edit the GDD. The shell pivot is raised slightly without changing turtle/shell shapes, preserving more room for leg animation.
+
 Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
 
 ---
@@ -232,6 +234,9 @@ The following must remain easy to edit without hunting through entity code:
 - acceleration;
 - braking/deceleration;
 - safe horizontal camera window;
+- charged-jump maximum charge time and launch intensity;
+- shared gravity;
+- fixed-run zoom and viewport-relative rear/front boundaries;
 - shell angular velocity;
 - maximum shell angle;
 - angular damping.
@@ -264,6 +269,10 @@ The following must remain easy to edit without hunting through entity code:
 - debug display settings.
 
 Use canonical configuration consumed by both game and playground.
+
+Root `settings.txt` supplies the adjustable startup defaults through a Vite raw-text import. Its versioned numeric `key=value` format supports `#` comment lines. A shared schema validates keys, ranges and cross-field constraints and serializes the current laboratory values. Technical timestep/geometry constants remain typed source configuration. Invalid settings produce a filename/key diagnostic rather than divergent silent defaults.
+
+The laboratory edits a session copy. Restore reloads the startup defaults; Export downloads `settings.txt` without resetting the run. Replacing the repository file makes changes permanent after development reload or production rebuild. The static production bundle requires no configuration backend.
 
 ### 6.4 Data-driven content
 
@@ -355,7 +364,8 @@ Target animation contract:
 
 Jam prototype:
 
-- two unique keyframes are sufficient;
+- two unique walking keyframes are sufficient;
+- two registered head-lowered walking variants communicate jump charging, without a GUI charge meter;
 - reuse those images across logical frames;
 - do not generate dozens of duplicate files;
 - final in-between frames may be supplied later by the artist.
@@ -406,7 +416,9 @@ Required systems:
 - Don Tortuga placeholder;
 - shell collider/body behavior;
 - acceleration/braking;
-- shell tilt;
+- shell tilt and terrain-relative physical support;
+- charged jump and WASD aliases;
+- settings-backed defaults/export and camera boundary/zoom tuning;
 - representative cargo bodies;
 - representative terrain;
 - at least enough biome behavior to begin meaningful physics tuning;
@@ -455,6 +467,15 @@ P1 if useful during tuning:
 - live sliders/input fields for high-value tuning parameters;
 - reset current parameters to baseline;
 - copy/export current tuning values.
+
+Required for the approved extension:
+
+- adjustable rear/front boundaries expressed as positions in percent of the logical landscape viewport;
+- adjustable laboratory zoom, fixed once a normal run starts;
+- deterministic reset after parameter changes, preserving pause;
+- empty, sofa-only and complete load comparisons;
+- Export settings and restore loaded settings;
+- optional contextual-help preview for testing shared onboarding without creating normal levels.
 
 Do not build a full editor UI during the jam unless it materially accelerates tuning.
 
@@ -671,7 +692,9 @@ Required:
 - no reverse traversal;
 - no full stop;
 - player modifies velocity within a bounded range;
+- Arrow keys and WASD both control speed and shell/swimming;
 - player controls shell tilt on dry terrain;
+- turtle terrain pitch plus relative manual shell tilt produces the authoritative physical shell pose;
 - shell maximum angle initially expected within the GDD's 30°–45° tuning range;
 - camera/turtle safe-window constraints should alter allowed acceleration/deceleration smoothly rather than teleporting the turtle.
 
@@ -680,6 +703,22 @@ In water:
 - horizontal inputs continue regulating forward motion;
 - vertical inputs control swimming rather than shell tilt;
 - Don Tortuga cannot drown.
+
+Charged jump:
+
+- press/hold Space while dry and grounded;
+- launch once on release with linear charge fraction capped at `jumpMaxChargeSeconds` (default 3 s);
+- holding beyond the cap never auto-launches;
+- `jumpMaxLaunchSpeed` describes maximum upward launch speed in m/s for the kinematic carrier; trajectory height is not linear in charge;
+- preserve forward momentum and shared carrier/cargo gravity;
+- pause, focus loss, reset, water entry or loss of ground eligibility cancels charge and pending release;
+- an invalid press in air/water must not arm a later jump;
+- convey charge through the lowered head/concentrated expression only;
+- bounded takeoff assistance may affect currently shell-connected cargo; separated/lost cargo must not receive remote assistance.
+
+Terrain support may use a stable translation proxy while the real shell follows the simulation-owned ground pose and rotated local pivot. Verify foot placement, shell clearance, automatic/manual rotation and realized traversal; rendering cannot invent authoritative physical support.
+
+Water tuning must make an empty turtle resist sustained immersion, retain smoothly damped entry momentum, and permit heavier retained loads to reach deeper routes. Up/down input modulates descent/ascent; all supported loads must be able to return to the surface and leave authored banks. Definitively lost cargo immediately stops contributing weight.
 
 Use Rapier body/control patterns that transfer understandable motion to dynamic cargo without arbitrary sprite teleportation.
 
@@ -772,34 +811,29 @@ Layout constraint:
 
 ### 14.4 Contextual onboarding
 
-There are exactly three gameplay help messages:
+There are four gameplay help messages:
 
-1. `← →` + **velocidad**
-2. `↑ ↓` + **equilibrar caparazón**
-3. `↑ ↓` + **nadar**
+1. `←/A →/D` + **velocidad**
+2. `↑/W ↓/S` + **equilibrar caparazón**
+3. `Espacio` + **mantén y suelta para saltar**
+4. `↑/W ↓/S` + **nadar**
 
-**Approved clarification of GDD 41.7:**
+Rules synchronized with GDD 41.7:
 
-- each message has a fixed configurable lifetime in the approximate **3–5 second** range;
-- choose the concrete duration according to text density, large child-readable typography, and key illustrations;
-- messages disappear on their timer; **player input is not required for dismissal**;
-- a message is considered seen for the **current run/level instance** once its display interval ends;
-- contextual-help state is **not persisted across runs, browser sessions, or accounts**;
-- restarting/replaying a level starts the onboarding sequence fresh;
-- message 3 remains pending until the first water entry in that run;
-- **Show controls again** resets all three flags while remaining paused; the sequence becomes eligible again only after gameplay resumes.
+- fixed configurable lifetimes in the approximate **3–5 second** range;
+- timer dismissal requires no player input;
+- seen state belongs only to the current run and begins when a message completes;
+- restarting/replaying resets all four messages;
+- no browser/session/account persistence;
+- simulation pause freezes timers;
+- **Show controls again** resets help while remaining paused;
+- speed, balance and jump appear in sequence on dry terrain;
+- first water entry activates swimming with priority over unfinished initial help; that help remains pending until it is eligible again on dry terrain;
+- only one message is displayed.
 
-Prototype 2 authored-level constraint:
+Prototype 2 opening constraint: the authored safe opening must allow all three initial messages to complete before reachable water, even at maximum permitted early-run speed. Community-content preemption preserves technical operation but does not certify onboarding layout quality.
 
-- the opening section must be flat/safe enough for messages 1 and 2;
-- water must not be reachable early enough to overlap those two messages;
-- validate this at the maximum permitted early-run speed;
-- in practical composition terms, there should be no immediate water body after the start and the first water body should not be visible/encountered as part of the initial onboarding beat.
-
-Fallback for future malformed/community content:
-
-- if swimming onboarding becomes eligible while message 2 is still visible, swimming onboarding **preempts** message 2;
-- this fallback keeps the level operable but does not make the user-authored level well designed.
+Prototype 1 supplies the tested shared help controller and an optional laboratory preview. Actual normal-level/menu integration remains Prototype 2 work.
 
 ### 14.5 Results / delivery note
 
@@ -976,7 +1010,11 @@ P0/P1 tests should cover:
 - level state flow;
 - pause freezing physics and timer;
 - contextual-help timer expiry and per-run reset;
-- swimming-message preemption fallback;
+- swimming-message preemption and pending initial-help resumption;
+- settings parse/export/default/session-copy invariants;
+- charged-jump saturation, release-once and cancellation;
+- terrain pitch/manual compensation and safe physical shell motion;
+- empty/full water depth, ascent and bank-exit relationships;
 - results-stamp integer rounding and band selection;
 - lost cargo no longer blocking gameplay;
 - public asset URL helper/base-path behavior where practical.
@@ -1024,7 +1062,9 @@ Includes only:
 - Don Tortuga;
 - representative cargo;
 - acceleration/braking;
-- shell tilt;
+- shell tilt and terrain-relative support;
+- charged jump;
+- settings/camera/WASD extension;
 - representative terrain/biome behavior;
 - cargo loss basics;
 - tuning/debug tools needed for iteration.
@@ -1107,7 +1147,10 @@ A jam candidate satisfies MVP when:
 - [ ] At least two distinct hazards exist.
 - [ ] Cargo can be lost individually.
 - [ ] Lost cargo cannot softlock Don Tortuga.
-- [ ] Player can accelerate/brake and control shell angle on dry terrain.
+- [ ] Player can accelerate/brake and control shell angle on dry terrain using arrows or WASD.
+- [ ] Space charge/release jump works with the configured cap and concentrated pose.
+- [ ] Terrain pitch affects the physical shell and permits manual compensation.
+- [ ] Normal-run camera margins match configured viewport positions and zoom stays fixed.
 - [ ] Water changes controls/behavior according to the GDD.
 - [ ] Designed-level scoring works.
 - [ ] Main → Mode → Level Select → Level → Results → Main works.
@@ -1115,7 +1158,7 @@ A jam candidate satisfies MVP when:
 - [ ] Menus are fully navigable by keyboard and selected state does not depend only on color.
 - [ ] Designed-level HUD shows cargo state and timer without a live designed-level score.
 - [ ] Contextual help uses fixed 3–5 s timed messages with per-run (not persistent) seen state.
-- [ ] Authored jam level cannot reach first water before initial speed/balance onboarding completes.
+- [ ] Authored jam level cannot reach first water before initial speed/balance/jump onboarding completes.
 - [ ] `Show controls again` resets help while remaining paused.
 - [ ] Results use the delivery-note presentation and rounded integer percentage for the delivery-status stamp.
 - [ ] Endless Run appears as `Próximamente` if not implemented.
@@ -1160,7 +1203,7 @@ Unless explicitly reprioritized:
 - mandatory all-16 module transition coverage;
 - account/authentication system;
 - sophisticated anti-cheat;
-- mobile/touch control parity;
+- mandatory mobile/touch control parity (the proposed touch scheme is a desired optional jam feature tracked in BACKLOG);
 - multiplayer;
 - large backend;
 - heavy UI framework;

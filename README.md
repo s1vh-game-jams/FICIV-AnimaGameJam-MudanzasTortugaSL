@@ -83,17 +83,24 @@ El diseño completo vive en [`/docs/GDD.md`](docs/GDD.md).
 
 | Tecla | Acción |
 |---|---|
-| `→` | Acelerar dentro del rango permitido |
-| `←` | Reducir velocidad, sin detenerse ni retroceder |
-| `↑` | Inclinar el frontal del caparazón hacia arriba |
-| `↓` | Inclinar el frontal del caparazón hacia abajo |
+| `→` / `D` | Acelerar dentro del rango permitido |
+| `←` / `A` | Reducir velocidad, sin detenerse ni retroceder |
+| `↑` / `W` | Inclinar el frontal del caparazón hacia arriba |
+| `↓` / `S` | Inclinar el frontal del caparazón hacia abajo |
+| `Espacio` | Mantener para cargar; soltar para saltar hacia delante |
+
+El salto se carga estando apoyado en terreno seco. Su intensidad de despegue aumenta linealmente hasta **3 segundos** por defecto; mantener Espacio más tiempo conserva el máximo y el salto siempre espera a que lo sueltes. Don Tortuga baja la cabeza mientras carga, sin barra de carga. Pausa, pérdida de foco, agua o pérdida de apoyo cancelan la carga.
+
+En desniveles, cuerpo y caparazón siguen la inclinación del suelo; las teclas verticales permiten compensarla para estabilizar la mudanza.
 
 ### Agua
 
 | Tecla | Acción |
 |---|---|
-| `←` / `→` | Regular el avance horizontal |
-| `↑` / `↓` | Nadar verticalmente |
+| `←` / `A` · `→` / `D` | Regular el avance horizontal |
+| `↑` / `W` · `↓` / `S` | Modular el ascenso y la inmersión |
+
+Sin carga cuesta más hundirse; conservar objetos permite alcanzar mayor profundidad. La entrada conserva una inmersión suave y después Don Tortuga tiende a volver hacia la superficie.
 
 Los valores exactos de velocidad, aceleración, inclinación, grip, impactos, flotación y corrientes son parámetros de *tuning*.
 
@@ -126,7 +133,8 @@ http://localhost:5173/?mode=physics
 Su objetivo es probar rápidamente:
 
 - aceleración y frenada;
-- inclinación del caparazón;
+- compensación del terreno con el caparazón;
+- salto cargado y aterrizaje;
 - estabilidad de la carga;
 - masas y centros de gravedad;
 - grip asistido;
@@ -136,16 +144,30 @@ Su objetivo es probar rápidamente:
 - flotación y corrientes;
 - parámetros de cámara y física.
 
-**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y cinco tramos diagnósticos de hierba, roca y agua. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
+**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y ocho tramos diagnósticos de hierba, roca y agua, incluidos salto y pendientes máximas. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
 
 | Herramienta | Tecla |
 |---|---|
 | Reiniciar el tramo | `R` |
 | Pausa / continuar | `Esc` |
 | Avanzar un tick estando en pausa | `N` |
-| Mostrar/ocultar colliders, contactos y centros de masa | `D` |
+| Mostrar/ocultar colliders, contactos y centros de masa | `C` |
 
-Los selectores permiten cambiar de escenario y comparar la mudanza completa con solo el sofá. Cambiar un parámetro reinicia la simulación conservando la pausa; «Restaurar valores base» deshace el tuning de la sesión. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
+Los selectores permiten cambiar de escenario y comparar la mudanza completa, solo el sofá o Don Tortuga sin carga. Cambiar un parámetro reinicia la simulación conservando la pausa. «Previsualizar ayudas» prueba la secuencia velocidad, caparazón, salto y natación, preparada para los futuros niveles normales. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
+
+### Ajustes permanentes y exportación
+
+Los valores ajustables del laboratorio se cargan desde **`settings.txt`**, en la raíz del proyecto. El archivo usa líneas `clave=valor`, comentarios con `#` y punto decimal; contiene la versión del formato y las unidades de los parámetros. Puedes editarlo directamente con un editor de texto.
+
+Para conservar un ajuste hecho en el laboratorio:
+
+1. Pulsa **«Exportar settings»** para descargar los valores actuales.
+2. Sustituye el `settings.txt` del repositorio por el archivo descargado.
+3. Recarga el servidor de desarrollo, o ejecuta **`npm run build`** si estás usando el build de producción.
+
+El build incorpora esos valores: cambiar el archivo del repositorio después de construir requiere reconstruir. Los ajustes de la sesión se conservan al reiniciar el tramo; **«Restaurar settings»** recupera los valores cargados del archivo. Exportar mantiene el tramo y la pausa. Un archivo inválido muestra el parámetro que hay que corregir.
+
+Los límites de cámara son **posiciones en porcentaje desde la izquierda de la escena**, no distancias desde cada borde. El zoom y los límites se pueden ajustar aquí; las partidas normales utilizarán el zoom fijado antes de empezar. La escena conserva su composición apaisada 16:9 al escalar.
 
 La guía de físicas y pruebas está en [docs/PHYSICS.md](docs/PHYSICS.md).
 
@@ -176,6 +198,7 @@ El backend **no es obligatorio** para jugar. El leaderboard remoto se considera 
 ├── README.md             # esta portada
 ├── CONTRIBUTING.md       # metodología y flujo Git
 ├── LICENSE.md            # licencia provisional
+├── settings.txt          # valores ajustables por defecto
 │
 ├── docs/
 │   ├── GDD.md            # fuente de verdad del diseño
@@ -216,15 +239,15 @@ Los assets públicos se guardan físicamente en:
 
 Vite los copiará al build sin mantener una segunda copia en `/src`.
 
-Los siete SVG originales combinan formas simples: la lámpara y el vaso tienen varios colliders; el sofá y la TV mantienen geometrías físicas sencillas. El fondo con parallax y el laboratorio usan formas de Pixi y HTML/CSS.
+Los SVG originales combinan formas simples: la lámpara y el vaso tienen varios colliders; el sofá y la TV mantienen geometrías físicas sencillas. El fondo con parallax y el laboratorio usan formas de Pixi y HTML/CSS.
 
-La artista puede repintar los placeholders conservando dimensiones y anclajes sin cambiar los colliders. El contrato de tamaños, pivotes y animación está en [docs/ASSETS.md](docs/ASSETS.md).
+La artista puede repintar los placeholders conservando dimensiones y anclajes sin cambiar los colliders. El caparazón está ligeramente elevado para dejar espacio a las patas. Las dos poses adicionales de carga de salto conservan el registro del cuerpo. El contrato de tamaños, pivotes y animación está en [docs/ASSETS.md](docs/ASSETS.md).
 
 ### Don Tortuga
 
 La animación final de caminar hacia la derecha está pensada como **1 segundo / 60 frames lógicos a 60 FPS**.
 
-Para el prototipo solo son necesarios **dos keyframes distintos**. El sistema puede reutilizarlos a lo largo de los 60 frames lógicos; no es necesario crear 58 archivos duplicados. La artista podrá completar después los intermedios.
+Cada estado del prototipo —caminar y cargar el salto— utiliza **dos keyframes distintos**. El sistema puede reutilizarlos a lo largo de los 60 frames lógicos; no es necesario crear 58 archivos duplicados. La artista podrá completar después los intermedios.
 
 ---
 
@@ -299,6 +322,8 @@ python scripts/localServer.py --directory dist --port 4173 --base-path /FICIV-An
 ```
 
 Abre `http://127.0.0.1:4173/FICIV-AnimaGameJam-MudanzasTortugaSL/?mode=physics`. Este comando sobrescribe `dist/`; vuelve a ejecutar `npm run build` para servir desde la raíz.
+
+Tras editar o reemplazar `settings.txt`, vuelve a construir antes de probar con preview o el servidor auxiliar. El helper sirve el build existente.
 
 Los tests del helper son independientes de npm:
 

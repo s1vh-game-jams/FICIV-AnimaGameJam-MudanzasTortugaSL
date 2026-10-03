@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Prototype 1 ready for human local verification on dev
+**Status:** Prototype 1 controls/settings/physics extension in progress on codex/physics-controls-settings
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -330,6 +330,40 @@ Jam release on main
 
 ---
 
+### PHYS-015 — Persist and export laboratory tuning defaults
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `22a656f` · branch: `codex/physics-controls-settings`
+- **Branch:** `codex/physics-controls-settings`
+- **Acceptance:** root settings.txt is canonical; strict shared numeric schema/codec; session edits and restore are independent; export round-trips current values; production rebuild workflow documented.
+
+### PHYS-016 — Add viewport-relative camera tuning and laboratory zoom
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `22a656f`, `287a7f9` · branch: `codex/physics-controls-settings`
+- **Depends on:** PHYS-015
+- **Acceptance:** rear/front viewport positions and zoom share simulation/render bounds; reset preserves pause; valid initial placement; CSS resize preserves composition; normal-run zoom is fixed.
+
+### PHYS-017 — Add soft charged jump
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `a03fc42`, `9284942` · branch: `codex/physics-controls-settings`
+- **Acceptance:** dry grounded Space hold/release; linear launch intensity; configurable default 3 s cap; no auto-launch at cap; maximum launch speed/shared gravity adjustable; safe lifecycle cancellation; independent supported cargo can accompany takeoff/landing without global grace extension.
+
+### PHYS-018 — Convey terrain inclination through turtle/shell support
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `9284942` · branch: `codex/physics-controls-settings`
+- **Acceptance:** simulation-owned ground pose and rotated shell pivot; relative manual compensation; matched traversable slope/compensation limit; smooth joins and clear feet/shell; body and shell shapes preserved while shell pivot is raised.
+
+### PHYS-019 — Add WASD aliases and input edge handling
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
+- **Acceptance:** arrows and WASD coexist without doubled axes; partial alias release works; Space edges consumed once; editor/button focus respected; C replaces D as collider shortcut.
+
+---
+
 # P0 — Biomes
 
 ### BIOME-001 — Implement baseline grass behavior
@@ -388,6 +422,14 @@ Jam release on main
 - **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** required biome implementations
 - **Acceptance:** testers can reproduce meaningful surface/impact differences rapidly.
+
+---
+
+### BIOME-009 — Strengthen empty/heavy buoyancy and swimming
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `9284942` · branch: `codex/physics-controls-settings`
+- **Acceptance:** adjustable buoyancy; empty turtle resists sinking; retained mass enables deeper travel; smooth initial immersion and natural rise; up/down modulate velocity; empty/light/full loads surface and leave banks; terminal loss removes weight immediately.
 
 ---
 
@@ -606,9 +648,10 @@ Jam release on main
 - **Status:** TODO
 - **Depends on:** PHYS-003, PHYS-004, BIOME-002, UX-002
 - **Messages:**
-  1. `← →` + `velocidad`
-  2. `↑ ↓` + `equilibrar caparazón`
-  3. `↑ ↓` + `nadar`
+  1. `←/A →/D` + `velocidad`
+  2. `↑/W ↓/S` + `equilibrar caparazón`
+  3. `Espacio` + `mantén y suelta para saltar`
+  4. `↑/W ↓/S` + `nadar`
 - **Acceptance:**
   - each message uses a fixed tunable lifetime of approximately 3–5 seconds;
   - input is not required for dismissal;
@@ -616,17 +659,17 @@ Jam release on main
   - help state is not persisted across runs/browser sessions/accounts;
   - replaying/restarting the level starts fresh help state;
   - swimming message appears on first water entry;
-  - Show controls again resets all three flags while the game remains paused;
+  - Show controls again resets all four flags while the game remains paused;
   - messages resume only after leaving pause;
-  - swimming message preempts shell-balance message if malformed/future community content causes overlap.
+  - swimming message preempts unfinished initial help if malformed/future community content causes overlap; unfinished help remains pending for dry terrain.
 
 ### UX-005 — Protect authored opening from onboarding overlap
 - **Priority:** P0
 - **Status:** TODO
 - **Depends on:** UX-004, LEVEL-001
 - **Acceptance:**
-  - opening terrain is flat/safe while speed and balance messages display;
-  - first water cannot be reached before both initial messages complete at maximum permitted early-run speed;
+  - opening terrain is flat/safe while speed, balance and jump messages display;
+  - first water cannot be reached before all three initial messages complete at maximum permitted early-run speed;
   - no immediate water body is placed after the start;
   - validation is applied to the jam-authored level, while future community levels only receive the runtime preemption fallback.
 
@@ -673,6 +716,26 @@ Jam release on main
   - returns cleanly to main menu;
   - supports required human/agent/art/audio attribution.
 - **Note:** recommended for the jam; must not block core playability under schedule pressure.
+
+### UX-010 — Add optional touch controls
+- **Priority:** P1
+- **Status:** TODO
+- **Target:** desired for the jam, not mandatory; not implemented by this extension.
+- **Proposal:** touch Don Tortuga or the shell to charge a jump; a single tap ahead/behind regulates lateral position; two-finger drag in the desired rotation direction balances the shell.
+- **Design follow-ups:** define tap duration/velocity mapping, release/cancellation, gesture priority and swimming gestures before implementation.
+- **Acceptance:** preserve landscape composition; avoid accidental simultaneous jump/rotation; update README control instructions when touch ships.
+
+### UX-011 — Prepare four-message shared onboarding controller
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `a03fc42`, `287a7f9` · branch: `codex/physics-controls-settings`
+- **Acceptance:** timed per-run speed/balance/jump/swim sequence; pause/reset; first-water priority and pending-message resume; optional laboratory preview. Full normal-level integration remains UX-004.
+
+### ART-004 — Register charged-head walking variants
+- **Priority:** P0
+- **Status:** DONE
+- **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
+- **Acceptance:** two simple head-lowered/concentrated poses; existing body/leg geometry, canvas and anchors preserved; 60 logical slots remain; no charge GUI; artist contract updated for raised shell pivot.
 
 ### ART-001 — Create placeholder sprite hierarchy
 - **Priority:** P0
@@ -934,9 +997,9 @@ Jam release on main
 
 ---
 
-## 4. Prototype 1 verification and remaining work
+## 4. Original Prototype 1 verification and historical remaining work
 
-Agent-side verification on 2026-10-03:
+Agent-side verification of original source commit `4ddd996` on 2026-10-03:
 
 - TypeScript strict check and ESLint pass.
 - Vitest: 105 tests pass (24 cargo graph, 55 core/config/content and 26 real Rapier).
@@ -947,15 +1010,35 @@ Agent-side verification on 2026-10-03:
 
 The reviewed source implementation is commit `4ddd996` on preserved branch `codex/physics-playground`. Squash integration: `2d6e854` on `dev`. Source history and attribution remain on `codex/physics-playground`. No regression-introducing commit is claimed for fixes made before this first implementation commit.
 
-Known limitations / follow-ups:
+Historical limitations / follow-ups at that original milestone:
 
 - PHYS-012 and TEST-005 need human assessment of correction feel and recoverable partial losses. Angular/camera/water assistance is provisional tuning.
-- BIOME-001 through BIOME-006 have diagnostic implementations; designed-level integration, authored transitions and the full biome-foundation acceptance remain Prototype 2 work. BIOME-008 supplies the five comparison diagnostics now. Sand remains optional.
+- BIOME-001 through BIOME-006 have diagnostic implementations; designed-level integration, authored transitions and the full biome-foundation acceptance remain Prototype 2 work. BIOME-008 supplied the five original diagnostics at that milestone. Sand remains optional.
 - BOOT-007 establishes branch conventions/dev/preserved history; remote protection and automatic branch-deletion settings have not been administered or certified.
 - TEST-004 and TEST-007 cover the playground portion; designed-level navigation and final pause flow remain pending their implementation.
-- No real level/module pool, hazard system, scoring/results, contextual help, leaderboard, final art or audio is included.
+- That original milestone did not include a real level/module pool, hazard system, scoring/results, contextual help, leaderboard, final art or audio.
 - Rapier WASM is approximately 2.4 MB before compression (about 921 kB gzip); actual cold-load/performance budgets need release profiling.
 - No Pages workflow/live publication is configured; main remains the human-controlled release branch.
+
+### Approved extension and human feedback — 2026-10-03
+
+The human reported natural physical feel and intuitive controls in the initial playground, then approved the controls/settings/physics plan and requested a slightly higher shell without shape changes. This is positive baseline feedback, not final verification of the extension or every partial-loss criterion.
+
+Completed extension tasks: PHYS-015 through PHYS-019, BIOME-009, UX-011 and ART-004. Sol synchronized only the explicitly authorized GDD changes; builder/subagent GDD permissions remain unchanged. The source branch is preserved as `codex/physics-controls-settings`. Squash provenance will be recorded after integration; main remains untouched.
+
+Extension verification on 2026-10-03:
+
+- TypeScript strict check and global ESLint pass.
+- Vitest: **232 tests pass** across eight files: 181 unit cases and 51 real-Rapier integration cases.
+- Python helper: 11 live unittest cases pass; helper behavior is unchanged.
+- Root and repository-subpath production builds succeed; browser textures, WASM, direct access and subpath refresh initialize without console errors.
+- Production browser checks cover fine decimal editing, invalid camera-window rejection, zoom/reset/pause preservation, restoration and actual settings download. The downloaded text contains all 37 values plus schemaVersion and the edited acceleration/zoom; exporting leaves tick/time/pause unchanged.
+- Help preview reaches the jump message after speed/balance. Paused single-step advances physics without advancing help. Landscape layout was measured at 854×480 without horizontal overflow; specific mobile game-feel remains human testing.
+- The browser shows corrected feet/body/shell support on the 36-degree ramp. Existing full-load neutral-water retention remains covered. Partial/full/capped jump, independent cargo flight/landing, headroom, support joins, finite state, weight-ordered immersion/rise and retained full-load surfacing pass real-physics invariants.
+- Full-load extreme-control traces complete maximum slopes and the jump obstacle without reverse or stalled ticks.
+- Nine original SVGs retain valid dimensions/registration; neutral body, legs and shell artwork remain unchanged. The shell pivot rises from 0.30 to 0.42 m.
+
+Human verification remains pending for this extension: compare partial/full/over-cap jump feel, slope compensation and recoverable losses, empty/sofa/full immersion/swimming, and camera candidates. Permanent settings require replacing root settings.txt and reloading development or rebuilding production. Normal-level onboarding integration remains UX-004; real levels and touch controls remain deferred (UX-010 records gestures and the README-update reminder).
 
 ## 5. Backlog maintenance reminder
 
