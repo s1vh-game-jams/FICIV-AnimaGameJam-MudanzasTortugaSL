@@ -34,8 +34,8 @@ shellPivotY=0.30
 cargoFriction=0.8
 cargoLinearDamping=0.16
 cargoAngularDamping=0.6
-gripAssistance=0.7
-lossGraceSeconds=0.65
+gripAssistance=2.0
+lossGraceSeconds=1.33
 
 # Water: buoyancy gain s^-2; weight responses kg^-1; swim acceleration m/s^2.
 waterRiseAcceleration=8.4
