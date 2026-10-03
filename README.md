@@ -195,6 +195,8 @@ La versión de jam está concebida para funcionar como una aplicación estática
 
 El backend **no es obligatorio** para jugar. El leaderboard remoto se considera una mejora deseable y su integración queda desacoplada del núcleo del juego.
 
+La base de servicios de la jam ya incluye un **catálogo estático validado**, configuraciones versionadas de Tortuga/carga y un **Top 100 local por nivel y versión de físicas**, guardado en el navegador. Si el almacenamiento falla, los registros siguen disponibles durante la sesión. Se juega de forma anónima; las cuentas con correo/contraseña o Google, el editor y los rankings globales quedan para más adelante. Todavía no hay niveles reales ni interfaz de rankings. Los contratos y la evolución futura se explican en [docs/BACKEND.md](docs/BACKEND.md).
+
 ---
 
 ## 🗂️ Estructura abreviada
@@ -213,7 +215,8 @@ El backend **no es obligatorio** para jugar. El leaderboard remoto se considera 
 │   ├── BACKLOG.md        # tareas, prioridades y trazabilidad
 │   ├── DEPLOYMENT.md     # builds, servidor y futuro despliegue
 │   ├── PHYSICS.md        # arquitectura y guía de tuning
-│   └── ASSETS.md         # contrato para repintar los placeholders
+│   ├── ASSETS.md         # contrato para repintar los placeholders
+│   └── BACKEND.md        # catálogo y servicios locales; evolución futura
 │
 ├── public/
 │   └── sprites/
@@ -222,7 +225,8 @@ El backend **no es obligatorio** para jugar. El leaderboard remoto se considera 
 ├── src/                  # código del juego
 ├── tests/                # tests automatizados
 └── scripts/
-    └── localServer.py    # servidor estático auxiliar
+    ├── localServer.py    # servidor estático auxiliar
+    └── pages-deploy.provisional.yml # plantilla inactiva de Pages
 ```
 
 > Cada vez que se añada documentación nueva a `/docs/`, también deberá registrarse en `/AGENTS.md`.
@@ -428,7 +432,7 @@ feature/* ── squash ──▶ dev ── autorización humana ──▶ main
 - `npm run build:pages` configura el subdirectorio de este repositorio;
 - los assets de `/public/sprites/` se resolverán mediante una ruta compatible con `import.meta.env.BASE_URL`.
 
-El workflow de publicación en GitHub Pages queda pendiente para la fase de release. La guía detallada está en [`/docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+La plantilla provisional está en [`scripts/pages-deploy.provisional.yml`](scripts/pages-deploy.provisional.yml). Permanece **inactiva** en `/scripts/`: no se publicará hasta cerrar las artes y licencias y autorizar la release. Cuando se active, el despliegue será manual desde `main`. Vite permite probar el build localmente con `npm run preview`; no es un proveedor de hosting remoto. La guía detallada está en [`/docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ---
 
@@ -455,6 +459,7 @@ Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de trabajar con ramas, commi
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — builds, servidor y despliegue.
 - [`docs/PHYSICS.md`](docs/PHYSICS.md) — arquitectura de físicas y tuning.
 - [`docs/ASSETS.md`](docs/ASSETS.md) — guía de repintado para la artista.
+- [`docs/BACKEND.md`](docs/BACKEND.md) — catálogo, ranking local, juego anónimo y futura migración remota.
 - [`AGENTS.md`](AGENTS.md) — mapa operativo completo para Codex y otros agentes.
 
 ---

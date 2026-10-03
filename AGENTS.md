@@ -144,6 +144,7 @@ This table is mandatory project metadata.
 | `/docs/DEPLOYMENT.md` | English | Local production serving, root/subpath builds, and pending GitHub Pages release procedure. | Read before build/base/hosting changes. Distinguish verified local serving from pending live publication. |
 | `/docs/PHYSICS.md` | English | Current physical architecture, diagnostic controls, canonical configuration and tuning workflow. | Read for physics/playground changes. Keep implementation facts current; human feel validation remains separate. |
 | `/docs/ASSETS.md` | English | Original placeholder provenance, dimensions, anchors, animation and artist repaint contract. | Read before visual replacements or registration changes. Preserve physics/art separation and record imported licenses. |
+| `/docs/BACKEND.md` | English | Static jam service contracts; published level/catalog data, local Top 100 persistence, anonymous sessions and future remote/auth migration. | Read before content/service/persistence changes. Do not treat local rankings as global or author IDs as authentication. |
 
 ### Future documentation
 
@@ -637,11 +638,13 @@ Keep persistence behind an interface, for example:
 ```ts
 interface LeaderboardService {
   submitScore(entry: ScoreEntry): Promise<void>;
-  getTopScores(levelId: string, limit?: number): Promise<ScoreEntry[]>;
+  getTopScores(query: { levelId: string; levelVersion: string; physicsVersion: string }, limit?: number): Promise<ScoreEntry[]>;
 }
 ```
 
 A local implementation may use `localStorage`.
+
+The approved jam foundation implements a validated static published catalog, local Top 100 and anonymous session behind these boundaries. See [BACKEND.md](docs/BACKEND.md) for concrete schemas and future auth/remote migration; account/editor writes remain deferred and must not be added as permissive client-only stubs.
 
 A future remote implementation must be swappable without rewriting scoring/gameplay.
 

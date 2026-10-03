@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Recovered human settings and local tester guide integrated on `dev`; human feel review remains pending
+**Status:** Human-approved physics playground promoted to `main`; static jam service foundation and inactive Pages template in progress on `codex/jam-services-pages-template`
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -498,9 +498,11 @@ Jam release on main
 
 ### MOD-001 — Define typed ModuleDefinition
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
+- **Branch:** `codex/jam-services-pages-template`
 - **Depends on:** BOOT-001
 - **Fields:** id, startBiome, endBiome, startHeight, endHeight, length, geometry, hazards, optional metadata.
+- **Foundation:** versioned serializable module metadata in services/contracts.ts with start/end biome-height connectors, length, actual terrain/water and optional local hazard placements. Catalog validation does not certify joins, traversal or pool continuation; those remain MOD-002 through MOD-007.
 
 ### MOD-002 — Implement module placement/alignment
 - **Priority:** P0
@@ -844,16 +846,26 @@ Jam release on main
 
 ### LB-001 — Define LeaderboardService interface
 - **Priority:** P1
-- **Status:** TODO
-- **Depends on:** SCORE-001
+- **Status:** IN PROGRESS
+- **Branch:** `codex/jam-services-pages-template`
+- **Score integration:** SCORE-001 remains pending; the persistence contract can be implemented before scoring.
 - **Acceptance:** score system is persistence-agnostic.
+- **Foundation:** full level ID/level revision/physics revision query, anonymous player metadata and stable run IDs; no scoring implementation.
 
 ### LB-002 — Implement localStorage leaderboard/history
 - **Priority:** P1
-- **Status:** TODO
-- **Depends on:** LB-001, UX-007
+- **Status:** IN PROGRESS
+- **Branch:** `codex/jam-services-pages-template`
+- **Depends on:** LB-001
 - **Acceptance:** optional local ranking/history survives reload and includes level/physics version metadata.
-- **Note:** UX-007 owns the simpler per-level personal-best requirement; this task expands beyond it.
+- **Note:** storage adapter foundation is implemented separately from UI. UX-007 still owns the per-level personal-best screen/integration; LB-003 remains pending. Human confirmed local rather than global Top 100 for this phase.
+
+### BACK-001 — Prepare validated published content and anonymous jam services
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/jam-services-pages-template`
+- **Acceptance:** serializable versioned level IDs/name/optional thumbnail/module and hazard coordinates/turtle-load configuration/Top 100/author user reference; exact referential validation and defensive anonymous reads; packaged official seed without inventing playable levels; browser storage acquisition cannot block startup.
+- **Scope:** no HTTP server/database/authentication/editor or public write operation. Static catalog and local rankings are the human-approved jam foundation. Concrete contracts and future migration are owned by BACKEND.md.
 
 ### LB-003 — Add leaderboard screen/panel for local records
 - **Priority:** P2
@@ -934,6 +946,13 @@ Jam release on main
 - **Priority:** P0
 - **Status:** TODO
 
+### TEST-011 — Keep physics regressions compatible with human tuning
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/jam-services-pages-template`
+- **Evidence:** human tuning commit `fd12654` changed grip to 2.0 and separation grace to 1.33 s. Existing tests encoded a 0.5 m/s² assistance ceiling at gain 0.7 and expected terminal loss within 1 s; the unchanged physics correctly uses the new gain/grace.
+- **Acceptance:** preserve complete-load/relative-motion/zero-assistance and mass-loss invariants, normalize the observed assistance bound by grip gain, and observe separation beyond the configured grace. No source physics or settings change.
+
 ### TEST-004 — Add production-build smoke test checklist
 - **Priority:** P0
 - **Status:** IN PROGRESS
@@ -977,6 +996,13 @@ Jam release on main
 - **Status:** TODO
 - **Depends on:** stable Vite build
 - **Acceptance:** deployment action targets `main`; correct base path; no dev auto-release.
+- **Preparation:** inactive template is tracked separately as RELEASE-006. Activation remains pending final art/licenses and explicit release authorization.
+
+### RELEASE-006 — Prepare an inactive main-only Pages Actions template
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/jam-services-pages-template`
+- **Acceptance:** YAML remains under scripts/, manual dispatch/main guards and explicit main checkout, least job permissions, current checks/build:pages, pinned verified actions and deployment docs. No .github activation, Pages settings changes or live publication.
 
 ### RELEASE-002 — Audit third-party assets/licenses/credits
 - **Priority:** P0
@@ -1049,6 +1075,12 @@ Jam release on main
 - **Priority:** POST-JAM
 - **Status:** DEFERRED
 - **May move into jam:** if audio is selected before submission.
+
+### FUTURE-009 — Add accounts and authenticated community ownership
+- **Priority:** POST-JAM
+- **Status:** DEFERRED
+- **Depends on:** FUTURE-001/FUTURE-002 and an approved remote provider
+- **Requirement:** email/password and Google sign-in; stable application user IDs linked to authored levels; server-verified ownership for create/update/publish. Published levels and Endless play remain anonymous. Do not migrate local rankings into verified remote rankings without an explicit reviewed import policy.
 
 ---
 
@@ -1144,6 +1176,28 @@ Agent verification of the completed implementation:
 - Temporary development/preview/subpath servers were stopped after verification. The root production helper remains available at `http://127.0.0.1:4173/?mode=physics`; the browser laboratory was reset and paused at tick/time zero with the complete 13.6 kg load.
 
 Human feel verification of the wider movement corridor remains pending. The laboratory's physical corridor is approximately 10.11 m; its normal-level framing preview is approximately 50.53 m with the current 40 percent outer dead zones. Normal-level integration and authoring/readability checks remain Prototype 2 work. Main remains under human release control.
+
+### Human-approved playground and jam service foundation — 2026-10-03
+
+The human declared the physics playground ready, fine-tuned `gripAssistance=2.0` and `lossGraceSeconds=1.33` in `fd12654`, and promoted the verified work to main via `3b3d1f0`. The current service preparation preserves those settings, colliders and physical source. The approved main build is now served locally with Vite preview at `http://127.0.0.1:4173/?mode=physics`, separately from the new candidate builds.
+
+The human explicitly selected a **packaged static catalog and browser-local Top 100**, with remote/global services later. Reviewed source commits on preserved branch `codex/jam-services-pages-template`: `bd4f8a0` (versioned content/catalog/load), `a2572ab` (ranking, anonymous composition and bootstrap) and `fcbbac7` (configuration-aware physics tests). Final global verification passed; squash integration into dev is the remaining handoff step.
+
+The seed includes the existing full-load configuration and public maintainer/archetype metadata only. No real level, hazard behavior, editor, scoring screen, account registration or HTTP API is added. All seven requested level fields are represented by validated versioned contracts, including coordinate placements and author ownership metadata. Exact historical revisions coexist without reinterpretation. Account ownership must eventually be verified by the server; a profile ID is not authentication. [BACKEND.md](BACKEND.md) owns the concrete contracts and non-destructive migration rules.
+
+Local service tests cover anonymous reload persistence, Top 100/order/ties, independent version partitions, mutation isolation, blocked storage, corrupt/future-version preservation, exact references, geometry, historical revisions and safe asset paths. The existing physics regression assumptions exposed by the new human tuning are tracked in TEST-011; source physics/settings remain unchanged.
+
+The provisional Actions file remains **inactive** under `scripts/pages-deploy.provisional.yml`; manual dispatch/main guards, explicit main checkout, separate permissions, current checks and subpath build were reviewed. All five action SHAs and inputs were checked against official current Vite/GitHub documentation and their pinned action definitions. A YAML parser/actionlint/Actions runner was unavailable; no runner or actual Pages deployment result is claimed. Art/licensing, Pages settings, template activation and live publication remain release work.
+
+The normal level/module pool, physics traversal matrix, hazards, score/results UI and Endless integration continue in their existing Prototype 2 tasks. Future account creation includes email/password and Google sign-in, while published-level and Endless play remain anonymous. No release authorization is inferred from successful local tests of this new service candidate.
+
+Verified build/runtime evidence for this candidate:
+
+- All **396 Vitest tests pass across 15 files**, including 119 new service tests (60 catalog, 55 ranking and 4 composition). The corrected real-physics suites also pass 35/35 with the actual human grip/grace.
+- Strict TypeScript and global ESLint pass. Checks use the bundled Node runtime directly because of the existing sandbox/npm junction limitation; package scripts and dependency versions are unchanged.
+- Root and repository-subpath production builds pass. Real-browser root menu, direct physics access, subpath access/refresh and textures/WASM initialize without console errors. Both new candidate routes show grip 2.0 and grace 1.33; startup requires no login.
+- All 11 existing Python helper tests pass. Temporary candidate preview/subpath servers were stopped after smoke checks; the separately captured main-approved build remains served by Vite preview at port 4173, reset and paused for human testing.
+- `settings.txt`, source physics/configuration, public art and package/lock files match the human-approved main tree. New service/catalog bootstrap adds no runtime dependency and no public workflow activation.
 
 ## 5. Backlog maintenance reminder
 
