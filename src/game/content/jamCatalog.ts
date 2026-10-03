@@ -22,4 +22,3 @@ export const JAM_CATALOG: ContentCatalog = {
   }],
   modules: [], hazards: [], levels: [],
 };
-
