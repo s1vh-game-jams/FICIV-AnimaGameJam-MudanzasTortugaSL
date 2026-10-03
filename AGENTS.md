@@ -108,6 +108,8 @@ Do not silently reinterpret the GDD. If code constraints appear to require a gen
 
 Never rewrite the GDD merely to make current code easier to justify.
 
+**Scoped design authorization (2026-10-03):** the human authorized the root agent Sol to amend the GDD for configurable camera margins/fixed run zoom, settings-backed tuning, charged jump, strengthened water buoyancy, terrain-relative turtle/shell inclination, WASD and their directly affected onboarding/documentation. The later shell-height adjustment preserves body/shell shapes. This is task-specific permission for Sol, not a standing authorization for builder agents or subagents. They must treat the GDD as read-only and report design discrepancies; future GDD edits require specific human authorization.
+
 ---
 
 ## 4. Language policy
@@ -580,16 +582,16 @@ Keep the right side visually clear enough for upcoming terrain, hazards, and bra
 
 For implementation, use these approved rules for GDD section 41.7:
 
-- there are three help messages: speed, shell balance, and swimming;
+- there are four help messages: speed, shell balance, charged jump, and swimming;
 - each message has a fixed configurable display duration of approximately **3–5 seconds**, chosen according to text density/readability;
 - the message disappears on its timer; **input is not required to dismiss it**;
 - once its display period completes, it is considered seen **for the current run/level instance only**;
 - help state is **not persisted across runs, browser sessions, or accounts**;
 - replaying the same level starts with fresh help state;
 - swimming help appears the first time Don Tortuga enters water during that run;
-- the authored jam level must not place reachable water so early that speed/balance onboarding can overlap with swimming onboarding;
-- specifically, water should not be immediately after the start and should be unreachable before the first two messages have completed at the fastest permitted early-run traversal;
-- if malformed/community content nevertheless creates an overlap, the swimming message preempts the shell-balance message;
+- the authored jam level must not place reachable water so early that speed/balance/jump onboarding can overlap with swimming onboarding;
+- specifically, water should not be immediately after the start and should be unreachable before the first three messages have completed at the fastest permitted early-run traversal;
+- if malformed/community content nevertheless creates an overlap, the swimming message preempts an unfinished initial message, which remains pending until dry terrain;
 - future user-created levels are required to remain technically completable, but the engine cannot guarantee that user-authored onboarding layout is good design.
 
 ### 11.5 Results delivery note
