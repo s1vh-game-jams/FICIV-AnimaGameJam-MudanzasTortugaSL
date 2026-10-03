@@ -72,7 +72,13 @@ describe('independent airborne load regression', () => {
         expect(snapshot.turtle.mass).toBeCloseTo(fullMass, 6);
       }
       if (!snapshot.turtle.grounded && !landed) for (const item of simulation.cargo) {
-        expect(Math.abs(item.body.userForce().y) / item.definition.mass).toBeLessThan(0.5);
+        const assistanceAcceleration = Math.abs(item.body.userForce().y) / item.definition.mass;
+        // Force/mass = grip gain × relative vertical speed. The original
+        // 0.5 m/s² bound at gain 0.7 s⁻¹ certified a 0.5/0.7 m/s correction
+        // envelope; preserve that envelope when the human tunes the gain.
+        if (simulation.tuning.gripAssistance > 0) {
+          expect(assistanceAcceleration / simulation.tuning.gripAssistance).toBeLessThan(0.5 / 0.7);
+        } else expect(assistanceAcceleration).toBe(0);
         const initial = before.cargo.find(cargo => cargo.id === item.definition.id)!;
         const relativeX = item.body.translation().x - snapshot.shell.x - (initial.x - before.shell.x);
         const relativeY = item.body.translation().y - snapshot.shell.y - (initial.y - before.shell.y);
@@ -117,13 +123,17 @@ describe('independent airborne load regression', () => {
     expect(simulation.tracker.state('cocktailGlass')).toBe('separated');
     const initialVelocity = glass.body.linvel().y;
     launch(simulation);
-    for (let tick = 0; tick < simulation.tuning.physicsHz; tick++) {
+    const lossTicks = Math.ceil(simulation.tuning.lossGraceSeconds * simulation.tuning.physicsHz) + 2;
+    for (let tick = 0; tick < lossTicks; tick++) {
       expect(glass.body.userForce()).toEqual({ x: 0, y: 0 });
       expect(glass.body.linvel().y).toBeCloseTo(initialVelocity -
         simulation.tuning.gravity * (tick + 1) / simulation.tuning.physicsHz, 4);
       simulation.step();
     }
     expect(simulation.tracker.state('cocktailGlass')).toBe('lost');
+    expect(glass.body.userForce()).toEqual({ x: 0, y: 0 });
+    expect(glass.body.linvel().y).toBeCloseTo(initialVelocity -
+      simulation.tuning.gravity * (lossTicks + 1) / simulation.tuning.physicsHz, 4);
   });
 
   it('can disable contact grip without adding hidden forces to compensate', () => {

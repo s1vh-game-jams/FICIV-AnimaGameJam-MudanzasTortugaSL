@@ -1,6 +1,6 @@
 # Deployment — Mudanzas Tortuga, S.L.
 
-Local production serving and repository-subpath builds are implemented. GitHub Pages publication and its workflow remain pending; this document does not certify a live deployment.
+Local Vite production serving and repository-subpath builds are implemented. An inactive GitHub Pages workflow template exists under `/scripts/`; activation/publication remain pending final art/licenses and release approval. This document does not certify a live deployment.
 
 ## 1. Build and branch contract
 
@@ -107,12 +107,16 @@ Automated physics and Python helper coverage complement this smoke check. Human 
 
 ## 5. Future GitHub Pages release
 
-No deployment workflow is installed in Prototype 1. When RELEASE-001 begins:
+The provisional template is [scripts/pages-deploy.provisional.yml](../scripts/pages-deploy.provisional.yml). GitHub does not execute this file in `/scripts/`. No `.github/workflows/` release action is activated by this task, and no Pages settings or live site were changed.
+
+The template uses manual `workflow_dispatch` only, guards both jobs to `refs/heads/main`, explicitly checks out `main`, runs the existing type/lint/game/helper checks and `build:pages`, then uploads/deploys the static artifact. Build and deployment permissions are separate; publication uses the `github-pages` environment. Full action SHAs have readable release comments, verified against the [official Vite Pages guide](https://vite.dev/guide/static-deploy.html#github-pages) and [GitHub custom workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). Recheck those pins before activation. A local review/build cannot certify an Actions runner or successful Pages deployment.
+
+After final art/licenses and explicit release approval:
 
 - verify current official GitHub/Vite guidance and pin supported action versions;
-- select GitHub Actions as the repository Pages source;
-- install using `npm ci`, run all checks, build with `npm run build:pages`, upload `dist/`;
-- trigger publication from `main` after the human's release authorization;
+- copy the reviewed template to `.github/workflows/pages.yml` on the approved `main` candidate;
+- select GitHub Actions as the repository Pages source and restrict the `github-pages` environment to `main`, with any required human reviewer;
+- dispatch the workflow manually from `main`; `configure-pages` reads existing setup and does not enable Pages itself;
 - do not auto-deploy `dev` or delete preserved auxiliary branches;
 - inspect the actual live root and physics route, textures and WASM after deployment.
 
@@ -120,7 +124,9 @@ Before releasing Prototype 2, also verify designed-level completion, pause/resul
 
 ## 6. Service and migration boundaries
 
-The game remains playable without a backend. A future leaderboard must document provider, versioned score model, CORS, abuse limits, score trust, fallback and secret handling. Never put private credentials into client Vite variables.
+The approved jam service foundation is a packaged catalog plus browser-local Top 100 and anonymous session, described in [BACKEND.md](BACKEND.md). It requires no API/database deployment or secrets. Browser records are scoped to origin/profile; a different host or port has separate records. Static Vite output and Pages cannot execute a future server API.
+
+A future remote leaderboard/auth/catalog must document provider, versioned score model, CORS, abuse limits, score trust, fallback and secret handling. Account/editor writes require verified server-side ownership; public level reads and play remain anonymous. Never put private credentials into client Vite variables.
 
 A hosting migration must update this document and the README, preserve static deployment where practical, and register any additional migration document in AGENTS.
 
