@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Prototype 1 flight/camera/shell-height corrections in progress on `codex/physics-stability-camera`
+**Status:** Prototype 1 flight/camera/shell-height corrections integrated on `dev`; human feel review and original tuning input remain pending
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -369,27 +369,31 @@ Jam release on main
 
 ### PHYS-020 — Restore and expose shell height
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
 - **Acceptance:** adjustable `shellPivotY` defaults to original 0.30 m; changing height shifts the real support and initial cargo registration without changing shapes; current maximum launch is 8 m/s. Remaining human tuning import is tracked separately in PHYS-024.
 
 ### PHYS-021 — Preserve independent cargo through high offscreen jumps
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
 - **Acceptance:** high full-charge jumps preserve the stack absent actual destabilizing forces, irrespective of visibility; finite independent bodies; separated/lost cargo gets no remote flight correction; unchanged global contact grace; meaningful real-Rapier regression coverage.
 - **Regression provenance:** investigated against the controls/settings source integrated by `e705e70`; precise introducing commit not yet established.
 
 ### PHYS-022 — Replace adjustable zoom with per-side dead-zone framing
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
 - **Acceptance:** schema 2 replaces `cameraZoom` with `cameraDeadZonePercent`; laboratory character scale remains fixed; physical movement bounds are independent of dead zone; shared immutable level-load framing derives zoom and visible origin from the physical corridor and per-side viewport percentage; normal-level integration remains future level work; explicit export/migration instructions and preview.
 
 ### PHYS-023 — Wait at a blocked rear movement margin
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
 - **Acceptance:** solid frontal blockage limits camera advance before crossing the rear margin; camera resumes as accepted forward motion allows it after jumping; world/time/cargo keep running; no collision bypass or character teleport; diagnostic wall route and grounded/full-charge traversal tests.
 
 ### PHYS-024 — Adopt the human's supplied permanent tuning defaults
@@ -518,6 +522,7 @@ Jam release on main
 - **Priority:** P0
 - **Status:** IN PROGRESS
 - **Branch:** `codex/physics-stability-camera`
+- **Diagnostic foundation:** `3cbbd00` · reviewed implementation: `19e55fa`; full module-format integration remains pending MOD-001/MOD-006.
 - **Acceptance:** shared real-Rapier diagnostic traversal validator observes actual full-charge release and grounded landing with a bounded authored route; clearable/unreachable geometry and launch/gravity changes tested. Future module proposals must provide every mandatory route/load case and human validation; rerun after relevant settings, geometry or controller changes. An analytical height estimate alone is insufficient. Full module-format integration depends on MOD-001/MOD-006 and remains pending.
 
 ---
@@ -1089,7 +1094,7 @@ Human verification remains pending for this extension: compare partial/full/over
 
 ### Approved flight/camera/shell-height corrections — 2026-10-03
 
-The human requested restoration of the original shell height, high-jump cargo consistency, per-side camera dead zones and physical obstacle waiting, and authorized Sol to synchronize the affected GDD rules. The reviewed implementation is `19e55fa` on preserved source branch `codex/physics-stability-camera`. Integration and final provenance are recorded after the squash lands on `dev`.
+The human requested restoration of the original shell height, high-jump cargo consistency, per-side camera dead zones and physical obstacle waiting, and authorized Sol to synchronize the affected GDD rules. The reviewed implementation is `19e55fa`, with documentation commit `ac01575`, on preserved source branch `codex/physics-stability-camera`. Squash integration is `3cbbd00` on `dev`; its tree matches the verified source. Main remains untouched.
 
 Agent verification on the reviewed implementation:
 
