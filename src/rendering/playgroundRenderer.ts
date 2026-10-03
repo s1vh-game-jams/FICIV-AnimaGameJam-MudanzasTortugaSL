@@ -34,6 +34,11 @@ export class PlaygroundRenderer {
     text: 'Ventana de cámara',
     style: { fontFamily: 'Arial, sans-serif', fontSize: 14, fill: 0x365746 },
   });
+  private readonly helpLabel = new Text({
+    text: '',
+    style: { fontFamily: 'Arial, sans-serif', fontSize: 20, fontWeight: 'bold', fill: 0x173e37,
+      stroke: { color: 0xf8faee, width: 5 }, wordWrap: true, wordWrapWidth: 1248 },
+  });
   private readonly shellContainer = new Container();
   private readonly turtle: Sprite;
   private readonly shell: Sprite;
@@ -58,6 +63,7 @@ export class PlaygroundRenderer {
       });
       const paths = [
         ...VISUALS.turtle.frames,
+        ...VISUALS.turtle.chargeFrames,
         VISUALS.shell.path,
         ...CARGO.map(({ id }) => VISUALS[id].path),
       ];
@@ -76,10 +82,10 @@ export class PlaygroundRenderer {
   private constructor(
     private readonly app: Application,
     private readonly host: HTMLElement,
-    private readonly tuning: Tuning,
+    private tuning: Tuning,
     private readonly textures: ReadonlyMap<string, Texture>,
   ) {
-    const ppm = tuning.worldPixelsPerMetre;
+    const ppm = tuning.worldPixelsPerMetre * tuning.cameraZoom;
     this.app.stage.eventMode = 'none';
     this.app.stage.addChild(this.viewport);
 
@@ -134,6 +140,9 @@ export class PlaygroundRenderer {
     this.world.addChild(this.labelLines);
     for (const { label } of this.cargoVisuals.values()) this.world.addChild(label);
     this.world.addChild(this.debugWorld);
+    this.helpLabel.anchor.set(0.5, 0);
+    this.helpLabel.visible = false;
+    this.world.addChild(this.helpLabel);
     this.guideLabel.anchor.set(0.5, 0.5);
     this.viewport.addChild(this.debugGuide, this.guideLabel);
     this.debugWorld.visible = false;
@@ -149,9 +158,25 @@ export class PlaygroundRenderer {
     this.resize();
   }
 
+  /** Reapply cached sprite sizes as well as world transforms when lab zoom changes. */
+  configure(tuning: Tuning): void {
+    if (this.disposed) return;
+    this.tuning = tuning;
+    const ppm = tuning.worldPixelsPerMetre * tuning.cameraZoom;
+    this.turtle.width = VISUALS.turtle.width * ppm;
+    this.turtle.height = VISUALS.turtle.height * ppm;
+    this.shell.width = VISUALS.shell.width * ppm;
+    this.shell.height = VISUALS.shell.height * ppm;
+    this.shell.y = -SHELL_VISUAL_OFFSET_Y * ppm;
+    for (const [id, visual] of this.cargoVisuals) {
+      visual.sprite.width = VISUALS[id].width * ppm;
+      visual.sprite.height = VISUALS[id].height * ppm;
+    }
+  }
+
   setScenario(scenario: Scenario): void {
     if (this.disposed) return;
-    const ppm = this.tuning.worldPixelsPerMetre;
+    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
     this.terrain.clear();
     this.water.clear();
     for (const strip of scenario.terrain) {
@@ -178,29 +203,37 @@ export class PlaygroundRenderer {
     }
   }
 
-  render(snapshot: SimulationSnapshot, debugVertices?: Float32Array): void {
+  render(snapshot: SimulationSnapshot, debugVertices?: Float32Array, helpText?: string): void {
     if (this.disposed) return;
-    const ppm = this.tuning.worldPixelsPerMetre;
+    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
     this.world.position.set(-snapshot.cameraX * ppm, GROUND_SCREEN_Y + snapshot.cameraY * ppm);
     this.farTrees.x = -this.wrappedParallax(snapshot.cameraX * ppm * 0.12);
     this.nearTrees.x = -this.wrappedParallax(snapshot.cameraX * ppm * 0.25);
 
     const logicalFrame = Math.floor(snapshot.time * VISUALS.turtle.framesPerSecond)
       % VISUALS.turtle.logicalFrames;
-    const keyframe = Math.floor(
-      logicalFrame * VISUALS.turtle.frames.length / VISUALS.turtle.logicalFrames,
-    );
-    this.turtle.texture = this.texture(VISUALS.turtle.frames[keyframe]);
+    const frames = snapshot.turtle.jumpCharging ? VISUALS.turtle.chargeFrames : VISUALS.turtle.frames;
+    const keyframe = Math.floor(logicalFrame * frames.length / VISUALS.turtle.logicalFrames);
+    this.turtle.texture = this.texture(frames[keyframe]);
+    const bodyAngle = snapshot.turtle.bodyAngle;
     this.turtle.position.set(
-      snapshot.turtle.x * ppm, -(snapshot.turtle.y + BODY_VISUAL_OFFSET_Y) * ppm,
+      (snapshot.turtle.bodyX - Math.sin(bodyAngle) * BODY_VISUAL_OFFSET_Y) * ppm,
+      -(snapshot.turtle.bodyY + Math.cos(bodyAngle) * BODY_VISUAL_OFFSET_Y) * ppm,
     );
+    this.turtle.rotation = -bodyAngle;
     this.turtle.visible = true;
-    this.shellContainer.position.set(
-      snapshot.turtle.x * ppm,
-      -(snapshot.turtle.y + PHYSICS_GEOMETRY.shellPivotY) * ppm,
-    );
-    this.shellContainer.rotation = -snapshot.turtle.angle;
+    this.shellContainer.position.set(snapshot.shell.x * ppm, -snapshot.shell.y * ppm);
+    this.shellContainer.rotation = -snapshot.shell.angle;
     this.shellContainer.visible = true;
+    this.helpLabel.visible = !!helpText;
+    if (helpText) {
+      this.helpLabel.text = helpText;
+      const halfWidth = this.helpLabel.width / 2;
+      const screenX = (snapshot.turtle.x - snapshot.cameraX) * ppm;
+      const readableX = Math.max(halfWidth + 16, Math.min(this.tuning.viewWidth - halfWidth - 16, screenX));
+      this.helpLabel.position.set(snapshot.cameraX * ppm + readableX,
+        -(snapshot.turtle.bodyY - PHYSICS_GEOMETRY.turtleHalfHeight) * ppm + 25);
+    }
 
     this.labelLines.clear();
     for (const visual of this.cargoVisuals.values()) {
@@ -239,7 +272,7 @@ export class PlaygroundRenderer {
     if (this.disposed) return;
     this.disposed = true;
     this.resizeObserver.disconnect();
-    // Assets caches the seven shared textures; scene teardown must preserve them.
+    // Asset textures remain cached across laboratory resets and route changes.
     this.app.destroy({ removeView: true }, { children: true, texture: false, textureSource: false });
   }
 
@@ -288,6 +321,8 @@ export class PlaygroundRenderer {
     const labelSize = CARGO_LABEL_SCREEN_SIZE / Math.min(1, this.viewportScale);
     for (const { label } of this.cargoVisuals.values()) label.style.fontSize = labelSize;
     this.guideLabel.style.fontSize = labelSize;
+    this.helpLabel.style.fontSize = 20 / Math.min(1, this.viewportScale);
+    this.helpLabel.style.wordWrapWidth = this.tuning.viewWidth - 32;
     this.app.render();
   }
 
@@ -299,7 +334,7 @@ export class PlaygroundRenderer {
     this.debugWorld.clear();
     this.debugGuide.clear();
     if (!vertices) return;
-    const ppm = this.tuning.worldPixelsPerMetre;
+    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
 
     for (let index = 0; index + 3 < vertices.length; index += 4) {
       this.debugWorld.moveTo(vertices[index] * ppm, -vertices[index + 1] * ppm)
@@ -308,7 +343,7 @@ export class PlaygroundRenderer {
     this.debugWorld.stroke({ width: 1.5, color: 0x1cb8dc, alpha: 0.9 });
 
     const positions = new Map<string, { x: number; y: number }>([
-      ['shell', { x: snapshot.turtle.x, y: snapshot.turtle.y + PHYSICS_GEOMETRY.shellPivotY }],
+      ['shell', snapshot.shell],
     ]);
     for (const item of snapshot.cargo) positions.set(item.id, item);
     for (const contact of snapshot.contacts) {
@@ -319,7 +354,7 @@ export class PlaygroundRenderer {
     this.debugWorld.stroke({ width: 2, color: 0x18a86f, alpha: 0.95 });
 
     this.drawMassMarker(snapshot.turtle.x, snapshot.turtle.y);
-    this.drawMassMarker(snapshot.turtle.x, snapshot.turtle.y + PHYSICS_GEOMETRY.shellPivotY);
+    this.drawMassMarker(snapshot.shell.x, snapshot.shell.y);
     for (const item of snapshot.cargo) {
       const definition = CARGO.find(({ id }) => id === item.id);
       const offset = definition?.centerOfMassY ?? 0;
@@ -341,7 +376,7 @@ export class PlaygroundRenderer {
   }
 
   private drawMassMarker(x: number, y: number): void {
-    const ppm = this.tuning.worldPixelsPerMetre;
+    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
     const px = x * ppm;
     const py = -y * ppm;
     this.debugWorld.circle(px, py, 3).fill(0xdc4583);
