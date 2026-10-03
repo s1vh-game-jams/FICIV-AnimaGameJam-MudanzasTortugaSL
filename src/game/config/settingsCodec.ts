@@ -5,7 +5,7 @@ export const SETTINGS_RULES = {
   cameraSpeed: { min: 0.1, max: 10 },
   cameraRearPercent: { min: 0, max: 100 },
   cameraFrontPercent: { min: 0, max: 100 },
-  cameraZoom: { min: 0.5, max: 2 },
+  cameraDeadZonePercent: { min: 0, max: 45 },
   cameraPressureWidth: { min: 0.05, max: 5 },
   cameraGuardMargin: { min: 0, max: 2 },
   cameraRecovery: { min: 0.1, max: 10 },
@@ -17,6 +17,7 @@ export const SETTINGS_RULES = {
   shellMaxAngle: { min: Math.PI / 6, max: Math.PI / 4 },
   shellAngularSpeed: { min: 0.1, max: 2 },
   shellAngularDamping: { min: 0.1, max: 20 },
+  shellPivotY: { min: 0.1, max: 0.8 },
   cargoFriction: { min: 0.05, max: 2 },
   cargoLinearDamping: { min: 0, max: 3 },
   cargoAngularDamping: { min: 0, max: 3 },
@@ -42,7 +43,7 @@ export const SETTINGS_RULES = {
 export type SettingsKey = keyof typeof SETTINGS_RULES;
 export type AdjustableSettings = { [K in SettingsKey]: number };
 export const SETTINGS_KEYS = Object.keys(SETTINGS_RULES) as SettingsKey[];
-const SCHEMA_VERSION = 1;
+export const SETTINGS_SCHEMA_VERSION = 2;
 const NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 export function validateSettings(values: AdjustableSettings): void {
@@ -87,7 +88,7 @@ export function parseSettings(text: string): AdjustableSettings {
     if (!Number.isFinite(value)) fail('non-finite number for ' + key);
     seen.add(key);
     if (key === 'schemaVersion') {
-      if (value !== SCHEMA_VERSION) fail('unsupported schemaVersion ' + raw);
+      if (value !== SETTINGS_SCHEMA_VERSION) fail('unsupported schemaVersion ' + raw + '; use schemaVersion=2, cameraDeadZonePercent and shellPivotY (see README)');
       version = value;
     } else {
       values[key as SettingsKey] = value;
@@ -106,9 +107,10 @@ export function serializeSettings(values: AdjustableSettings): string {
   validateSettings(values);
   return [
     '# Mudanzas Tortuga, S.L. - canonical adjustable defaults',
-    '# Percentages use the logical landscape viewport. Angles use radians.',
+    '# Rear/front percentages use the fixed laboratory viewport. Dead zone is per side of a normal viewport.',
+    '# Shell pivot height uses metres. Angles use radians.',
     '# Metres, kilograms and seconds elsewhere; see docs/PHYSICS.md for meanings.',
-    `schemaVersion=${SCHEMA_VERSION}`,
+    `schemaVersion=${SETTINGS_SCHEMA_VERSION}`,
     ...SETTINGS_KEYS.map(key => key + '=' + String(values[key])),
     '',
   ].join('\n');

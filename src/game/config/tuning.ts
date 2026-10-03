@@ -10,13 +10,15 @@ const FIXED_TUNING = {
   worldPixelsPerMetre: 76, viewWidth: 1280, viewHeight: 720,
 } as const;
 type FixedTuning = { -readonly [K in keyof typeof FIXED_TUNING]: number };
-/** Metres, kilograms, seconds and radians; camera percentages use the logical viewport. */
+/** Metres, kilograms, seconds and radians; movement margins use the fixed laboratory viewport. */
 export type Tuning = AdjustableSettings & FixedTuning & { cameraBack: number; cameraFront: number };
 
 export const PHYSICS_GEOMETRY = {
-  turtleHalfWidth: 0.95, turtleHalfHeight: 0.24, shellPivotY: 0.42,
+  turtleHalfWidth: 0.95, turtleHalfHeight: 0.24,
   // Authored cargo y values reference the original support pivot.
   cargoLayoutShellPivotY: 0.30,
+  // Metres of numerical clearance tolerance for simplified shell/solid queries.
+  posePenetrationTolerance: 0.001,
   shellVertices: [-1.1, -0.05, 1.1, -0.05, 1.1, 0, 0.8, 0.32, 0.6, 0.42, -0.6, 0.42, -0.8, 0.32, -1.1, 0],
   controllerOffset: 0.05, controllerNudge: 0.003, stepHeight: 0.32, stepMinWidth: 0.3,
   settleTicks: 30,
@@ -29,7 +31,7 @@ function adjustableValues(tuning: Tuning): AdjustableSettings {
 }
 
 function deriveCamera(tuning: Tuning): void {
-  const metresVisible = tuning.viewWidth / (tuning.worldPixelsPerMetre * tuning.cameraZoom);
+  const metresVisible = tuning.viewWidth / tuning.worldPixelsPerMetre;
   tuning.cameraBack = metresVisible * tuning.cameraRearPercent / 100;
   tuning.cameraFront = metresVisible * tuning.cameraFrontPercent / 100;
 }
@@ -82,9 +84,10 @@ export const TUNING_FIELDS: readonly TuningField[] = [
   field('lossGraceSeconds', 'Contact grace · s', 0.05),
   field('waterWeightInfluence', 'Water weight response · kg⁻¹', 0.01),
   field('waterCurrent', 'Deep current · m/s', 0.05),
-  field('cameraRearPercent', 'Camera rear boundary · %', 0.0001),
-  field('cameraFrontPercent', 'Camera front boundary · %', 0.0001),
-  field('cameraZoom', 'Camera zoom', 0.05),
+  field('cameraRearPercent', 'Rear movement margin · lab %', 0.0001),
+  field('cameraFrontPercent', 'Front movement margin · lab %', 0.0001),
+  field('cameraDeadZonePercent', 'Level dead zone · % per side', 1),
+  field('shellPivotY', 'Shell height above body · m', 0.01),
   field('jumpMaxChargeSeconds', 'Maximum jump charge · s', 0.1),
   field('jumpMaxLaunchSpeed', 'Maximum jump speed · m/s', 0.1),
   field('gravity', 'Gravity · m/s²', 0.01),
@@ -102,11 +105,11 @@ export function validateTuning(tuning: Tuning): void {
       tuning.worldPixelsPerMetre <= 0 || !Number.isInteger(tuning.maxStepsPerFrame) || tuning.maxStepsPerFrame < 1) {
     throw new Error('Invalid fixed tuning bounds');
   }
-  const metresVisible = tuning.viewWidth / (tuning.worldPixelsPerMetre * tuning.cameraZoom);
+  const metresVisible = tuning.viewWidth / tuning.worldPixelsPerMetre;
   const back = metresVisible * tuning.cameraRearPercent / 100;
   const front = metresVisible * tuning.cameraFrontPercent / 100;
   if (Math.abs(tuning.cameraBack - back) > 1e-10 || Math.abs(tuning.cameraFront - front) > 1e-10) {
-    throw new Error('Invalid tuning: camera limits must match viewport percentages and zoom');
+    throw new Error('Invalid tuning: camera limits must match fixed laboratory viewport percentages');
   }
   if (tuning.cameraGuardMargin * 2 >= front - back) {
     throw new Error('settings.txt: camera window must be wider than twice cameraGuardMargin');

@@ -43,6 +43,11 @@ summary { cursor: pointer; font-weight: 650; }
 #baseline, #export-settings { width: 100%; margin-top: .6rem; }
 .tuning-panel .help-preview { display: flex; align-items: center; gap: .4rem; font-weight: 500; }
 .tuning-error { color: #8a342b; line-height: 1.4; }
+.camera-preview { margin-top: .7rem; }
+.camera-preview-bar { display: flex; height: 18px; border: 1px solid #a8b59d; border-radius: 3px; overflow: hidden; }
+#camera-rear-zone, #camera-front-zone { background: repeating-linear-gradient(135deg, #dce2d2, #dce2d2 4px, #f1f4e8 4px, #f1f4e8 8px); }
+#camera-movement-zone { background: #9ccaaf; border-inline: 1px dashed #365746; }
+#camera-framing { display: block; margin-top: .3rem; }
 .loading, .error { padding: 2rem; }
 .error h1 { font-size: 2rem; }
 .error pre { white-space: pre-wrap; }

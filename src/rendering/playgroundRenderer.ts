@@ -85,7 +85,7 @@ export class PlaygroundRenderer {
     private tuning: Tuning,
     private readonly textures: ReadonlyMap<string, Texture>,
   ) {
-    const ppm = tuning.worldPixelsPerMetre * tuning.cameraZoom;
+    const ppm = tuning.worldPixelsPerMetre;
     this.app.stage.eventMode = 'none';
     this.app.stage.addChild(this.viewport);
 
@@ -158,11 +158,11 @@ export class PlaygroundRenderer {
     this.resize();
   }
 
-  /** Reapply cached sprite sizes as well as world transforms when lab zoom changes. */
+  /** Parameter resets preserve the fixed laboratory scale. */
   configure(tuning: Tuning): void {
     if (this.disposed) return;
     this.tuning = tuning;
-    const ppm = tuning.worldPixelsPerMetre * tuning.cameraZoom;
+    const ppm = tuning.worldPixelsPerMetre;
     this.turtle.width = VISUALS.turtle.width * ppm;
     this.turtle.height = VISUALS.turtle.height * ppm;
     this.shell.width = VISUALS.shell.width * ppm;
@@ -176,7 +176,7 @@ export class PlaygroundRenderer {
 
   setScenario(scenario: Scenario): void {
     if (this.disposed) return;
-    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
+    const ppm = this.tuning.worldPixelsPerMetre;
     this.terrain.clear();
     this.water.clear();
     for (const strip of scenario.terrain) {
@@ -205,7 +205,7 @@ export class PlaygroundRenderer {
 
   render(snapshot: SimulationSnapshot, debugVertices?: Float32Array, helpText?: string): void {
     if (this.disposed) return;
-    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
+    const ppm = this.tuning.worldPixelsPerMetre;
     this.world.position.set(-snapshot.cameraX * ppm, GROUND_SCREEN_Y + snapshot.cameraY * ppm);
     this.farTrees.x = -this.wrappedParallax(snapshot.cameraX * ppm * 0.12);
     this.nearTrees.x = -this.wrappedParallax(snapshot.cameraX * ppm * 0.25);
@@ -334,7 +334,7 @@ export class PlaygroundRenderer {
     this.debugWorld.clear();
     this.debugGuide.clear();
     if (!vertices) return;
-    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
+    const ppm = this.tuning.worldPixelsPerMetre;
 
     for (let index = 0; index + 3 < vertices.length; index += 4) {
       this.debugWorld.moveTo(vertices[index] * ppm, -vertices[index + 1] * ppm)
@@ -376,7 +376,7 @@ export class PlaygroundRenderer {
   }
 
   private drawMassMarker(x: number, y: number): void {
-    const ppm = this.tuning.worldPixelsPerMetre * this.tuning.cameraZoom;
+    const ppm = this.tuning.worldPixelsPerMetre;
     const px = x * ppm;
     const py = -y * ppm;
     this.debugWorld.circle(px, py, 3).fill(0xdc4583);

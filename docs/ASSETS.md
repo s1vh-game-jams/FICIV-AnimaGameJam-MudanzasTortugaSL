@@ -30,7 +30,7 @@ All normalized sprite anchors are `(0.5, 0.5)`. The centre below is measured in 
 | `turtle.chargeFrames` | `sprites/turtle/charge-walk-01.svg`, `sprites/turtle/charge-walk-02.svg` | 240 × 90 each | 2.4 × 0.9 | 120, 45 |
 | `shell` | `sprites/turtle/shell.svg` | 220 × 60 | 2.2 × 0.6 | 110, 30 |
 
-The render scale is `Tuning.worldPixelsPerMetre × Tuning.cameraZoom`, with a baseline of 76 logical pixels per metre at zoom 1. The logical scene is 1280 × 720 and scales uniformly to fit its host with letterboxing. Asset dimensions remain in metres when the browser viewport changes.
+The laboratory render scale is fixed at 76 logical pixels per metre. Its 1280 × 720 logical scene scales uniformly to fit the host with letterboxing. Normal-level framing derives a separate scale from the physical movement corridor and configured outer dead zones at level load, then freezes that frame. Resizing uniformly scales the captured composition; asset dimensions remain in metres. The laboratory does not necessarily display the same apparent character size as a normal level.
 
 Runtime asset paths pass through [publicAsset.ts](../src/utils/publicAsset.ts), which uses Vite's `BASE_URL`. Asset metadata contains paths relative to `public/`, without a leading slash.
 
@@ -43,9 +43,9 @@ Cargo sprites are centred on each object's geometric pose origin. A configured c
 Don Tortuga is split into two parts:
 
 - The walking body excludes the shell and stays right-facing. Its visual centre is 0.21 m above the corrected body origin (snapshot.turtle.bodyX/bodyY) in the body's local coordinates, placing its feet at the body's lower boundary. The body follows the simulation-owned corrected body origin and terrain pitch, rather than the fixed locomotion proxy's centre.
-- The shell has its own container at the simulation-owned physical shell pivot. Its local offset from that corrected body origin is 0.42 m upward, rotated with terrain pitch. The sprite centre is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
+- The shell has its own container at the simulation-owned physical shell pivot. Its local upward offset from that corrected body origin is the adjustable `shellPivotY`, rotated with terrain pitch. The default is restored to the original 0.30 m; the previous 0.42 m registration remains available as a tuning candidate. The sprite centre is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
 
-With the current 0.6 m shell image height, its upper centre is 0.42 m above the shell pivot, matching the support's maximum height. The pivot and collider definitions remain canonical in [tuning.ts](../src/game/config/tuning.ts).
+With the current 0.6 m shell image height, its upper centre is 0.42 m above the shell pivot, matching the support's maximum height. `settings.txt` owns the pivot-height value; [tuning.ts](../src/game/config/tuning.ts) owns the unchanged collider shape and the original cargo-layout reference of 0.30 m. Initial cargo placement shifts by `shellPivotY - 0.30` before settling. Editing the support height does not add padding, resize artwork or alter collider geometry.
 
 The broad sofa combines a back, seat, arms and feet. The television combines a screen/body and feet. The cocktail glass uses a cup, narrow stem and base. The lamp combines a shade, pole and base. These composed silhouettes convey the objects without requiring detailed physical geometry.
 
@@ -64,7 +64,7 @@ The renderer selects the frame from simulation time, rather than elapsed wall ti
 
 While the authoritative snapshot reports `jumpCharging`, the renderer selects `chargeFrames` at the same logical animation slot. Each charging variant preserves its matching walking frame's body, neck, tail, paws, label and anchor. Only the head moves down by 13 SVG units (0.13 m), with a narrowed eye and angled brow conveying concentration. Releasing or canceling the charge returns to the walking images.
 
-The character pose is the only player-facing charge feedback. Do not add a GUI charge bar, percentage or meter. The shell remains a separate unchanged source image; the raised shell pivot is physical registration, not additional paint or padding.
+The character pose is the only player-facing charge feedback. Do not add a GUI charge bar, percentage or meter. The shell remains a separate unchanged source image; adjustable shell height is physical registration, not additional paint or padding.
 
 Future in-betweens can replace this reuse by extending the metadata's `frames` array while retaining the one-second, 60-logical-frame contract. Do not create duplicate image files for unused slots.
 
@@ -73,7 +73,7 @@ Future in-betweens can replace this reuse by extending the metadata's `frames` a
 The artist can replace or paint over these placeholders while physics work continues.
 
 1. Preserve each canvas size, transparent background, normalized anchor and meaningful silhouette placement.
-2. Keep the walking body and shell separate. Preserve identical registration between walking and charging frames so animation or charging does not move the character's origin. Maintain the lowered-head/concentrated pose while charging; paw motion follows the corresponding walking keyframe.
+2. Keep the walking body and shell separate. Preserve identical registration between walking and charging frames so animation or charging does not move the character's origin. Maintain the lowered-head/concentrated pose while charging; paw motion follows the corresponding walking keyframe. Check the default 0.30 m shell height before relying on additional leg room from higher tuning candidates.
 3. Preserve broad, low support for the sofa; a compact television; a narrow glass; and a tall lamp. Internal visual detail may increase while colliders remain simple.
 4. Keep artwork within the canvas. If additional padding is needed, coordinate an explicit metadata/placement change so the sprite does not silently change scale or alignment.
 5. Replace the files at their existing paths for a direct SVG swap. A change of format or filename also requires updating the corresponding metadata path.
@@ -91,7 +91,9 @@ After replacing assets, verify:
 
 - direct playground access through `?mode=physics`;
 - stable registration during the walking cycle, charge-pose changes, terrain pitch and shell tilt;
+- changing shell height moves support/cargo registration coherently without changing source-image or collider shapes;
 - readable silhouettes and external labels at the normal viewport;
+- high jumps can place cargo outside the visible frame without changing its physical behavior;
 - alignment against the actual collider debug display;
 - loading from a production build at both the site root and a deployment subpath.
 

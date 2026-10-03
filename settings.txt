@@ -1,18 +1,18 @@
 # Mudanzas Tortuga, S.L. - canonical adjustable defaults
 # Edit this file, reload development, or rebuild production to apply permanent changes.
 # Export settings in the laboratory downloads this same schema.
-schemaVersion=1
+schemaVersion=2
 
-# Gravity: m/s^2. Fixed physics frequency and geometry stay in source code.
+# Gravity: m/s^2. Fixed physics frequency and collider shapes stay in source code.
 gravity=9.81
 
-# Camera: speeds in m/s; boundaries are percentages from the viewport's left edge.
-# Zoom is a laboratory setting and is fixed during a normal run.
+# Camera: speeds in m/s; movement boundaries are percentages of the FIXED lab viewport.
+# Normal levels compute their fixed zoom at load: each outer dead zone uses this viewport percentage.
 cameraVerticalSpeed=2
 cameraSpeed=2
 cameraRearPercent=15.4375
 cameraFrontPercent=30.875
-cameraZoom=1
+cameraDeadZonePercent=40
 # Pressure/guard widths: metres; recovery: inverse seconds.
 cameraPressureWidth=1.15
 cameraGuardMargin=0.2
@@ -27,6 +27,8 @@ braking=2.4
 shellMaxAngle=0.6283185307179586
 shellAngularSpeed=0.8
 shellAngularDamping=6
+# Shell pivot height above the body origin, metres; .30 restores the original registration.
+shellPivotY=0.30
 
 # Cargo: friction dimensionless, damping/grip gain inverse seconds, grace seconds.
 cargoFriction=0.8
@@ -55,4 +57,4 @@ rockLandingDamping=0.05
 
 # Jump: charge seconds, maximum launch speed m/s.
 jumpMaxChargeSeconds=3
-jumpMaxLaunchSpeed=4.5
+jumpMaxLaunchSpeed=8
