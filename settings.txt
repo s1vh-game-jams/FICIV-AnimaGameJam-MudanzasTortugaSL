@@ -1,0 +1,60 @@
+# Mudanzas Tortuga, S.L. - canonical adjustable defaults
+# Edit this file, reload development, or rebuild production to apply permanent changes.
+# Export settings in the laboratory downloads this same schema.
+schemaVersion=2
+
+# Gravity: m/s^2. Fixed physics frequency and collider shapes stay in source code.
+gravity=9.81
+
+# Camera: speeds in m/s; movement boundaries are percentages of the FIXED lab viewport.
+# Normal levels compute their fixed zoom at load: each outer dead zone uses this viewport percentage.
+cameraVerticalSpeed=2
+cameraSpeed=2
+cameraRearPercent=20
+cameraFrontPercent=80
+cameraDeadZonePercent=40
+# Pressure/guard widths: metres; recovery: inverse seconds.
+cameraPressureWidth=1.15
+cameraGuardMargin=0.2
+cameraRecovery=1.5
+
+# Turtle: speed m/s, acceleration/braking m/s^2, angles radians.
+baseSpeed=2
+minSpeed=0.75
+maxSpeed=3.3
+acceleration=1.8
+braking=2.4
+shellMaxAngle=0.6283185307179586
+shellAngularSpeed=0.8
+shellAngularDamping=6
+# Shell pivot height above the body origin, metres; .30 restores the original registration.
+shellPivotY=0.30
+
+# Cargo: friction dimensionless, damping/grip gain inverse seconds, grace seconds.
+cargoFriction=0.8
+cargoLinearDamping=0.16
+cargoAngularDamping=0.6
+gripAssistance=2.0
+lossGraceSeconds=1.33
+
+# Water: buoyancy gain s^-2; weight responses kg^-1; swim acceleration m/s^2.
+waterRiseAcceleration=8.4
+waterWeightInfluence=0.2
+waterDrag=1.5
+waterSwimAcceleration=8
+waterSwimWeightInfluence=0.05
+# Current/vertical speed m/s; entry damping s^-1; depths/margins metres.
+waterCurrent=0.65
+waterMaxVerticalSpeed=2
+waterEntryDamping=6
+waterBaseDepth=0.12
+waterDepthPerKg=0.075
+waterExitMargin=0.5
+
+# Fraction of downward landing speed compensated, dimensionless.
+grassLandingDamping=0.5
+rockLandingDamping=0.05
+
+# Jump: charge seconds, maximum launch speed m/s.
+jumpMaxChargeSeconds=3
+jumpMaxLaunchSpeed=8

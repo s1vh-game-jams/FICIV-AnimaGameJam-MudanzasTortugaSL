@@ -56,7 +56,7 @@ La Tortuga determina:
 - la velocidad deliberadamente lenta;
 - el caparazón curvo que sirve como plataforma física;
 - la inclinación del caparazón como herramienta de equilibrio;
-- la imposibilidad de detenerse completamente;
+- la imposibilidad de detenerse voluntariamente con el control de velocidad, con espera de cámara ante un bloqueo físico temporal;
 - su carácter resistente e indestructible;
 - la relación entre lentitud, anticipación y compromiso con las decisiones;
 - la broma narrativa de que el mejor profesional de mudanzas es alguien que siempre lleva su propia casa a cuestas.
@@ -74,6 +74,7 @@ El vocabulario de control es pequeño:
 - avanzar un poco más rápido;
 - dejar que la Tortuga avance algo más despacio;
 - inclinar el caparazón;
+- cargar y soltar un salto;
 - en el agua, nadar verticalmente.
 
 La profundidad aparece al combinar esas pocas acciones con:
@@ -384,12 +385,12 @@ flowchart LR
 
 ## 8.1. Principio general
 
-La Tortuga avanza siempre hacia la derecha.
+La Tortuga intenta avanzar siempre hacia la derecha. Un obstáculo puede detenerla temporalmente; la cámara la espera según la sección 9.
 
 El juego funciona como un *endless runner* lento:
 
-- la cámara tiene un avance constante;
-- la Tortuga nunca se detiene por completo;
+- la cámara tiene un avance automático, salvo la espera por bloqueo físico;
+- el jugador no puede detener voluntariamente a la Tortuga con el control de velocidad;
 - la Tortuga nunca retrocede por el nivel;
 - el jugador modifica su velocidad relativa;
 - la Tortuga dispone de una pequeña ventana horizontal dentro de la pantalla.
@@ -398,7 +399,7 @@ El juego funciona como un *endless runner* lento:
 
 ## 8.2. Controles en terreno seco
 
-### Flecha derecha
+### Flecha derecha / D
 
 Aumenta la velocidad de avance dentro del rango permitido.
 
@@ -411,13 +412,13 @@ Consecuencias:
 
 ---
 
-### Flecha izquierda
+### Flecha izquierda / A
 
 Reduce la velocidad de avance.
 
 No permite retroceder.
 
-No permite detenerse completamente.
+No permite detenerse voluntariamente. La detención física ante un obstáculo se resuelve con el salto y la espera de cámara, no con una orden de frenado.
 
 Consecuencias:
 
@@ -428,13 +429,13 @@ Consecuencias:
 
 ---
 
-### Flecha arriba
+### Flecha arriba / W
 
 Inclina progresivamente la parte frontal del caparazón hacia arriba.
 
 ---
 
-### Flecha abajo
+### Flecha abajo / S
 
 Inclina progresivamente la parte frontal del caparazón hacia abajo.
 
@@ -448,7 +449,11 @@ El ángulo máximo estará dentro de un rango aproximado de:
 
 El valor definitivo se decidirá durante el *tuning*.
 
-La inclinación máxima del terreno deberá coincidir con el máximo que la Tortuga pueda compensar razonablemente.
+El cuerpo de Don Tortuga y la orientación base del caparazón se inclinan de forma coherente con el suelo bajo sus pies. Esa inclinación se transmite físicamente a la carga.
+
+La inclinación manual del caparazón es relativa a esa postura: el jugador puede compensar una subida o bajada para mantener el apoyo de la mudanza más horizontal. El límite de 30°–45° corresponde a esta compensación manual; el ángulo total respecto al mundo combina terreno y compensación.
+
+La inclinación máxima del terreno transitable deberá coincidir con el máximo que la Tortuga pueda compensar razonablemente.
 
 Esto evita situaciones en las que la geometría del escenario exija una orientación que el sistema de control no puede reproducir.
 
@@ -467,9 +472,31 @@ El control debe ser:
 
 ---
 
+## 8.5. Salto cargado
+
+Mantener pulsada la **barra espaciadora** carga el salto mientras Don Tortuga está apoyado en terreno seco. Don Tortuga salta **al soltarla**, manteniendo su avance hacia la derecha.
+
+- La intensidad de despegue aumenta linealmente con el tiempo de carga, hasta un máximo configurable de **3 segundos** por defecto.
+- Mantenerla más tiempo conserva la intensidad máxima; nunca dispara el salto antes de soltar.
+- La linealidad se aplica al impulso de despegue, no a la altura final de la trayectoria.
+- La fuerza máxima y la gravedad son parámetros de *tuning*. El salto debe sentirse suave y fácil de anticipar.
+- Se puede regular velocidad y equilibrio mientras se carga.
+- La carga se cancela al perder el apoyo, entrar en agua, pausar, reiniciar o perder el foco de juego. Una pulsación iniciada en aire o agua no prepara un salto posterior.
+- No hay doble salto ni salto cargado bajo el agua.
+
+Durante la carga, Don Tortuga baja la cabeza y muestra concentración. **No existe barra, porcentaje ni indicador GUI de carga de salto.** La postura comunica la acción.
+
+El salto amplía las posibilidades de interacción y de geometría de los niveles. Una salida y un aterrizaje ordinarios deben permitir conservar la mudanza con ayuda física moderada; los objetos siguen siendo independientes y pueden perderse por errores reales. Salir del campo visual no altera contactos, fuerzas ni pertenencia a la carga.
+
+La intensidad máxima actual es **8 m/s de velocidad vertical inicial**, ajustable. Ningún obstáculo obligatorio puede exigir más que un salto cargado al 100 % con los valores vigentes. La capacidad depende también de gravedad, dimensiones, espacio de aproximación, techo y aterrizaje: se valida mediante recorridos físicos reales, no solamente por altura teórica (sección 42).
+
+La ayuda de salto aparece después de las ayudas de velocidad y caparazón (sección 41.7).
+
+---
+
 # 9. CONTRATO ENTRE CÁMARA Y TORTUGA
 
-La cámara avanza horizontalmente a velocidad constante.
+La cámara avanza horizontalmente a la velocidad automática configurada mientras el recorrido físico lo permite.
 
 La Tortuga ocupa una ventana horizontal dentro de pantalla.
 
@@ -504,6 +531,18 @@ Al aproximarse al límite delantero:
 - la aceleración deja progresivamente de proporcionar ventaja posicional.
 
 Esto evita *clamps* violentos que podrían transmitir impulsos artificiales a la estructura.
+
+Los límites trasero y delantero determinan una ventana física de movimiento horizontal. La configuración de testeo utiliza una referencia de escala fija para ajustar esa ventana; el nivel normal encuadra su misma anchura física con las zonas muertas exteriores de la sección 36. Escalar la pantalla mantiene la composición.
+
+## 9.1. Espera de cámara ante obstáculos
+
+Si una pared u otro obstáculo sólido bloquea el avance, Don Tortuga puede quedar detenido temporalmente mientras el margen trasero se aproxima a él. **La cámara se detiene al agotarse ese margen**, sin empujarlo contra la pared ni dejarlo fuera de la ventana.
+
+El jugador conserva la capacidad de cargar y soltar el salto y de equilibrar el caparazón. La física de la carga y el cronómetro continúan: esta espera no es una pausa de partida ni una condición de fracaso.
+
+Cuando Don Tortuga consigue avanzar hacia la derecha —por ejemplo, al saltar por encima del obstáculo—, vuelve a permitir el avance automático de la cámara. La cámara continúa en cuanto el movimiento físico admite ese avance, aunque esperar más le conviniese al jugador. El control de velocidad no permite mantenerla detenida después de superar el bloqueo.
+
+Esta regla no sustituye la obligación de diseñar módulos superables. No hay teletransporte, desplazamiento a través de paredes ni rescate automático de la carga.
 
 ---
 
@@ -1060,7 +1099,9 @@ La sensación debe ser deslizante y fluida.
 
 ## 20.3. Flotación
 
-Don Tortuga flota.
+Don Tortuga tiene una flotabilidad ajustable que favorece su regreso natural hacia la superficie. **Sin carga debe costarle hundirse**, mientras conservar objetos permite alcanzar mayor profundidad.
+
+Una caída conserva un impulso inicial de inmersión que se amortigua suavemente. Al agotarse ese impulso, la flotabilidad hace que Don Tortuga ascienda de nuevo. La entrada sigue protegiendo la estabilidad de la mudanza.
 
 Puede permanecer bajo el agua indefinidamente.
 
@@ -1075,6 +1116,8 @@ Cuanta más carga conserva:
 - mayor masa total;
 - mayor profundidad alcanzada;
 - mayor tiempo necesita para regresar naturalmente hacia la superficie.
+
+La carga retenida durante el margen de recuperación sigue contando; una pérdida definitiva deja de aportar peso. La flotabilidad y la natación deben conservar suficiente control para ascender y salir del agua con las cargas previstas.
 
 ---
 
@@ -1135,9 +1178,12 @@ La ruta profunda funciona como recompensa sistémica a la conservación de la ca
 
 En agua:
 
-- ← / → siguen regulando el avance horizontal;
-- ↑ / ↓ dejan de inclinar manualmente el caparazón;
-- ↑ / ↓ controlan la natación vertical.
+- ←/A y →/D siguen regulando el avance horizontal;
+- ↑/W y ↓/S dejan de inclinar manualmente el caparazón;
+- ↑/W ayuda a frenar la inmersión y acelera el ascenso;
+- ↓/S ayuda a descender y retrasa el regreso hacia la superficie.
+
+Los controles modulan la velocidad vertical durante la inmersión inicial y el ascenso posterior. La respuesta depende de la carga: conservar más objetos facilita alcanzar rutas profundas que funcionan como recompensa sistémica.
 
 El agua no ejerce fuerzas laterales directas sobre los objetos de la carga.
 
@@ -1506,9 +1552,13 @@ No puede ser secreta.
 
 # 36. DISEÑO DE CÁMARA
 
-La cámara utiliza zoom fijo.
+La cámara calcula su zoom **al cargar cada nivel normal** a partir de la ventana física de movimiento y de una zona muerta exterior configurable. Ese zoom permanece **fijo durante toda la partida**.
 
-No existe control manual de zoom en esta versión.
+La zona muerta se expresa como porcentaje del ancho total del viewport y se reserva **a cada lado**, detrás del margen trasero y delante del delantero. Por ejemplo, un 40 % por lado deja el 20 % central para la ventana de movimiento. Más zona muerta aumenta el campo visible sin ampliar el rango físico de desplazamiento de Don Tortuga.
+
+El nivel de testeo mantiene una escala de personaje fija para comparar físicas y márgenes. Su tamaño visual no tiene por qué coincidir con el de un nivel normal. Los niveles normales no ofrecen control de zoom durante el recorrido.
+
+La escena está concebida para visualizarse en modo apaisado, también en móvil. El escalado mantiene la composición y los márgenes configurados.
 
 La composición debe equilibrar:
 
@@ -1565,6 +1615,8 @@ El caparazón debe funcionar simultáneamente como:
 - referencia visual del equilibrio.
 
 Su inclinación debe resultar evidente.
+
+La altura relativa del caparazón es un parámetro de *tuning*, conservando la forma del cuerpo y del caparazón. Su ajuste mueve también el apoyo físico y el registro inicial de la carga; debe comprobarse su efecto sobre la estabilidad. La configuración inicial recupera la altura original del prototipo. Durante la carga del salto, la cabeza baja y la expresión comunica concentración.
 
 ---
 
@@ -1659,6 +1711,8 @@ NOTAR INERCIA
 INCLINAR CAPARAZÓN
         ↓
 CORREGIR CARGA
+        ↓
+CARGAR Y SOLTAR SALTO
         ↓
 VER UNA AMENAZA
         ↓
@@ -1880,33 +1934,35 @@ La colocación definitiva se decide en los *mockups*.
 
 ## 41.7. Mensajes de ayuda contextuales (onboarding)
 
-Existen únicamente tres mensajes.
+Existen cuatro mensajes de ayuda.
 
-| # | Cuándo aparece | Contenido | Cuándo desaparece |
+| # | Cuándo aparece | Contenido | Duración |
 |---|---|---|---|
-| 1 | Nada más empezar el recorrido | teclas **← →** dibujadas + «velocidad» | cuando el jugador ha usado ← / → unos instantes |
-| 2 | Justo después de desaparecer el 1 | teclas **↑ ↓** dibujadas + «equilibrar caparazón» | cuando el jugador ha usado ↑ / ↓ unos instantes |
-| 3 | La primera vez que Don Tortuga entra en el agua | teclas **↑ ↓** dibujadas + «nadar» | cuando el jugador ha usado ↑ / ↓ en el agua |
+| 1 | Nada más empezar el recorrido | **←/A →/D** + «velocidad» | 3–5 segundos configurables |
+| 2 | Después del 1, en terreno seco | **↑/W ↓/S** + «equilibrar caparazón» | 3–5 segundos configurables |
+| 3 | Después del 2, en terreno seco | **Espacio** + «mantén y suelta para saltar» | 3–5 segundos configurables |
+| 4 | La primera vez que Don Tortuga entra en agua | **↑/W ↓/S** + «nadar» | 3–5 segundos configurables |
 
 Reglas:
 
-- aparecen **debajo de Don Tortuga**, en grande, y lo acompañan mientras avanza;
-- el texto se limita a una o dos palabras; las teclas dibujadas hacen el trabajo;
+- aparecen **debajo de Don Tortuga**, en grande, y lo acompañan;
+- las teclas dibujadas y un texto breve comunican la acción;
 - nunca detienen la partida;
-- solo se muestra un mensaje a la vez; si el mensaje 2 sigue visible al entrar en el agua, lo sustituye el 3;
-- si el jugador no pulsa las teclas, el mensaje se desvanece tras un tiempo máximo (parámetro de *tuning*);
-- al salir del agua no aparece ningún mensaje: el jugador ya sabe que fuera del agua ↑ / ↓ equilibran el caparazón.
+- cada mensaje desaparece al completar su tiempo; **no requiere pulsar las teclas para desaparecer**;
+- solo aparece uno a la vez;
+- el agua tiene prioridad: si contenido futuro provoca un solapamiento, la ayuda de natación sustituye la ayuda inicial en curso; la ayuda incompleta queda pendiente para cuando vuelva a ser pertinente en terreno seco.
 
-El tramo inicial del recorrido es llano y sin amenazas mientras se muestran los mensajes 1 y 2 (ver sección 40).
+El inicio del nivel diseñado es llano y seguro durante velocidad, equilibrio y salto. El agua no debe poder alcanzarse antes de completar las tres ayudas iniciales, incluso a la velocidad máxima permitida. Los niveles comunitarios futuros reciben la regla de prioridad, pero el motor no puede garantizar la calidad de su composición inicial.
 
-### Persistencia
+### Estado por recorrido
 
-Cada mensaje se marca como visto de forma independiente y el navegador lo recuerda.
+Cada ayuda se considera vista al completar su duración, **solo para el recorrido actual**.
 
-- Una vez visto, no vuelve a aparecer en partidas posteriores.
-- Si el jugador aún no ha llegado al agua, el mensaje 3 sigue pendiente para cuando ocurra.
-- La opción **Ver los controles otra vez** del menú de pausa restablece los tres.
-- Si el navegador no permite guardar esta información, los mensajes se muestran en cada partida: es preferible repetirlos a no mostrarlos.
+- No se guarda entre partidas, sesiones del navegador ni cuentas.
+- Reiniciar o repetir el nivel empieza con las cuatro ayudas pendientes.
+- Natación espera a la primera entrada en agua.
+- La pausa congela los temporizadores.
+- **Ver los controles otra vez** restablece las cuatro ayudas y mantiene la pausa; vuelven a ser elegibles cuando el jugador continúa explícitamente.
 
 ---
 
@@ -1965,16 +2021,30 @@ El copy definitivo se ajustará durante la producción.
 
 La Tortuga siempre debe poder continuar.
 
+Puede quedar detenida **temporalmente** ante un obstáculo superable: la cámara espera según la sección 9.1 hasta que el jugador consigue avanzar. Esa espera nunca justifica una pared insalvable ni una geometría que requiera retroceder.
+
 Está prohibido diseñar:
 
 - pozos sin salida;
 - rocas que bloqueen permanentemente el camino;
 - geometría que atrape al personaje;
 - situaciones que requieran retroceder;
-- trampas que exijan detenerse completamente;
+- trampas que exijan una orden de detención voluntaria que los controles no ofrecen;
 - elementos caídos que puedan convertirse en un muro permanente.
 
 Los objetos perdidos dejan de interferir con el desplazamiento precisamente para evitar estas situaciones.
+
+## 42.1. Validación obligatoria de nuevos módulos
+
+**Cada propuesta de módulo de nivel debe probarse físicamente antes de incorporarse al pool.** Todas sus rutas obligatorias deben poder completarse con un salto al 100 % usando los valores actualizados de `settings.txt`: actualmente **8 m/s** de despegue máximo, junto con la gravedad y los restantes parámetros vigentes.
+
+- Probar las paredes, desniveles, huecos, techos, aproximaciones y aterrizajes con los colliders reales y la espera de cámara.
+- Cubrir las cargas previstas, incluida la ausencia de carga: perder objetos no puede volver obligatorio un salto imposible.
+- Registrar la configuración de físicas, la ruta y la secuencia de control que completaron cada prueba.
+- Repetir las pruebas al cambiar geometría, salto, gravedad, altura del caparazón, márgenes físicos o resolución del movimiento; una validación con parámetros antiguos no certifica los nuevos.
+- Acompañar las pruebas automatizadas de una comprobación manual de lectura y de ejecución razonable para el público del juego.
+
+La estimación `velocidad² / (2 × gravedad)` orienta sobre la altura disponible, pero no demuestra que una pared sea superable. Hace falta espacio y tiempo para despegar, librar la geometría y aterrizar. Un caso de prueba fallido impide certificar esa ruta hasta corregirla o demostrar un recorrido válido; no demuestra por sí solo que todas las secuencias de control posibles fallen.
 
 ---
 
@@ -2179,7 +2249,11 @@ Los siguientes valores deberán permanecer expuestos y fáciles de modificar dur
 - velocidad máxima;
 - aceleración;
 - frenada;
-- ancho de ventana respecto a cámara;
+- límites trasero y delantero de la ventana respecto a cámara;
+- porcentaje de zona muerta exterior por lado, del que se calcula el zoom fijo al cargar un nivel;
+- altura relativa del caparazón;
+- tiempo máximo de carga de salto;
+- intensidad máxima de despegue;
 - velocidad angular;
 - inclinación máxima;
 - amortiguación angular.
@@ -2200,7 +2274,8 @@ Los siguientes valores deberán permanecer expuestos y fáciles de modificar dur
 - multiplicador de impacto horizontal;
 - multiplicador de impacto vertical;
 - influencia del peso;
-- flotación;
+- flotabilidad;
+- respuesta de natación según la carga;
 - intensidad de corriente.
 
 ### Diseño
@@ -2255,7 +2330,13 @@ El primer prototipo funcional debe comprobar:
 7. que el agua responda al peso;
 8. que dos módulos puedan encadenarse con bioma y altura;
 9. que las trampas puedan telegrapharse con antelación;
-10. que la cámara no produzca correcciones físicas bruscas.
+10. que la cámara no produzca correcciones físicas bruscas;
+11. que cargar y soltar el salto produzca una intensidad lineal y una trayectoria suave;
+12. que el terreno incline el conjunto y la compensación manual ayude a conservar la carga;
+13. que sin carga resulte más difícil alcanzar rutas profundas;
+14. que un salto alto conserve la consistencia física de la carga aunque salga del viewport, salvo desequilibrios reales;
+15. que un bloqueo frontal detenga la cámara en el margen trasero y que el avance se reanude al librarlo;
+16. que cada módulo nuevo supere recorridos de salto con los parámetros vigentes.
 
 ---
 
@@ -2272,6 +2353,7 @@ Solo:
 - aceleración;
 - frenada;
 - inclinación;
+- salto cargado;
 - pérdida de objetos.
 
 Sin arte final.
@@ -2415,6 +2497,8 @@ verificar que nunca aparece una transición incompatible
 ```text
 Comprobar límites de collider
 comprobar que objetos perdidos no bloqueen a Tortuga
+probar saltos cargados y aterrizajes de cada ruta obligatoria con settings vigentes
+comprobar espera y reanudación de cámara ante bloqueo frontal
 ```
 
 ---
@@ -2512,9 +2596,9 @@ Si la respuesta es no, probablemente no pertenece al núcleo del juego.
 
 **Mudanzas Tortuga, S.L.** es un juego 2D de físicas simplificadas para navegador protagonizado por una Tortuga que ayuda a las criaturas de un bosque amenazado a trasladar sus pertenencias.
 
-La Tortuga avanza constantemente hacia la derecha.
+La Tortuga intenta avanzar hacia la derecha; los bloqueos físicos temporales activan la espera de cámara de la sección 9.1.
 
-El jugador regula su velocidad y la inclinación del caparazón para conservar una estructura precaria de muebles, objetos delicados y cachivaches.
+El jugador regula su velocidad, compensa la inclinación del terreno con el caparazón y carga saltos para conservar una estructura precaria de muebles, objetos delicados y cachivaches.
 
 El personaje es indestructible.
 

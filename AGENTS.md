@@ -108,6 +108,10 @@ Do not silently reinterpret the GDD. If code constraints appear to require a gen
 
 Never rewrite the GDD merely to make current code easier to justify.
 
+**Scoped design authorization (2026-10-03):** the human authorized the root agent Sol to amend the GDD for configurable camera margins/fixed run zoom, settings-backed tuning, charged jump, strengthened water buoyancy, terrain-relative turtle/shell inclination, WASD and their directly affected onboarding/documentation. The later shell-height adjustment preserves body/shell shapes. This is task-specific permission for Sol, not a standing authorization for builder agents or subagents. They must treat the GDD as read-only and report design discrepancies; future GDD edits require specific human authorization.
+
+**Further scoped authorization (2026-10-03):** Sol may synchronize the newly approved adjustable original shell height, viewport-independent cargo flight, per-side camera dead zones/fixed level-load zoom, camera waiting at a physically blocked rear margin and mandatory current-settings jump traversal validation for proposed modules. Builder agents/subagents still cannot edit the GDD.
+
 ---
 
 ## 4. Language policy
@@ -137,7 +141,9 @@ This table is mandatory project metadata.
 | `/docs/GDD.md` | Spanish | **Complete Game Design Document; source of truth for game design and UI/UX.** | Read before gameplay/player-facing changes, especially section 41 for UI/UX. Do not edit unless explicitly requested or an approved design change must be incorporated. |
 | `/docs/PRD.md` | English | Product/technical requirements: architecture, phase-specific scope, build stages, `physics-playground`, approved implementation clarifications, assets, service boundaries, acceptance criteria. | Read before implementation. Use it to determine what the current phase must build while preserving compatibility with the complete GDD. |
 | `/docs/BACKLOG.md` | English | Living task pool, priorities, dependencies, status, commit references, regression provenance, post-jam deferrals. | Updating it is part of development. Close tasks with commit hashes when known. Record suspected bug-introducing commits when useful and evidenced. |
-| `/docs/DEPLOYMENT.md` | English | **Initial placeholder** for GitHub Pages/release deployment. | Read before deployment work. Replace assumptions with verified repository-specific instructions as deployment is implemented. |
+| `/docs/DEPLOYMENT.md` | English | Local production serving, root/subpath builds, and pending GitHub Pages release procedure. | Read before build/base/hosting changes. Distinguish verified local serving from pending live publication. |
+| `/docs/PHYSICS.md` | English | Current physical architecture, diagnostic controls, canonical configuration and tuning workflow. | Read for physics/playground changes. Keep implementation facts current; human feel validation remains separate. |
+| `/docs/ASSETS.md` | English | Original placeholder provenance, dimensions, anchors, animation and artist repaint contract. | Read before visual replacements or registration changes. Preserve physics/art separation and record imported licenses. |
 
 ### Future documentation
 
@@ -499,6 +505,8 @@ The designed level and potential Endless Run consume the **same module pool**.
 
 Author modules first to make the designed jam level good. If Endless Run is implemented, it uses the complete set of compatible available modules rather than a separate procedural-only pool.
 
+Every proposed module must include real-physics full-charge jump traversal evidence for its mandatory routes and supported loads, using current settings (currently 8 m/s maximum launch). Repeat validation after relevant geometry, launch/gravity, shell-height, movement-margin or controller changes. An analytical height bound alone cannot certify traversal; camera waiting never excuses an impossible wall. See GDD 42.1 and PHYSICS for the diagnostic validator.
+
 The jam does not require examples of all sixteen abstract biome transition combinations.
 
 ### Hazards
@@ -578,16 +586,16 @@ Keep the right side visually clear enough for upcoming terrain, hazards, and bra
 
 For implementation, use these approved rules for GDD section 41.7:
 
-- there are three help messages: speed, shell balance, and swimming;
+- there are four help messages: speed, shell balance, charged jump, and swimming;
 - each message has a fixed configurable display duration of approximately **3–5 seconds**, chosen according to text density/readability;
 - the message disappears on its timer; **input is not required to dismiss it**;
 - once its display period completes, it is considered seen **for the current run/level instance only**;
 - help state is **not persisted across runs, browser sessions, or accounts**;
 - replaying the same level starts with fresh help state;
 - swimming help appears the first time Don Tortuga enters water during that run;
-- the authored jam level must not place reachable water so early that speed/balance onboarding can overlap with swimming onboarding;
-- specifically, water should not be immediately after the start and should be unreachable before the first two messages have completed at the fastest permitted early-run traversal;
-- if malformed/community content nevertheless creates an overlap, the swimming message preempts the shell-balance message;
+- the authored jam level must not place reachable water so early that speed/balance/jump onboarding can overlap with swimming onboarding;
+- specifically, water should not be immediately after the start and should be unreachable before the first three messages have completed at the fastest permitted early-run traversal;
+- if malformed/community content nevertheless creates an overlap, the swimming message preempts an unfinished initial message, which remains pending until dry terrain;
 - future user-created levels are required to remain technically completable, but the engine cannot guarantee that user-authored onboarding layout is good design.
 
 ### 11.5 Results delivery note

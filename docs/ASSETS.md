@@ -1,0 +1,100 @@
+# Asset Contract — Mudanzas Tortuga, S.L.
+
+**Scope:** Prototype 1 placeholder visuals and the handoff to the artist.
+**Visual metadata:** [visualDefinitions.ts](../src/rendering/visualDefinitions.ts)
+**Renderer:** [playgroundRenderer.ts](../src/rendering/playgroundRenderer.ts)
+**Requirements:** [PRD, section 7](PRD.md#7-prototype-asset-strategy)
+**Licensing authority:** [LICENSE.md](../LICENSE.md)
+
+## 1. Source files and provenance
+
+Static sprite source files live in `public/sprites/`. Vite copies these files into the production build; there is no second asset copy under `src/`.
+
+The current nine SVGs are original, repository-specific placeholders authored by OpenAI Codex, with subagent provenance `/root/placeholder_assets`. They use simple rectangles, ellipses, circles and paths with solid fills and labels. No third-party images, icon packs, textures or font files were imported. The SVGs reference the system font family `Arial, sans-serif`; they contain no external image/font URLs or scripts.
+
+Original creative assets remain governed by the project's provisional licensing notice. This document does not change that notice or select a final license. Future imported assets must record their source, creator, license and required attribution before inclusion.
+
+## 2. Dimensions and anchors
+
+All source SVGs have a transparent background. Their declared width and height match their `viewBox`, which starts at `0 0`. Source coordinates point right and down. Each asset currently uses 100 SVG units per visual metre.
+
+All normalized sprite anchors are `(0.5, 0.5)`. The centre below is measured in source SVG units.
+
+| Metadata key | Source path under `public/` | SVG dimensions | Visual size in metres | Source centre |
+|---|---|---|---|---|
+| `sofa` | `sprites/cargo/sofa/sofa.svg` | 220 × 65 | 2.2 × 0.65 | 110, 32.5 |
+| `television` | `sprites/cargo/tv/tv.svg` | 80 × 90 | 0.8 × 0.9 | 40, 45 |
+| `cocktailGlass` | `sprites/cargo/cocktail-glass/cocktail-glass.svg` | 40 × 70 | 0.4 × 0.7 | 20, 35 |
+| `floorLamp` | `sprites/cargo/floor-lamp/floor-lamp.svg` | 55 × 160 | 0.55 × 1.6 | 27.5, 80 |
+| `turtle.frames` | `sprites/turtle/walk-01.svg`, `sprites/turtle/walk-02.svg` | 240 × 90 each | 2.4 × 0.9 | 120, 45 |
+| `turtle.chargeFrames` | `sprites/turtle/charge-walk-01.svg`, `sprites/turtle/charge-walk-02.svg` | 240 × 90 each | 2.4 × 0.9 | 120, 45 |
+| `shell` | `sprites/turtle/shell.svg` | 220 × 60 | 2.2 × 0.6 | 110, 30 |
+
+The laboratory render scale is fixed at 76 logical pixels per metre. Its 1280 × 720 logical scene scales uniformly to fit the host with letterboxing. Normal-level framing derives a separate scale from the physical movement corridor and configured outer dead zones at level load, then freezes that frame. Resizing uniformly scales the captured composition; asset dimensions remain in metres. The laboratory does not necessarily display the same apparent character size as a normal level.
+
+Runtime asset paths pass through [publicAsset.ts](../src/utils/publicAsset.ts), which uses Vite's `BASE_URL`. Asset metadata contains paths relative to `public/`, without a leading slash.
+
+## 3. Visual placement and physics
+
+Physics coordinates point right and up. The renderer converts physical `y` to screen `-y`, and physical angles to screen `-angle`. Sprites mirror snapshots; their transforms never drive Rapier.
+
+Cargo sprites are centred on each object's geometric pose origin. A configured centre of mass may be offset from that origin. The artwork must not compensate for that offset: physical dimensions and mass properties belong to [cargo.ts](../src/game/content/cargo.ts) and the physics implementation.
+
+Don Tortuga is split into two parts:
+
+- The walking body excludes the shell and stays right-facing. Its visual centre is 0.21 m above the corrected body origin (snapshot.turtle.bodyX/bodyY) in the body's local coordinates, placing its feet at the body's lower boundary. The body follows the simulation-owned corrected body origin and terrain pitch, rather than the fixed locomotion proxy's centre.
+- The shell has its own container at the simulation-owned physical shell pivot. Its local upward offset from that corrected body origin is the adjustable `shellPivotY`, rotated with terrain pitch. The default is restored to the original 0.30 m; the previous 0.42 m registration remains available as a tuning candidate. The sprite centre is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
+
+With the current 0.6 m shell image height, its upper centre is 0.42 m above the shell pivot, matching the support's maximum height. `settings.txt` owns the pivot-height value; [tuning.ts](../src/game/config/tuning.ts) owns the unchanged collider shape and the original cargo-layout reference of 0.30 m. Initial cargo placement shifts by `shellPivotY - 0.30` before settling. Editing the support height does not add padding, resize artwork or alter collider geometry.
+
+The broad sofa combines a back, seat, arms and feet. The television combines a screen/body and feet. The cocktail glass uses a cup, narrow stem and base. The lamp combines a shade, pole and base. These composed silhouettes convey the objects without requiring detailed physical geometry.
+
+## 4. Walking animation
+
+The walking cycle lasts one second and contains 60 logical frames at 60 FPS.
+
+Each state reuses two unique source images:
+
+| Logical frame range | Walking | Charging jump |
+|---|---|---|
+| 0–29 | `walk-01.svg` | `charge-walk-01.svg` |
+| 30–59 | `walk-02.svg` | `charge-walk-02.svg` |
+
+The renderer selects the frame from simulation time, rather than elapsed wall time. Pausing simulation freezes logical animation time; canceling jump charge restores the neutral head pose. The two walking frames use the same canvas, anchor, body/head placement and scale; their leg poses differ.
+
+While the authoritative snapshot reports `jumpCharging`, the renderer selects `chargeFrames` at the same logical animation slot. Each charging variant preserves its matching walking frame's body, neck, tail, paws, label and anchor. Only the head moves down by 13 SVG units (0.13 m), with a narrowed eye and angled brow conveying concentration. Releasing or canceling the charge returns to the walking images.
+
+The character pose is the only player-facing charge feedback. Do not add a GUI charge bar, percentage or meter. The shell remains a separate unchanged source image; adjustable shell height is physical registration, not additional paint or padding.
+
+Future in-betweens can replace this reuse by extending the metadata's `frames` array while retaining the one-second, 60-logical-frame contract. Do not create duplicate image files for unused slots.
+
+## 5. Artist repaint contract
+
+The artist can replace or paint over these placeholders while physics work continues.
+
+1. Preserve each canvas size, transparent background, normalized anchor and meaningful silhouette placement.
+2. Keep the walking body and shell separate. Preserve identical registration between walking and charging frames so animation or charging does not move the character's origin. Maintain the lowered-head/concentrated pose while charging; paw motion follows the corresponding walking keyframe. Check the default 0.30 m shell height before relying on additional leg room from higher tuning candidates.
+3. Preserve broad, low support for the sofa; a compact television; a narrow glass; and a tall lamp. Internal visual detail may increase while colliders remain simple.
+4. Keep artwork within the canvas. If additional padding is needed, coordinate an explicit metadata/placement change so the sprite does not silently change scale or alignment.
+5. Replace the files at their existing paths for a direct SVG swap. A change of format or filename also requires updating the corresponding metadata path.
+6. Review replacements in the playground with collider debug enabled. Artwork must communicate the existing contact surfaces without requiring pixel-perfect matching.
+
+Embedded labels are prototype scaffolding and may give way to final artwork. The playground also renders upright cargo-name callouts independently of the textures, with a minimum 14-pixel screen font size. Lost cargo is dimmed and marked `×`; temporarily separated cargo is marked `↔`. These presentation cues do not change physical state.
+
+Terrain, water, simple parallax trees and diagnostic markers currently use Pixi Graphics. Menu and tuning controls use HTML/CSS. They have no additional sprite files to repaint in this milestone.
+
+## 6. Verification
+
+The nine original SVGs were parsed as XML. Dimensions, labels, distinct walking postures and matching body/paw registration between each walking/charging pair were checked.
+
+After replacing assets, verify:
+
+- direct playground access through `?mode=physics`;
+- stable registration during the walking cycle, charge-pose changes, terrain pitch and shell tilt;
+- changing shell height moves support/cargo registration coherently without changing source-image or collider shapes;
+- readable silhouettes and external labels at the normal viewport;
+- high jumps can place cargo outside the visible frame without changing its physical behavior;
+- alignment against the actual collider debug display;
+- loading from a production build at both the site root and a deployment subpath.
+
+Build and subpath procedures belong to [DEPLOYMENT.md](DEPLOYMENT.md).

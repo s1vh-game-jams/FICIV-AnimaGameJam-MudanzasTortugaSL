@@ -97,11 +97,21 @@ When this PRD labels a rule as an **approved clarification**, it records a human
 
 Agents should implement the clarification exactly and must not generalize it into unrelated design changes.
 
+**Approved Prototype 1 scope:** the human approved grass and rock diagnostics plus a compact water basin/high-entry case. These establish the three required Prototype 2 biomes without requiring a real designed level in Prototype 1. Sand remains outside the current mandatory scope. Cargo visuals/colliders may combine a few simple shapes; the artist repaints the registered placeholders while physics geometry stays stable.
+
+**Historical approved Prototype 1 extension (2026-10-03):** configurable viewport-relative camera boundaries and laboratory zoom; canonical root settings.txt with export; Space release-to-jump with a default three-second charge cap; WASD aliases; stronger load-dependent buoyancy; terrain-relative turtle/shell pose and manual compensation. That extension raised the shell pivot without changing turtle/shell shapes.
+
+**Approved stability/camera revision (2026-10-03):** expose shell height as `shellPivotY`, restoring the original 0.30 m default; replace adjustable zoom with a percentage dead zone on each side of the physical movement corridor; keep the laboratory's character scale fixed; compute and freeze normal-level framing when loading the level. The current maximum jump launch speed is 8 m/s. A physical obstacle can stop Don Tortuga and, once rear-margin space is exhausted, stop camera progression until accepted forward movement permits it to resume. Simulation and run time continue during this obstacle wait. Every proposed module must receive real traversal tests with the currently loaded jump settings. Cargo must remain physically simulated when outside the visible frame.
+
+Sol alone has scoped permission to synchronize these affected GDD rules. Builder agents/subagents treat the GDD as read-only and report discrepancies.
+
+Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
+
 ---
 
 ## 2. Product statement
 
-Build a lightweight 2D browser game in which Don Tortuga continuously travels to the right while the player regulates speed and shell angle to preserve a physically simulated moving load.
+Build a lightweight 2D browser game in which Don Tortuga automatically attempts to travel to the right while the player regulates speed and shell angle to preserve a physically simulated moving load. Physical blockers use the camera-wait and jump-recovery contract in section 12.
 
 The game should produce readable, funny, partially recoverable physical failures rather than realistic simulation or binary character death.
 
@@ -228,6 +238,10 @@ The following must remain easy to edit without hunting through entity code:
 - acceleration;
 - braking/deceleration;
 - safe horizontal camera window;
+- charged-jump maximum charge time and launch intensity;
+- shared gravity;
+- physical rear/front movement boundaries and per-side camera dead-zone percentage;
+- shell height above the body origin;
 - shell angular velocity;
 - maximum shell angle;
 - angular damping.
@@ -260,6 +274,10 @@ The following must remain easy to edit without hunting through entity code:
 - debug display settings.
 
 Use canonical configuration consumed by both game and playground.
+
+Root `settings.txt` supplies the adjustable startup defaults through a Vite raw-text import. Its versioned numeric `key=value` format supports `#` comment lines. Schema version 2 replaces `cameraZoom` with `cameraDeadZonePercent` and adds `shellPivotY`; old exports require explicit migration, documented in [PHYSICS.md](PHYSICS.md#4-configuration-and-tuning). A shared schema validates keys, ranges and cross-field constraints and serializes the current laboratory values. Technical timestep and collider-shape constants remain typed source configuration. Invalid settings produce a filename/key diagnostic rather than divergent silent defaults.
+
+The laboratory edits a session copy. Restore reloads the startup defaults; Export downloads `settings.txt` without resetting the run. Replacing the repository file makes changes permanent after development reload or production rebuild. The static production bundle requires no configuration backend.
 
 ### 6.4 Data-driven content
 
@@ -351,7 +369,8 @@ Target animation contract:
 
 Jam prototype:
 
-- two unique keyframes are sufficient;
+- two unique walking keyframes are sufficient;
+- two registered head-lowered walking variants communicate jump charging, without a GUI charge meter;
 - reuse those images across logical frames;
 - do not generate dozens of duplicate files;
 - final in-between frames may be supplied later by the artist.
@@ -402,7 +421,9 @@ Required systems:
 - Don Tortuga placeholder;
 - shell collider/body behavior;
 - acceleration/braking;
-- shell tilt;
+- shell tilt and terrain-relative physical support;
+- charged jump and WASD aliases;
+- settings-backed defaults/export, shell-height tuning and camera boundary/dead-zone tuning;
 - representative cargo bodies;
 - representative terrain;
 - at least enough biome behavior to begin meaningful physics tuning;
@@ -451,6 +472,18 @@ P1 if useful during tuning:
 - live sliders/input fields for high-value tuning parameters;
 - reset current parameters to baseline;
 - copy/export current tuning values.
+
+Required for the approved extension:
+
+- adjustable rear/front boundaries expressed as positions in percent of the fixed logical laboratory viewport, defining a physical movement corridor in metres;
+- fixed laboratory character scale, independent of the normal-level dead zone;
+- adjustable dead-zone percentage on each side of the movement corridor, with a read-only normal-level framing preview;
+- shared immutable framing calculated once at normal-level load; resizing uniformly scales that composition without changing physical bounds or world span;
+- adjustable shell pivot height, default 0.30 m, with unchanged body/shell shapes and corresponding initial cargo registration;
+- deterministic reset after parameter changes, preserving pause;
+- empty, sofa-only and complete load comparisons;
+- Export settings and restore loaded settings;
+- optional contextual-help preview for testing shared onboarding without creating normal levels.
 
 Do not build a full editor UI during the jam unless it materially accelerates tuning.
 
@@ -633,6 +666,14 @@ User-authored custom levels/editor support is **post-jam backlog**, not MVP.
 
 The current data architecture should avoid making this impossible, but do not build the editor during the jam.
 
+### 10.5 Mandatory jump and blockage validation
+
+Every new module proposal must include authored real-Rapier traversal cases for each mandatory route and relevant supported load. Use the currently loaded settings, including `jumpMaxLaunchSpeed` (currently 8 m/s), gravity, charge cap, shell height, physical camera corridor and controller behavior. Demonstrate a full-charge release, clearance of the actual obstacle geometry and the first grounded landing at or beyond the authored reachable target. Walking onward after landing short cannot certify the jump. Validate the approach, room to charge, headroom, joins and recovery from a wall at the rear margin.
+
+The shared `validateJumpTraversal` helper in `src/game/content/jumpValidation.ts` exercises an authored scenario and returns observed pass/outcome (including `landing-short`), launch, charge, first landing and settings evidence. A passing script certifies that route/load case only; a failed script blocks certification of that case and does not prove that all possible control sequences fail. Future modules must supply the full route/load matrix rather than relying on one successful diagnostic.
+
+Repeat traversal validation after jump, gravity, geometry, shell registration or controller settings change. The idealized `v²/(2g)` height bound is an initial design estimate; it cannot replace collision-aware traversal. Human readability and playtesting still follow automated validation. Walls or blocking objects that cannot be cleared with the configured maximum jump are invalid authored content.
+
 ---
 
 ## 11. Cargo state/loss requirements
@@ -663,19 +704,43 @@ The exact post-loss implementation may use collision-group changes, body deactiv
 
 Required:
 
-- continuous rightward progression;
+- automatic rightward progression when physical clearance permits;
 - no reverse traversal;
-- no full stop;
+- no player-commanded full stop; physical blockers may stop realized movement until a jump or other valid forward recovery clears them;
 - player modifies velocity within a bounded range;
+- Arrow keys and WASD both control speed and shell/swimming;
 - player controls shell tilt on dry terrain;
+- turtle terrain pitch plus relative manual shell tilt produces the authoritative physical shell pose;
 - shell maximum angle initially expected within the GDD's 30°–45° tuning range;
 - camera/turtle safe-window constraints should alter allowed acceleration/deceleration smoothly rather than teleporting the turtle.
+
+Camera progression normally uses its configured speed. At the rear movement margin, accepted physical forward movement limits camera advance when a solid ahead blocks Don Tortuga; a stationary blocked carrier holds the camera. Physics, jump charging, cargo and the run timer continue. Once forward movement becomes possible, the camera resumes automatically without requiring player consent or teleporting Don Tortuga. Clearing the obstacle must preserve upward jump movement and permit resumption during flight. This is obstacle handling, not voluntary pause.
+
+The laboratory maps rear/front percentages through its fixed 1280×720 composition at 76 pixels/metre. Those metre boundaries remain independent of `cameraDeadZonePercent`. At normal-level load, the framing factory fits that corridor between equal per-side outer dead zones and freezes the resulting zoom. No normal-level camera zoom changes occur during a run. Prototype 1 provides the shared factory and tests; normal-level integration remains Prototype 2 work.
 
 In water:
 
 - horizontal inputs continue regulating forward motion;
 - vertical inputs control swimming rather than shell tilt;
 - Don Tortuga cannot drown.
+
+Charged jump:
+
+- press/hold Space while dry and grounded;
+- launch once on release with linear charge fraction capped at `jumpMaxChargeSeconds` (default 3 s);
+- holding beyond the cap never auto-launches;
+- `jumpMaxLaunchSpeed` describes maximum upward launch speed in m/s for the kinematic carrier (currently 8 m/s); trajectory height is not linear in charge;
+- preserve forward momentum and shared carrier/cargo gravity;
+- pause, focus loss, reset, water entry or loss of ground eligibility cancels charge and pending release;
+- an invalid press in air/water must not arm a later jump;
+- convey charge through the lowered head/concentrated expression only;
+- bounded takeoff assistance may affect currently shell-connected cargo; separated/lost cargo must not receive remote assistance.
+
+Terrain support may use a stable translation proxy while the real shell follows the simulation-owned ground pose and rotated local pivot. Verify foot placement, shell clearance, automatic/manual rotation and realized traversal; rendering cannot invent authoritative physical support.
+
+`shellPivotY` moves the shell pivot relative to the body origin along the terrain-relative local up axis. Its default is the original 0.30 m; increasing it raises the cargo support and changes stability, while preserving body, shell and cargo collider shapes. Initial cargo placement shifts by the same height difference before settling.
+
+Water tuning must make an empty turtle resist sustained immersion, retain smoothly damped entry momentum, and permit heavier retained loads to reach deeper routes. Up/down input modulates descent/ascent; all supported loads must be able to return to the surface and leave authored banks. Definitively lost cargo immediately stops contributing weight.
 
 Use Rapier body/control patterns that transfer understandable motion to dynamic cargo without arbitrary sprite teleportation.
 
@@ -690,6 +755,7 @@ Priority outcomes:
 - severe impacts may cause cascades;
 - the default state is not constant total collapse;
 - cargo must not feel glued into a rigid single body;
+- leaving the visible frame must not alter cargo physics, connectivity or stability;
 - player corrections must matter;
 - a child should visually understand the direction of imminent collapse.
 
@@ -768,34 +834,29 @@ Layout constraint:
 
 ### 14.4 Contextual onboarding
 
-There are exactly three gameplay help messages:
+There are four gameplay help messages:
 
-1. `← →` + **velocidad**
-2. `↑ ↓` + **equilibrar caparazón**
-3. `↑ ↓` + **nadar**
+1. `←/A →/D` + **velocidad**
+2. `↑/W ↓/S` + **equilibrar caparazón**
+3. `Espacio` + **mantén y suelta para saltar**
+4. `↑/W ↓/S` + **nadar**
 
-**Approved clarification of GDD 41.7:**
+Rules synchronized with GDD 41.7:
 
-- each message has a fixed configurable lifetime in the approximate **3–5 second** range;
-- choose the concrete duration according to text density, large child-readable typography, and key illustrations;
-- messages disappear on their timer; **player input is not required for dismissal**;
-- a message is considered seen for the **current run/level instance** once its display interval ends;
-- contextual-help state is **not persisted across runs, browser sessions, or accounts**;
-- restarting/replaying a level starts the onboarding sequence fresh;
-- message 3 remains pending until the first water entry in that run;
-- **Show controls again** resets all three flags while remaining paused; the sequence becomes eligible again only after gameplay resumes.
+- fixed configurable lifetimes in the approximate **3–5 second** range;
+- timer dismissal requires no player input;
+- seen state belongs only to the current run and begins when a message completes;
+- restarting/replaying resets all four messages;
+- no browser/session/account persistence;
+- simulation pause freezes timers;
+- **Show controls again** resets help while remaining paused;
+- speed, balance and jump appear in sequence on dry terrain;
+- first water entry activates swimming with priority over unfinished initial help; that help remains pending until it is eligible again on dry terrain;
+- only one message is displayed.
 
-Prototype 2 authored-level constraint:
+Prototype 2 opening constraint: the authored safe opening must allow all three initial messages to complete before reachable water, even at maximum permitted early-run speed. Community-content preemption preserves technical operation but does not certify onboarding layout quality.
 
-- the opening section must be flat/safe enough for messages 1 and 2;
-- water must not be reachable early enough to overlap those two messages;
-- validate this at the maximum permitted early-run speed;
-- in practical composition terms, there should be no immediate water body after the start and the first water body should not be visible/encountered as part of the initial onboarding beat.
-
-Fallback for future malformed/community content:
-
-- if swimming onboarding becomes eligible while message 2 is still visible, swimming onboarding **preempts** message 2;
-- this fallback keeps the level operable but does not make the user-authored level well designed.
+Prototype 1 supplies the tested shared help controller and an optional laboratory preview. Actual normal-level/menu integration remains Prototype 2 work.
 
 ### 14.5 Results / delivery note
 
@@ -972,7 +1033,16 @@ P0/P1 tests should cover:
 - level state flow;
 - pause freezing physics and timer;
 - contextual-help timer expiry and per-run reset;
-- swimming-message preemption fallback;
+- swimming-message preemption and pending initial-help resumption;
+- settings parse/export/default/session-copy invariants;
+- charged-jump saturation, release-once and cancellation;
+- terrain pitch/manual compensation and safe physical shell motion;
+- shell-height registration and deterministic load placement without collider-shape changes;
+- fixed laboratory scale and immutable dead-zone-derived normal-level framing;
+- blocked rear-margin camera hold, preserved jump clearance and automatic resumption with ongoing simulation time;
+- full-charge module traversal using current settings and representative load/route cases;
+- high airborne stacks remaining independently simulated beyond viewport edges;
+- empty/full water depth, ascent and bank-exit relationships;
 - results-stamp integer rounding and band selection;
 - lost cargo no longer blocking gameplay;
 - public asset URL helper/base-path behavior where practical.
@@ -1020,7 +1090,9 @@ Includes only:
 - Don Tortuga;
 - representative cargo;
 - acceleration/braking;
-- shell tilt;
+- shell tilt and terrain-relative support;
+- charged jump;
+- settings/camera/WASD extension;
 - representative terrain/biome behavior;
 - cargo loss basics;
 - tuning/debug tools needed for iteration.
@@ -1043,7 +1115,8 @@ Exit criterion:
 - entrance/exit height;
 - connector alignment;
 - loading/placement;
-- pool validation.
+- pool validation;
+- current-settings full-charge traversal cases for each mandatory route and relevant load, repeated after physics or geometry changes.
 
 ### Build 3 — Hazards
 
@@ -1103,7 +1176,13 @@ A jam candidate satisfies MVP when:
 - [ ] At least two distinct hazards exist.
 - [ ] Cargo can be lost individually.
 - [ ] Lost cargo cannot softlock Don Tortuga.
-- [ ] Player can accelerate/brake and control shell angle on dry terrain.
+- [ ] Player can accelerate/brake and control shell angle on dry terrain using arrows or WASD.
+- [ ] Space charge/release jump works with the configured cap and concentrated pose.
+- [ ] Terrain pitch affects the physical shell and permits manual compensation.
+- [ ] Normal-run framing uses the configured physical corridor and per-side dead zone, frozen at level load.
+- [ ] A physical blocker holds the camera at the rear margin while physics/time continue; clearing it restores automatic forward camera progression.
+- [ ] Every mandatory module route passes current-settings full-charge traversal with its first grounded landing at or beyond the authored target.
+- [ ] Cargo physics and stability remain independent of viewport visibility.
 - [ ] Water changes controls/behavior according to the GDD.
 - [ ] Designed-level scoring works.
 - [ ] Main → Mode → Level Select → Level → Results → Main works.
@@ -1111,7 +1190,7 @@ A jam candidate satisfies MVP when:
 - [ ] Menus are fully navigable by keyboard and selected state does not depend only on color.
 - [ ] Designed-level HUD shows cargo state and timer without a live designed-level score.
 - [ ] Contextual help uses fixed 3–5 s timed messages with per-run (not persistent) seen state.
-- [ ] Authored jam level cannot reach first water before initial speed/balance onboarding completes.
+- [ ] Authored jam level cannot reach first water before initial speed/balance/jump onboarding completes.
 - [ ] `Show controls again` resets help while remaining paused.
 - [ ] Results use the delivery-note presentation and rounded integer percentage for the delivery-status stamp.
 - [ ] Endless Run appears as `Próximamente` if not implemented.
@@ -1156,7 +1235,7 @@ Unless explicitly reprioritized:
 - mandatory all-16 module transition coverage;
 - account/authentication system;
 - sophisticated anti-cheat;
-- mobile/touch control parity;
+- mandatory mobile/touch control parity (the proposed touch scheme is a desired optional jam feature tracked in BACKLOG);
 - multiplayer;
 - large backend;
 - heavy UI framework;

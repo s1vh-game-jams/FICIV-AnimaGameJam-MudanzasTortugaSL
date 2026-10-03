@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="65" viewBox="0 0 220 65" role="img" aria-labelledby="title">
+  <title id="title">Sofá: carga ancha y baja</title>
+  <g stroke="#432a29" stroke-width="2" stroke-linejoin="round">
+    <rect x="12" y="49" width="22" height="15" rx="2" fill="#754e3b"/>
+    <rect x="186" y="49" width="22" height="15" rx="2" fill="#754e3b"/>
+    <rect x="15" y="1" width="190" height="42" rx="7" fill="#ef8354"/>
+    <rect x="16" y="31" width="188" height="23" rx="4" fill="#f4a068"/>
+    <rect x="1" y="18" width="23" height="39" rx="5" fill="#dc6a47"/>
+    <rect x="196" y="18" width="23" height="39" rx="5" fill="#dc6a47"/>
+  </g>
+  <text x="110" y="26" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#432a29">SOFÁ</text>
+</svg>

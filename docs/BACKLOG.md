@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Initial Game Jam backlog  
+**Status:** Recovered human settings and local tester guide integrated on `dev`; human feel review remains pending
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -96,7 +96,8 @@ Jam release on main
 
 ### BOOT-001 — Scaffold Vite + TypeScript project
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** none
 - **Acceptance:**
   - Vite project runs with `npm run dev`.
@@ -106,7 +107,8 @@ Jam release on main
 
 ### BOOT-002 — Install/configure PixiJS 8
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - Pixi application initializes.
@@ -115,7 +117,8 @@ Jam release on main
 
 ### BOOT-003 — Install/configure Rapier2D
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `@dimforge/rapier2d` initializes correctly.
@@ -124,7 +127,8 @@ Jam release on main
 
 ### BOOT-004 — Implement fixed-step game/physics loop
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-002, BOOT-003
 - **Acceptance:**
   - Physics targets 60 Hz fixed timestep.
@@ -133,7 +137,8 @@ Jam release on main
 
 ### BOOT-005 — Add public asset URL helper
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - Uses `import.meta.env.BASE_URL`.
@@ -142,7 +147,8 @@ Jam release on main
 
 ### BOOT-006 — Establish baseline npm checks
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `npm run typecheck`
@@ -153,13 +159,26 @@ Jam release on main
 
 ### BOOT-007 — Add initial repository branch protections/workflow conventions
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** repository availability
 - **Acceptance:**
   - `dev` exists as development integration branch.
   - `main` is treated as release/deployment branch.
   - auxiliary branches are preserved after squash integration.
   - no automation auto-deletes them.
+### BOOT-008 — Provide a tested production-preview helper
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
+- **Acceptance:** reusable scripts/localServer.py supports root/subpath mounts, repository-relative default dist, clear option/bind errors and WASM serving; live standard-library tests pass.
+
+### BOOT-009 — Document copyable local-server workflows for human testers
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/human-settings-local-guide`
+- **Integration:** `e6efc0a` · documentation: `0921a4c`
+- **Acceptance:** existing Spanish README explains prerequisites and repository-root terminal setup; development and production URLs; copyable Vite/preview/Python commands; rebuild/reload behavior, Ctrl+C, occupied ports, matched subpath builds and configuration backups. Options match the installed tooling and tested helper.
+
 
 ---
 
@@ -167,7 +186,8 @@ Jam release on main
 
 ### PHYS-001 — Add physics-playground routing/access
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-001
 - **Acceptance:**
   - `Shift + P` opens it from the main screen.
@@ -176,7 +196,8 @@ Jam release on main
 
 ### PHYS-002 — Prototype Don Tortuga body and shell collider
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-003, BOOT-004
 - **Acceptance:**
   - Placeholder visual exists.
@@ -186,18 +207,20 @@ Jam release on main
 
 ### PHYS-003 — Implement dry-land turtle speed control
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002
 - **Acceptance:**
   - right input accelerates;
   - left input reduces speed;
   - no reverse;
-  - no full stop;
+  - no player-commanded full stop; physical obstacle waiting is defined by PHYS-023;
   - min/base/max speeds are tunable.
 
 ### PHYS-004 — Implement shell tilt control
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002
 - **Acceptance:**
   - up/down adjust shell angle progressively;
@@ -207,7 +230,8 @@ Jam release on main
 
 ### PHYS-005 — Add four representative cargo archetypes
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002
 - **Objects:**
   - Sofa
@@ -222,7 +246,8 @@ Jam release on main
 
 ### PHYS-006 — Centralize tuning configuration
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-003, PHYS-004, PHYS-005
 - **Acceptance:**
   - physics/game-feel constants are not scattered;
@@ -231,7 +256,8 @@ Jam release on main
 
 ### PHYS-007 — Implement active cargo contact graph
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-005
 - **Acceptance:**
   - detects direct/indirect physical connection to shell;
@@ -240,7 +266,8 @@ Jam release on main
 
 ### PHYS-008 — Implement contact-loss hysteresis
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-007
 - **Acceptance:**
   - one brief loss of contact does not instantly lose an object;
@@ -249,7 +276,8 @@ Jam release on main
 
 ### PHYS-009 — Disable gameplay interaction from definitively lost cargo
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-008
 - **Acceptance:**
   - lost objects no longer block Don Tortuga;
@@ -259,7 +287,8 @@ Jam release on main
 
 ### PHYS-010 — Add playground reset
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-002, PHYS-005
 - **Acceptance:**
   - restores deterministic baseline turtle/cargo state;
@@ -267,7 +296,8 @@ Jam release on main
 
 ### PHYS-011 — Add collider/debug visualization
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** BOOT-002, BOOT-003
 - **Acceptance:**
   - toggleable;
@@ -276,7 +306,7 @@ Jam release on main
 
 ### PHYS-012 — Tune first viable cargo behavior
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-003 through PHYS-011
 - **Acceptance:**
   - acceleration/braking visibly transfer motion;
@@ -288,7 +318,8 @@ Jam release on main
 
 ### PHYS-013 — Add playground pause/single-step controls
 - **Priority:** P1
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-010
 - **Acceptance:**
   - pause does not corrupt state;
@@ -296,7 +327,8 @@ Jam release on main
 
 ### PHYS-014 — Add live high-value tuning controls
 - **Priority:** P1
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-006
 - **Acceptance:**
   - only parameters that materially accelerate tuning;
@@ -305,17 +337,104 @@ Jam release on main
 
 ---
 
+### PHYS-015 — Persist and export laboratory tuning defaults
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `22a656f` · branch: `codex/physics-controls-settings`
+- **Branch:** `codex/physics-controls-settings`
+- **Acceptance:** root settings.txt is canonical; strict shared numeric schema/codec; session edits and restore are independent; export round-trips current values; production rebuild workflow documented.
+
+### PHYS-016 — Add viewport-relative camera tuning and laboratory zoom
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `22a656f`, `287a7f9` · branch: `codex/physics-controls-settings`
+- **Depends on:** PHYS-015
+- **Acceptance:** rear/front viewport positions and zoom share simulation/render bounds; reset preserves pause; valid initial placement; CSS resize preserves composition; normal-run zoom is fixed.
+
+### PHYS-017 — Add soft charged jump
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `a03fc42`, `9284942` · branch: `codex/physics-controls-settings`
+- **Acceptance:** dry grounded Space hold/release; linear launch intensity; configurable default 3 s cap; no auto-launch at cap; maximum launch speed/shared gravity adjustable; safe lifecycle cancellation; independent supported cargo can accompany takeoff/landing without global grace extension.
+
+### PHYS-018 — Convey terrain inclination through turtle/shell support
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `9284942` · branch: `codex/physics-controls-settings`
+- **Acceptance:** simulation-owned ground pose and rotated shell pivot; relative manual compensation; matched traversable slope/compensation limit; smooth joins and clear feet/shell; body and shell shapes preserved while shell pivot is raised.
+
+### PHYS-019 — Add WASD aliases and input edge handling
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
+- **Acceptance:** arrows and WASD coexist without doubled axes; partial alias release works; Space edges consumed once; editor/button focus respected; C replaces D as collider shortcut.
+
+### PHYS-020 — Restore and expose shell height
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
+- **Acceptance:** adjustable `shellPivotY` defaults to original 0.30 m; changing height shifts the real support and initial cargo registration without changing shapes; current maximum launch is 8 m/s. Remaining human tuning import is tracked separately in PHYS-024.
+
+### PHYS-021 — Preserve independent cargo through high offscreen jumps
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
+- **Acceptance:** high full-charge jumps preserve the stack absent actual destabilizing forces, irrespective of visibility; finite independent bodies; separated/lost cargo gets no remote flight correction; unchanged global contact grace; meaningful real-Rapier regression coverage.
+- **Regression provenance:** investigated against the controls/settings source integrated by `e705e70`; precise introducing commit not yet established.
+
+### PHYS-022 — Replace adjustable zoom with per-side dead-zone framing
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
+- **Acceptance:** schema 2 replaces `cameraZoom` with `cameraDeadZonePercent`; laboratory character scale remains fixed; physical movement bounds are independent of dead zone; shared immutable level-load framing derives zoom and visible origin from the physical corridor and per-side viewport percentage; normal-level integration remains future level work; explicit export/migration instructions and preview.
+
+### PHYS-023 — Wait at a blocked rear movement margin
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/physics-stability-camera`
+- **Integration:** `3cbbd00` · reviewed implementation: `19e55fa`
+- **Acceptance:** solid frontal blockage limits camera advance before crossing the rear margin; camera resumes as accepted forward motion allows it after jumping; world/time/cargo keep running; no collision bypass or character teleport; diagnostic wall route and grounded/full-charge traversal tests.
+
+### PHYS-024 — Adopt the human's supplied permanent tuning defaults
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/human-settings-local-guide`
+- **Integration:** `e6efc0a` · implementation: `9d2f319`
+- **Acceptance:** preserve all unaffected human values when migrating the supplied configuration to schema 2, with the approved 0.30 m shell height and dead-zone semantics; validate and repeat applicable physics checks.
+- **Input provenance:** the original attachment was absent during the prior task. A later browser export test generated a new `settings.txt` in Downloads with dead zone 35 percent and shell height 0.42 m; that agent-generated export was not imported. The human has now pasted the recovered schema-1 backup directly into this chat, resolving the missing-input dependency.
+- **Migration:** all 36 shared numeric settings match the recovered values. Only movement margins change from the previously retained defaults: rear 20 percent, front 80 percent. Remove obsolete `cameraZoom`, retain schema 2, dead zone 40 percent and shell height 0.30 m. Current launch remains 8 m/s.
+
+### PHYS-025 — Normalize transient shell hulls at Rapier precision
+- **Priority:** P0
+- **Status:** DONE
+- **Branch:** `codex/human-settings-local-guide`
+- **Fixed by:** `9d2f319` · squash integration: `e6efc0a`
+- **Depends on:** PHYS-024 validation
+- **Suspected introduced by:** reviewed implementation `19e55fa`, squash integration `3cbbd00`; the assumed-convex temporary envelope sorted/deduplicated double-precision vertices before float32 conversion.
+- **Evidence:** the recovered 20/80 movement window deterministically exposed a wall-approach pose where distinct double vertices became an identical float32 point. Rapier rejected the duplicate-edge polyline, raising `expected instance of RawShape` during the configured-reset regression.
+- **Acceptance:** quantize before hull ordering/deduplication and let Rapier normalize the ordered envelope; retain SAT/rotation clearance checks and human tuning values. Explicit real-physics wall approach remains finite; full reset, clearance and traversal suites pass.
+
+---
+
 # P0 — Biomes
 
 ### BIOME-001 — Implement baseline grass behavior
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-012
 - **Acceptance:** permissive reference dry biome consistent with GDD.
 
 ### BIOME-002 — Implement water body detection/state
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-012
 - **Acceptance:**
   - enter/leave water state reliably;
@@ -324,7 +443,7 @@ Jam release on main
 
 ### BIOME-003 — Implement buoyancy and weight-dependent depth
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BIOME-002
 - **Acceptance:**
   - turtle floats;
@@ -333,7 +452,7 @@ Jam release on main
 
 ### BIOME-004 — Implement depth-dependent rightward current
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BIOME-003
 - **Acceptance:**
   - deeper position produces stronger rightward assistance;
@@ -341,15 +460,15 @@ Jam release on main
 
 ### BIOME-005 — Implement water impact damping
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** BIOME-002
 - **Acceptance:** major water entries do not significantly destabilize cargo, consistent with GDD intent.
 
 ### BIOME-006 — Implement second required dry biome
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** PHYS-012
-- **Note:** choose sand or rock based on designed-level needs.
+- **Note:** rock selected by the human for the first playable prototype; sand remains optional.
 
 ### BIOME-007 — Implement remaining fourth biome
 - **Priority:** P1
@@ -359,9 +478,19 @@ Jam release on main
 
 ### BIOME-008 — Add biome comparison scenarios to playground
 - **Priority:** P1
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** required biome implementations
 - **Acceptance:** testers can reproduce meaningful surface/impact differences rapidly.
+
+---
+
+### BIOME-009 — Strengthen empty/heavy buoyancy and swimming
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `9284942` · branch: `codex/physics-controls-settings`
+- **Acceptance:** adjustable buoyancy; empty turtle resists sinking; retained mass enables deeper travel; smooth initial immersion and natural rise; up/down modulate velocity; empty/light/full loads surface and leave banks; terminal loss removes weight immediately.
 
 ---
 
@@ -408,6 +537,13 @@ Jam release on main
   - duplicates of transition types allowed;
   - no requirement to cover all sixteen abstract types.
 
+### MOD-007 — Gate proposed modules on current-settings jump traversal
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/physics-stability-camera`
+- **Diagnostic foundation:** `3cbbd00` · reviewed implementation: `19e55fa`; full module-format integration remains pending MOD-001/MOD-006.
+- **Acceptance:** shared real-Rapier diagnostic traversal validator observes actual full-charge release and grounded landing with a bounded authored route; clearable/unreachable geometry and launch/gravity changes tested. Future module proposals must provide every mandatory route/load case and human validation; rerun after relevant settings, geometry or controller changes. An analytical height estimate alone is insufficient. Full module-format integration depends on MOD-001/MOD-006 and remains pending.
+
 ---
 
 # P0 — Hazards
@@ -420,6 +556,7 @@ Jam release on main
   - hazard activation and telegraph phases are explicit;
   - no health damage;
   - no permanent blockage.
+  - if dynamic solid blockers are introduced, test actual shell/headroom clearance as well as carrier movement; current shell-clearance queries exclude dynamic bodies and the existing blocker regressions use static solids.
 
 ### HAZ-002 — Implement hazard type A
 - **Priority:** P0
@@ -528,7 +665,8 @@ Jam release on main
 
 ### CAM-001 — Implement constant camera progression + turtle safe window
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** PHYS-003
 - **Acceptance:** boundary pressure smoothly reduces speed advantage/disadvantage; no teleport clamps.
 
@@ -579,9 +717,10 @@ Jam release on main
 - **Status:** TODO
 - **Depends on:** PHYS-003, PHYS-004, BIOME-002, UX-002
 - **Messages:**
-  1. `← →` + `velocidad`
-  2. `↑ ↓` + `equilibrar caparazón`
-  3. `↑ ↓` + `nadar`
+  1. `←/A →/D` + `velocidad`
+  2. `↑/W ↓/S` + `equilibrar caparazón`
+  3. `Espacio` + `mantén y suelta para saltar`
+  4. `↑/W ↓/S` + `nadar`
 - **Acceptance:**
   - each message uses a fixed tunable lifetime of approximately 3–5 seconds;
   - input is not required for dismissal;
@@ -589,17 +728,17 @@ Jam release on main
   - help state is not persisted across runs/browser sessions/accounts;
   - replaying/restarting the level starts fresh help state;
   - swimming message appears on first water entry;
-  - Show controls again resets all three flags while the game remains paused;
+  - Show controls again resets all four flags while the game remains paused;
   - messages resume only after leaving pause;
-  - swimming message preempts shell-balance message if malformed/future community content causes overlap.
+  - swimming message preempts unfinished initial help if malformed/future community content causes overlap; unfinished help remains pending for dry terrain.
 
 ### UX-005 — Protect authored opening from onboarding overlap
 - **Priority:** P0
 - **Status:** TODO
 - **Depends on:** UX-004, LEVEL-001
 - **Acceptance:**
-  - opening terrain is flat/safe while speed and balance messages display;
-  - first water cannot be reached before both initial messages complete at maximum permitted early-run speed;
+  - opening terrain is flat/safe while speed, balance and jump messages display;
+  - first water cannot be reached before all three initial messages complete at maximum permitted early-run speed;
   - no immediate water body is placed after the start;
   - validation is applied to the jam-authored level, while future community levels only receive the runtime preemption fallback.
 
@@ -647,14 +786,38 @@ Jam release on main
   - supports required human/agent/art/audio attribution.
 - **Note:** recommended for the jam; must not block core playability under schedule pressure.
 
+### UX-010 — Add optional touch controls
+- **Priority:** P1
+- **Status:** TODO
+- **Target:** desired for the jam, not mandatory; not implemented by this extension.
+- **Proposal:** touch Don Tortuga or the shell to charge a jump; a single tap ahead/behind regulates lateral position; two-finger drag in the desired rotation direction balances the shell.
+- **Design follow-ups:** define tap duration/velocity mapping, release/cancellation, gesture priority and swimming gestures before implementation.
+- **Acceptance:** preserve landscape composition; avoid accidental simultaneous jump/rotation; update README control instructions when touch ships.
+
+### UX-011 — Prepare four-message shared onboarding controller
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `a03fc42`, `287a7f9` · branch: `codex/physics-controls-settings`
+- **Acceptance:** timed per-run speed/balance/jump/swim sequence; pause/reset; first-water priority and pending-message resume; optional laboratory preview. Full normal-level integration remains UX-004.
+
+### ART-004 — Register charged-head walking variants
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
+- **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
+- **Acceptance:** two simple head-lowered/concentrated poses; existing body/leg geometry, canvas and anchors preserved; 60 logical slots remain; no charge GUI; artist contract updated for raised shell pivot.
+
 ### ART-001 — Create placeholder sprite hierarchy
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Acceptance:** `/public/sprites/{entity}/` convention exists and is used.
 
 ### ART-002 — Add two turtle walk keyframes
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Depends on:** ART-001
 - **Acceptance:** animation system represents 60 logical frames/1 second while reusing two unique prototype keyframes.
 
@@ -764,7 +927,8 @@ Jam release on main
 
 ### TEST-002 — Add cargo graph/hysteresis tests
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
 
 ### TEST-003 — Add module compatibility/pool tests
 - **Priority:** P0
@@ -772,12 +936,13 @@ Jam release on main
 
 ### TEST-004 — Add production-build smoke test checklist
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Acceptance:** dev route, `?mode=physics`, public assets, Rapier WASM, designed level all tested from production build.
 
 ### TEST-005 — Playtest partial-loss behavior
 - **Priority:** P0
 - **Status:** TODO
+- **Handoff:** Prototype 1 is ready for human tuning; see [PHYSICS.md](PHYSICS.md#suggested-tuning-sequence).
 - **Human verification required.**
 
 ### TEST-006 — Child/family readability pass
@@ -787,7 +952,7 @@ Jam release on main
 
 ### TEST-007 — Test pause invariants
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** IN PROGRESS
 - **Depends on:** UX-002
 - **Acceptance:** physics and timer remain unchanged while paused; resume does not inject a simulation jump.
 
@@ -834,6 +999,12 @@ Jam release on main
 - **Priority:** P0
 - **Status:** BLOCKED
 - **Depends on:** RELEASE-004
+### TEST-010 — Cover the physical core with real Rapier invariants
+- **Priority:** P0
+- **Status:** DONE
+- **Integration:** `2d6e854` · branch: `codex/physics-playground`
+- **Acceptance:** fixed-loop/config/controller unit coverage plus real Rapier finite states, repeatable reset, realized traversal/camera bounds, mass properties, lost-body isolation, water weight/rise/current/swim and high-entry cushioning.
+
 
 ---
 
@@ -885,10 +1056,10 @@ Jam release on main
 
 | Decision | Current default | Trigger for update |
 |---|---|---|
-| Exact repository name / GitHub Pages base | placeholder | repository created/finalized |
-| Exact Node version | current LTS | project scaffold/CI |
-| Exact linter/test configuration | TypeScript + Vite-compatible tools; Vitest preferred | BOOT-006 |
-| Third required biome choice | TBD between sand/rock depending on level | level/blockout needs |
+| Repository / Pages base | FICIV-AnimaGameJam-MudanzasTortugaSL; root and repository-subpath builds verified | live Pages configuration remains RELEASE-001 |
+| Node baseline | >=22.12, npm lockfile | CI setup / dependency upgrade |
+| Linter/test configuration | TypeScript strict, ESLint, Vitest; Python unittest for helper | expand when meaningful behavior is added |
+| Third required biome choice | rock approved; grass/rock/water are the required playable-prototype set | sand remains optional for this phase |
 | Contextual-help duration | 3–5 seconds per message, tuned for child-readable content | playtesting/readability tuning |
 | Remote leaderboard provider | none | LB-004 starts |
 | Final software license | unresolved | before public release |
@@ -897,7 +1068,84 @@ Jam release on main
 
 ---
 
-## 4. Backlog maintenance reminder
+## 4. Original Prototype 1 verification and historical remaining work
+
+Agent-side verification of original source commit `4ddd996` on 2026-10-03:
+
+- TypeScript strict check and ESLint pass.
+- Vitest: 105 tests pass (24 cargo graph, 55 core/config/content and 26 real Rapier).
+- Python helper: 11 live unittest cases pass, including mounting, redirects, MIME, occupied ports and document-root containment.
+- Root and repository-subpath production builds succeed; real-browser rendering, public textures and Rapier WASM initialize without console errors.
+- Browser checks cover hidden Shift+P access, direct route/refresh, frozen pause/time, one-tick stepping, repeatable reset, scenario/load switching, valid parameter editing and empty-field restoration.
+- The complete stack remains retained through ordinary water traversal with neutral input. This verifies a baseline, not subjective game feel.
+
+The reviewed source implementation is commit `4ddd996` on preserved branch `codex/physics-playground`. Squash integration: `2d6e854` on `dev`. Source history and attribution remain on `codex/physics-playground`. No regression-introducing commit is claimed for fixes made before this first implementation commit.
+
+Historical limitations / follow-ups at that original milestone:
+
+- PHYS-012 and TEST-005 need human assessment of correction feel and recoverable partial losses. Angular/camera/water assistance is provisional tuning.
+- BIOME-001 through BIOME-006 have diagnostic implementations; designed-level integration, authored transitions and the full biome-foundation acceptance remain Prototype 2 work. BIOME-008 supplied the five original diagnostics at that milestone. Sand remains optional.
+- BOOT-007 establishes branch conventions/dev/preserved history; remote protection and automatic branch-deletion settings have not been administered or certified.
+- TEST-004 and TEST-007 cover the playground portion; designed-level navigation and final pause flow remain pending their implementation.
+- That original milestone did not include a real level/module pool, hazard system, scoring/results, contextual help, leaderboard, final art or audio.
+- Rapier WASM is approximately 2.4 MB before compression (about 921 kB gzip); actual cold-load/performance budgets need release profiling.
+- No Pages workflow/live publication is configured; main remains the human-controlled release branch.
+
+### Approved extension and human feedback — 2026-10-03
+
+The human reported natural physical feel and intuitive controls in the initial playground, then approved the controls/settings/physics plan and requested a slightly higher shell without shape changes. This is positive baseline feedback, not final verification of the extension or every partial-loss criterion.
+
+Completed extension tasks: PHYS-015 through PHYS-019, BIOME-009, UX-011 and ART-004. Sol synchronized only the explicitly authorized GDD changes; builder/subagent GDD permissions remain unchanged. The source branch is preserved as `codex/physics-controls-settings`. Reviewed source implementation: `c9c527d`. Squash integration: `e705e70` on `dev`. Detailed commits and agent attribution remain on the preserved source branch; main remains untouched.
+
+Extension verification on 2026-10-03:
+
+- TypeScript strict check and global ESLint pass.
+- Vitest: **232 tests pass** across eight files: 181 unit cases and 51 real-Rapier integration cases.
+- Python helper: 11 live unittest cases pass; helper behavior is unchanged.
+- Root and repository-subpath production builds succeed; browser textures, WASM, direct access and subpath refresh initialize without console errors.
+- Production browser checks cover fine decimal editing, invalid camera-window rejection, zoom/reset/pause preservation, restoration and actual settings download. The downloaded text contains all 37 values plus schemaVersion and the edited acceleration/zoom; exporting leaves tick/time/pause unchanged.
+- Help preview reaches the jump message after speed/balance. Paused single-step advances physics without advancing help. Landscape layout was measured at 854×480 without horizontal overflow; specific mobile game-feel remains human testing.
+- The browser shows corrected feet/body/shell support on the 36-degree ramp. Existing full-load neutral-water retention remains covered. Partial/full/capped jump, independent cargo flight/landing, headroom, support joins, finite state, weight-ordered immersion/rise and retained full-load surfacing pass real-physics invariants.
+- Full-load extreme-control traces complete maximum slopes and the jump obstacle without reverse or stalled ticks.
+- Nine original SVGs retain valid dimensions/registration; neutral body, legs and shell artwork remain unchanged. The shell pivot rises from 0.30 to 0.42 m.
+
+Human verification remains pending for this extension: compare partial/full/over-cap jump feel, slope compensation and recoverable losses, empty/sofa/full immersion/swimming, and camera candidates. Permanent settings require replacing root settings.txt and reloading development or rebuilding production. Normal-level onboarding integration remains UX-004; real levels and touch controls remain deferred (UX-010 records gestures and the README-update reminder).
+
+### Approved flight/camera/shell-height corrections — 2026-10-03
+
+The human requested restoration of the original shell height, high-jump cargo consistency, per-side camera dead zones and physical obstacle waiting, and authorized Sol to synchronize the affected GDD rules. The reviewed implementation is `19e55fa`, with documentation commit `ac01575`, on preserved source branch `codex/physics-stability-camera`. Squash integration is `3cbbd00` on `dev`; its tree matches the verified source. Main remains untouched.
+
+Agent verification on the reviewed implementation:
+
+- Strict TypeScript and global ESLint pass. The checks used the bundled Node runtime directly because this Windows environment's npm runtime junction could not be resolved inside the sandbox; the repository package-script checks themselves remain unchanged.
+- Vitest: **276 tests pass across 12 files**. Coverage includes full-charge 8 m/s and lower-gravity retention, higher 12 m/s flight, identical snapshots inside/outside different viewport heights, unchanged cargo independence and separation grace, and no remote assistance for separated/lost cargo. Harder landings and intentional imbalance may still lose objects.
+- Actual collider shapes, masses, inertia and body registration remain unchanged across 0.30/0.42/0.55 m shell-height candidates. Static convex containment, complete rotation arcs at 60 Hz and adversarial 15 Hz, safe corrective rotation and terrain recovery pass.
+- Blocked wall/object tests keep camera movement bounded while time and cargo continue; an actual full-charge jump clears the wall and resumes scrolling without repositioning the carrier. The authored-route validator stops at the first landing, preventing subsequent walking from certifying an insufficient jump.
+- Root and repository-subpath production builds succeed. Browser checks initialize WASM, textures and the 19 controls with no console errors; the wall diagnostic holds camera X while simulation time continues. The fixed-scale laboratory preview, height editing, invalid dead-zone rejection, reset/pause preservation and single-step controls were verified. A real export contains all 38 tuning values plus schema version 2 without advancing the paused simulation. Landscape layout at 854×480 has no horizontal overflow.
+- The unchanged local production-server helper passes **11 live Python unittest cases**. The root production server remains available for human testing at `http://127.0.0.1:4173/?mode=physics`; scenario 09 exercises wall waiting and charged-jump recovery.
+
+The flight failure was independent of rendering: longer airborne intervals amplified carrier/cargo integration and contact-velocity differences until ordinary contact grace expired. The fix matches solver displacement and uses existing bounded contact grip without welding cargo or changing loss grace. The low restored shell pivot also required independent static polygon clearance: the recorded long-floor query discrepancy and corrective rotation recovery are documented in [PHYSICS.md](PHYSICS.md).
+
+Human feel verification remains pending. Normal-level framing is supplied as an immutable load-time factory; its runtime integration waits for real levels. Full module-format integration remains MOD-001/MOD-006, and future dynamic-hazard shell clearance remains HAZ-001. **At this milestone PHYS-024 was blocked:** the original human settings attachment was unavailable; the later Downloads file was created by the agent's export test and was not imported. Only the explicitly approved shell height and 8 m/s launch plus the new dead-zone schema were adopted; other defaults remained unchanged until the human supplied the recovered text.
+
+### Recovered tuning and local tester guide — 2026-10-03
+
+The human supplied the recovered settings as pasted text, resolving PHYS-024 without relying on a later agent-generated download. Reviewed code/settings/test commit: `9d2f319`; documentation: `0921a4c`, on preserved branch `codex/human-settings-local-guide`. Squash integration: `e6efc0a` on `dev`, with the same verified source tree. BOOT-009, PHYS-024 and PHYS-025 are complete. All **36 shared numeric values** match the supplied backup exactly. Movement margins are now 20/80 percent; schema 2 retains the approved 40 percent dead zone and 0.30 m shell pivot. The obsolete direct zoom was removed during migration; maximum launch remains 8 m/s. No shared value required an incompatibility adjustment.
+
+That movement window exposed PHYS-025: two distinct double-precision vertices in a transient shell envelope collapsed to the same float32 point, invalidating the assumed-convex native polyline. Coordinates are now quantized before ordering/deduplication, and Rapier normalizes the ordered hull. Independent SAT and rotation-clearance guards remain. The explicit full-load wall approach is covered as a finite-state regression; the configured-reset suite also passes.
+
+Agent verification of the completed implementation:
+
+- Strict TypeScript and global ESLint pass; **277 Vitest tests pass across 12 files**. The bundled Node runtime invoked the package tools directly because of the existing Windows sandbox/npm junction limitation; package scripts are unchanged.
+- All 36 shared human defaults were compared numerically against the pasted text. The complete settings codec/schema tests pass.
+- The unchanged Python server helper passes **11 live unittest cases**.
+- Root and repository-subpath production builds succeed. Real-browser checks on Vite development, Vite preview, root Python serving and subpath Python serving initialize the canvas, textures and Rapier WASM with the expected 20/80 margins, 40 percent dead zone, 0.30 m shell pivot and 8 m/s launch, without console errors.
+- The README's copyable local-server guide covers prerequisites, opening a repository-root terminal, dependency installation, explicit URLs/ports, rebuild/reload behavior, stopping servers, Python command alternatives, occupied ports, subpath builds and configuration backups. Tool help confirms the documented flags. The canonical file remains `README.md`; no duplicate `README.txt` was created.
+- Temporary development/preview/subpath servers were stopped after verification. The root production helper remains available at `http://127.0.0.1:4173/?mode=physics`; the browser laboratory was reset and paused at tick/time zero with the complete 13.6 kg load.
+
+Human feel verification of the wider movement corridor remains pending. The laboratory's physical corridor is approximately 10.11 m; its normal-level framing preview is approximately 50.53 m with the current 40 percent outer dead zones. Normal-level integration and authoring/readability checks remain Prototype 2 work. Main remains under human release control.
+
+## 5. Backlog maintenance reminder
 
 When implementing work from this file:
 
