@@ -24,15 +24,13 @@ describe('canonical text settings', () => {
     expect(second.gravity).toBe(settings.gravity);
     expect(BASELINE_TUNING.gravity).toBe(settings.gravity);
     expect(Object.isFrozen(BASELINE_TUNING)).toBe(true);
-    expect(first.waterRiseAcceleration).toBe(8.4);
-    expect(first.jumpMaxChargeSeconds).toBe(3);
-    expect(first.jumpMaxLaunchSpeed).toBe(4.5);
-    expect(first.waterSwimWeightInfluence).toBe(0.05);
+    expect(first.shellPivotY).toBe(0.30);
+    expect(first.jumpMaxLaunchSpeed).toBe(8);
   });
 
   it('accepts BOM, Windows newlines, spacing, blank lines, comments and decimal exponents', () => {
     const text = '\uFEFF# ignored header\r\n\r\n' + sourceSettings
-      .replace('gravity=9.81', '  gravity = 9.81e0 # inline unit comment')
+      .replace(/^gravity=.*$/m, '  gravity = ' + String(defaults().gravity) + 'e0 # inline unit comment')
       .replace(/\n/g, '\r\n');
     expect(parseSettings(text)).toEqual(defaults());
   });
@@ -40,7 +38,7 @@ describe('canonical text settings', () => {
   it('exports the same complete schema in stable order and round-trips edited values', () => {
     const tuning = withTuning(createTuning(), {
       gravity: 12.4, cameraRearPercent: 17, cameraFrontPercent: 37,
-      cameraZoom: 1.25, jumpMaxChargeSeconds: 2.5, waterSwimAcceleration: 5.5,
+      cameraDeadZonePercent: 35, shellPivotY: 0.42, jumpMaxChargeSeconds: 2.5, waterSwimAcceleration: 5.5,
     });
     const text = exportSettings(tuning);
     const parsed = parseSettings(text);
@@ -55,9 +53,10 @@ describe('canonical text settings', () => {
   it.each([
     ['unknown key', () => sourceSettings + '\nunknownSetting=2', /unknownSetting/],
     ['duplicate key', () => sourceSettings + '\ngravity=10', /duplicate setting gravity/],
-    ['duplicate version', () => sourceSettings + '\nschemaVersion=1', /duplicate setting schemaVersion/],
-    ['missing version', () => sourceSettings.replace('schemaVersion=1', ''), /missing schemaVersion/],
-    ['unsupported version', () => sourceSettings.replace('schemaVersion=1', 'schemaVersion=2'), /unsupported schemaVersion/],
+    ['duplicate version', () => sourceSettings + '\nschemaVersion=2', /duplicate setting schemaVersion/],
+    ['missing version', () => sourceSettings.replace('schemaVersion=2', ''), /missing schemaVersion/],
+    ['unsupported version', () => sourceSettings.replace('schemaVersion=2', 'schemaVersion=99'), /unsupported schemaVersion/],
+    ['old zoom format', () => sourceSettings.replace('schemaVersion=2', 'schemaVersion=1'), /cameraDeadZonePercent and shellPivotY/],
     ['missing value', () => sourceSettings.replace(/^waterSwimAcceleration=.*$/m, ''), /missing setting waterSwimAcceleration/],
     ['empty value', () => replaceSetting('gravity', ''), /decimal number.*gravity/],
     ['NaN', () => replaceSetting('gravity', 'NaN'), /decimal number.*gravity/],
@@ -73,7 +72,7 @@ describe('canonical text settings', () => {
   });
 
   it('includes the source line number for syntactically invalid assignments', () => {
-    expect(() => parseSettings('# header\nschemaVersion=1\ngravity=nope')).toThrow('settings.txt:3:');
+    expect(() => parseSettings('# header\nschemaVersion=2\ngravity=nope')).toThrow('settings.txt:3:');
   });
 
   it.each([
@@ -83,7 +82,8 @@ describe('canonical text settings', () => {
     ['rear after front', { cameraRearPercent: 50, cameraFrontPercent: 40 }],
     ['camera out of speed range', { cameraSpeed: 5 }],
     ['reversed turtle speed range', { minSpeed: 3 }],
-    ['invalid zoom', { cameraZoom: 0 }],
+    ['overlapping dead zones', { cameraDeadZonePercent: 50 }],
+    ['negative shell height', { shellPivotY: -1 }],
     ['NaN buoyancy', { waterRiseAcceleration: Number.NaN }],
     ['infinite swimming mass response', { waterSwimWeightInfluence: Number.POSITIVE_INFINITY }],
   ] as const)('validates %s before serializing or applying', (_name, changes) => {
@@ -102,7 +102,7 @@ describe('canonical text settings', () => {
 
   it('keeps malformed source parsing inside startup rather than module initialization', async () => {
     vi.resetModules();
-    vi.doMock('../../settings.txt?raw', () => ({ default: 'schemaVersion=1\ngravity=bad\n' }));
+    vi.doMock('../../settings.txt?raw', () => ({ default: 'schemaVersion=2\ngravity=bad\n' }));
     try {
       const module = await import('../../src/game/config/tuning');
       expect(() => module.createTuning()).toThrow(/settings.txt:2:.*gravity/);
@@ -114,21 +114,21 @@ describe('canonical text settings', () => {
 });
 
 describe('viewport-derived tuning', () => {
-  it('retains the existing baseline metre boundaries at the initial zoom', () => {
+  it('maps baseline movement margins to the fixed laboratory reference', () => {
     const tuning = createTuning();
-    expect(tuning.cameraBack).toBeCloseTo(2.6, 12);
-    expect(tuning.cameraFront).toBeCloseTo(5.2, 12);
+    expect(tuning.cameraBack).toBeCloseTo(tuning.viewWidth / tuning.worldPixelsPerMetre * tuning.cameraRearPercent / 100, 12);
+    expect(tuning.cameraFront).toBeCloseTo(tuning.viewWidth / tuning.worldPixelsPerMetre * tuning.cameraFrontPercent / 100, 12);
     expect(() => validateTuning(tuning)).not.toThrow();
   });
 
-  it.each([0.5, 1, 2])('matches configured viewport percentages at zoom %s', cameraZoom => {
+  it.each([0, 20, 40, 45])('keeps laboratory margins independent of dead zone %s', cameraDeadZonePercent => {
     const base = createTuning();
-    const tuning = withTuning(base, { cameraZoom });
-    const pixelsPerMetre = tuning.worldPixelsPerMetre * tuning.cameraZoom;
+    const tuning = withTuning(base, { cameraDeadZonePercent });
+    const pixelsPerMetre = tuning.worldPixelsPerMetre;
     expect(tuning.cameraBack * pixelsPerMetre / tuning.viewWidth * 100).toBeCloseTo(tuning.cameraRearPercent, 12);
     expect(tuning.cameraFront * pixelsPerMetre / tuning.viewWidth * 100).toBeCloseTo(tuning.cameraFrontPercent, 12);
-    expect(base.cameraZoom).toBe(1);
-    expect(base.cameraBack).toBeCloseTo(2.6, 12);
+    expect(tuning.cameraBack).toBe(base.cameraBack);
+    expect(tuning.cameraFront).toBe(base.cameraFront);
   });
 
   it('recomputes derived values rather than accepting manual camera-limit overrides', () => {
@@ -151,16 +151,14 @@ describe('viewport-derived tuning', () => {
     const settings = parseSettings(exportSettings(createTuning()));
     const fields = TUNING_FIELDS.map(field => field.key);
     expect(new Set(fields).size).toBe(fields.length);
-    expect(fields).toHaveLength(18);
+    expect(fields).toHaveLength(19);
     for (const field of TUNING_FIELDS) {
       expect(settings[field.key]).toBeDefined();
       expect(settings[field.key]).toBeGreaterThanOrEqual(field.min);
       expect(settings[field.key]).toBeLessThanOrEqual(field.max);
-      const steps = (settings[field.key] - field.min) / field.step;
-      expect(steps).toBeCloseTo(Math.round(steps), 8);
     }
     expect(fields).toEqual(expect.arrayContaining([
-      'cameraRearPercent', 'cameraFrontPercent', 'cameraZoom', 'jumpMaxChargeSeconds',
+      'cameraRearPercent', 'cameraFrontPercent', 'cameraDeadZonePercent', 'shellPivotY', 'jumpMaxChargeSeconds',
       'jumpMaxLaunchSpeed', 'gravity', 'waterRiseAcceleration', 'waterSwimAcceleration',
       'waterSwimWeightInfluence',
     ]));

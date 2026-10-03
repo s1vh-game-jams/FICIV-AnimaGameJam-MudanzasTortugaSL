@@ -94,7 +94,8 @@ describe('charged jump and supported cargo', () => {
     const start = simulation.snapshot();
     release(simulation);
     let airborneTicks = 0;
-    for (let i = 0; i < simulation.tuning.physicsHz * 1.5; i++) {
+    const flightAndLandingSeconds = 2 * simulation.tuning.jumpMaxLaunchSpeed / simulation.tuning.gravity + 0.5;
+    for (let i = 0; i < simulation.tuning.physicsHz * flightAndLandingSeconds; i++) {
       simulation.step();
       const snapshot = simulation.snapshot();
       if (!snapshot.turtle.grounded) airborneTicks++;
@@ -174,13 +175,16 @@ describe('terrain pose and actual shell support', () => {
     let measuredSlope = false, measuredCompensation = false;
     for (let i = 0; i < simulation.tuning.physicsHz * 20; i++) {
       const previous = simulation.snapshot();
-      const vertical = previous.turtle.bodyAngle > 0.02 ? -1 : 0;
+      // The restored low pivot has genuine terrain clearance limits; do not
+      // demand a fully horizontal shell where its front rim hits the ramp.
+      const target = Math.max(-0.45, Math.min(0.45, -previous.turtle.bodyAngle));
+      const vertical = previous.turtle.angle < target - 0.015 ? 1 : previous.turtle.angle > target + 0.015 ? -1 : 0;
       simulation.step({ horizontal: 0, vertical });
       const next = simulation.snapshot();
       expect(Math.abs(next.turtle.bodyAngle - previous.turtle.bodyAngle)).toBeLessThanOrEqual(
         simulation.tuning.shellAngularSpeed / simulation.tuning.physicsHz + 1e-7);
-      expect(next.shell.x).toBeCloseTo(next.turtle.bodyX - Math.sin(next.turtle.bodyAngle) * G.shellPivotY, 5);
-      expect(next.shell.y).toBeCloseTo(next.turtle.bodyY + Math.cos(next.turtle.bodyAngle) * G.shellPivotY, 5);
+      expect(next.shell.x).toBeCloseTo(next.turtle.bodyX - Math.sin(next.turtle.bodyAngle) * simulation.tuning.shellPivotY, 5);
+      expect(next.shell.y).toBeCloseTo(next.turtle.bodyY + Math.cos(next.turtle.bodyAngle) * simulation.tuning.shellPivotY, 5);
       expect(next.shell.angle).toBeCloseTo(next.turtle.bodyAngle + next.turtle.angle, 5);
       if (next.turtle.bodyAngle > 0.4) measuredSlope = true;
       if (next.turtle.bodyAngle > 0.4 && next.turtle.angle < -0.4) measuredCompensation = true;
@@ -212,8 +216,8 @@ describe('terrain pose and actual shell support', () => {
     expect(checked).toBe(true);
   });
 
-  it('starts in the midpoint of the configured camera window at a different zoom', () => {
-    const tuning = withTuning(createTuning(), { cameraZoom: 1.2, cameraRearPercent: 18, cameraFrontPercent: 42 });
+  it('starts in the midpoint of the configured movement window independently of dead zone', () => {
+    const tuning = withTuning(createTuning(), { cameraDeadZonePercent: 35, cameraRearPercent: 18, cameraFrontPercent: 42 });
     const snapshot = create('flat', 'empty', tuning).snapshot();
     expect(snapshot.turtle.x - snapshot.cameraX).toBeCloseTo((tuning.cameraBack + tuning.cameraFront) / 2, 6);
   });

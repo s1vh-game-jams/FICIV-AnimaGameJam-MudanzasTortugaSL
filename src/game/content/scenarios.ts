@@ -33,6 +33,9 @@ export const SCENARIOS: readonly Scenario[] = [
     terrain: [{ biome: 'grass', points: [{ x: -12, y: 0 }, { x: 9, y: 0 }, { x: 15, y: -3.5 },
       { x: 38, y: -3.5 }, { x: 47, y: 0 }, { x: 80, y: 0 }] }],
     water: { left: 10, right: 45, surface: -0.1, bottom: -3.5 } },
+  { id: 'jump-wall', label: '09 · Pared / espera de cámara', description: 'Pared de 2 m: la cámara espera. Carga Espacio al llegar y suelta para continuar.', startX: 0, startY: 0, endX: 45,
+    terrain: [{ biome: 'grass', points: [{ x: -12, y: 0 }, { x: 9, y: 0 }, { x: 9.001, y: 2 },
+      { x: 16, y: 2 }, { x: 20, y: 0 }, { x: 70, y: 0 }] }] },
 ];
 export function terrainAt(scenario: Scenario, x: number): { height: number; biome: 'grass' | 'rock' } {
   for (const strip of scenario.terrain) for (let i = 1; i < strip.points.length; i++) {

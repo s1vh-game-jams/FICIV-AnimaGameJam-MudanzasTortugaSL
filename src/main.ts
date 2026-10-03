@@ -1,6 +1,7 @@
 import './styles/main.css';
 import { createTuning, exportSettings, TUNING_FIELDS, withTuning } from './game/config/tuning';
 import type { Tuning } from './game/config/tuning';
+import { createLevelCameraFraming } from './game/config/cameraFraming';
 import { FixedLoop } from './game/core/fixedLoop';
 import { isInteractiveTarget, KeyboardInput } from './game/core/input';
 import { SCENARIOS } from './game/content/scenarios';
@@ -44,16 +45,21 @@ async function showPlayground(): Promise<void> {
         <select id="scenario">${SCENARIOS.map(s => '<option value="' + s.id + '">' + s.label + '</option>').join('')}</select>
         <label for="load">Carga inicial</label><select id="load"><option value="full">Mudanza completa</option><option value="light">Solo sofá · comparación de peso</option><option value="empty">Sin carga · flotabilidad</option></select>
         <label class="help-preview"><input id="help-preview" type="checkbox"> Previsualizar ayudas</label>
-        <details open><summary>Parámetros de prueba</summary><p class="hint">Cambiar un valor reinicia el tramo. La pausa se conserva. Los límites de cámara son posiciones en % desde la izquierda de la escena.</p>
+        <details open><summary>Parámetros de prueba</summary><p class="hint">Cambiar un valor reinicia el tramo. La pausa se conserva. Los márgenes se miden en % desde la izquierda de esta escena, cuya escala es fija. La zona muerta reserva ese porcentaje a cada lado en un nivel normal.</p>
         <div class="fields">${TUNING_FIELDS.map(f => '<label class="tuning-field">' + f.label +
           '<input type="number" data-tuning="' + f.key + '" min="' + f.min + '" max="' + f.max + '" step="' + f.step + '"></label>').join('')}</div>
         <p id="tuning-error" class="tuning-error" role="status" hidden></p>
+        <div class="camera-preview" aria-label="Composición prevista para un nivel normal">
+          <p class="hint">Encuadre de nivel · vista orientativa</p>
+          <div class="camera-preview-bar" aria-hidden="true"><span id="camera-rear-zone"></span><span id="camera-movement-zone"></span><span id="camera-front-zone"></span></div>
+          <output id="camera-framing" class="hint"></output>
+        </div>
         <button id="baseline">Restaurar settings</button><button id="export-settings">Exportar settings</button>
         <p class="hint">Para guardar los ajustes, reemplaza settings.txt en el repositorio con el archivo exportado y reconstruye el build.</p></details>
         <details><summary>Qué estamos probando</summary><p>La carga se conecta al caparazón por contactos. Un rebote breve se puede recuperar; una pérdida definitiva queda fuera de la mudanza.</p>
         <p>Compensa la inclinación del suelo con el caparazón. Carga Espacio en terreno seco y suéltalo para saltar.</p>
-        <p>En agua, más peso permite bajar y aprovechar una corriente más fuerte. Sin carga cuesta hundirse. Don Tortuga sigue siempre hacia la derecha.</p></details>
-        <p class="hint">Los tramos son diagnósticos, sin puntuación ni niveles reales. El zoom se ajusta aquí; en las partidas normales será fijo.</p>
+        <p>En agua, más peso permite bajar y aprovechar una corriente más fuerte. Sin carga cuesta hundirse. Ante un obstáculo, la cámara espera en el margen trasero hasta que puedas avanzar saltando.</p></details>
+        <p class="hint">Los tramos son diagnósticos, sin puntuación ni niveles reales. Aquí la escala es fija. Cada nivel normal calculará su zoom al cargar y lo mantendrá durante el recorrido.</p>
       </aside>
     </section>
   </div>`;
@@ -91,7 +97,8 @@ async function showPlayground(): Promise<void> {
     metrics.value = snapshot.turtle.biome + ' · ' + snapshot.turtle.speed.toFixed(2) + ' m/s · ' +
       'caparazón ' + (snapshot.turtle.angle * 180 / Math.PI).toFixed(1) + '° · suelo ' +
       (snapshot.turtle.bodyAngle * 180 / Math.PI).toFixed(1) + '° · ' + snapshot.turtle.mass.toFixed(1) + ' kg · ' +
-      snapshot.time.toFixed(2) + ' s · ' + Math.round(fps) + ' FPS';
+      snapshot.time.toFixed(2) + ' s · ' + Math.round(fps) + ' FPS' +
+      (snapshot.cameraBlocked ? ' · cámara esperando' : '');
     metrics.dataset.tick = String(snapshot.tick);
     metrics.dataset.time = String(snapshot.time);
     metrics.dataset.x = String(snapshot.turtle.x);
@@ -102,6 +109,10 @@ async function showPlayground(): Promise<void> {
     metrics.dataset.biome = snapshot.turtle.biome;
     metrics.dataset.jumpCharging = String(snapshot.turtle.jumpCharging);
     metrics.dataset.help = message?.id ?? '';
+    metrics.dataset.cameraX = String(snapshot.cameraX);
+    metrics.dataset.cameraSpeed = String(snapshot.cameraSpeed);
+    metrics.dataset.cameraBlocked = String(snapshot.cameraBlocked);
+    metrics.dataset.shellY = String(snapshot.shell.y);
     cargoStatus.replaceChildren(...snapshot.cargo.map(c => {
       const label = document.createElement('span');
       label.className = 'cargo-chip ' + c.state;
@@ -118,6 +129,14 @@ async function showPlayground(): Promise<void> {
       const key = TUNING_FIELDS.find(f => f.key === field.dataset.tuning)!.key;
       field.value = String(tuning[key]);
     }
+    const framing = createLevelCameraFraming(tuning);
+    const percent = tuning.cameraDeadZonePercent;
+    document.querySelector<HTMLElement>('#camera-rear-zone')!.style.width = percent + '%';
+    document.querySelector<HTMLElement>('#camera-front-zone')!.style.width = percent + '%';
+    document.querySelector<HTMLElement>('#camera-movement-zone')!.style.width = (100 - 2 * percent) + '%';
+    document.querySelector<HTMLOutputElement>('#camera-framing')!.value =
+      percent + '% detrás y delante · ventana ' + (tuning.cameraFront - tuning.cameraBack).toFixed(2) +
+      ' m · campo visible ' + framing.visibleMetres.toFixed(2) + ' m';
   }
   function reset(nextTuning: Tuning = tuning): void {
     const next = new PhysicsSimulation(scenario, nextTuning, load);

@@ -16,12 +16,118 @@ const groups = (member: number, filter: number) => (member << 16) | filter;
 const TERRAIN = 1, TURTLE = 2, CARGO_GROUP = 4, SHELL = 8, LOST = 16;
 const clamp = (v: number, low: number, high: number) => Math.max(low, Math.min(high, v));
 const POSE_CLEARANCE_SEARCH_STEPS = 8;
+const CONTACT_MOVEMENT_TOLERANCE = G.controllerNudge * G.controllerNudge;
+// Rapier's float32 contact-distance queries can disagree near long prisms.
+// Clearance tolerates one millimetre; camera movement has its own tolerance.
+const POSE_PENETRATION_TOLERANCE = G.posePenetrationTolerance;
 const SHELL_ROTATION_RADIUS = Math.max(...Array.from({ length: G.shellVertices.length / 2 }, (_, i) =>
   Math.hypot(G.shellVertices[i * 2], G.shellVertices[i * 2 + 1])));
+
+/** Exact vertex minima prove a moving convex hull stays outside this support plane. */
+function clearsContactPlane(origin: RAPIER.Vector, rotation: number, delta: RAPIER.Vector,
+  angleChange: number, point: RAPIER.Vector, normal: RAPIER.Vector): boolean {
+  const originDistance = (origin.x - point.x) * normal.x + (origin.y - point.y) * normal.y;
+  const translation = delta.x * normal.x + delta.y * normal.y;
+  const tau = Math.PI * 2;
+  const initialDistance = Math.min(...Array.from({ length: G.shellVertices.length / 2 }, (_, i) => {
+    const x = G.shellVertices[i * 2], y = G.shellVertices[i * 2 + 1];
+    return originDistance + normal.x * (x * Math.cos(rotation) - y * Math.sin(rotation)) +
+      normal.y * (x * Math.sin(rotation) + y * Math.cos(rotation));
+  }));
+  let arrivalMinimum = Infinity;
+  for (let i = 0; i < G.shellVertices.length; i += 2) {
+    const x = G.shellVertices[i], y = G.shellVertices[i + 1];
+    const cosine = normal.x * x + normal.y * y;
+    const sine = -normal.x * y + normal.y * x;
+    const distance = (fraction: number) => originDistance + translation * fraction +
+      cosine * Math.cos(rotation + angleChange * fraction) + sine * Math.sin(rotation + angleChange * fraction);
+    arrivalMinimum = Math.min(arrivalMinimum, distance(1));
+    let minimum = Math.min(distance(0), distance(1));
+    const amplitude = angleChange * Math.hypot(cosine, sine);
+    if (amplitude !== 0) {
+      const root = -translation / amplitude;
+      if (Math.abs(root) <= 1) {
+        const phase = Math.atan2(cosine, sine);
+        const low = Math.min(rotation, rotation + angleChange) + phase;
+        const high = Math.max(rotation, rotation + angleChange) + phase;
+        for (const extremum of [Math.acos(root), -Math.acos(root)]) {
+          for (let turn = Math.ceil((low - extremum) / tau); turn <= Math.floor((high - extremum) / tau); turn++) {
+            const fraction = (extremum + turn * tau - phase - rotation) / angleChange;
+            minimum = Math.min(minimum, distance(fraction));
+          }
+        }
+      }
+    }
+    if (minimum < Math.min(0, initialDistance) - CONTACT_MOVEMENT_TOLERANCE) return false;
+  }
+  // Existing numerical overlap may be escaped, never made deeper or dragged
+  // sideways indefinitely. New obstacles still require the full sweep.
+  return initialDistance >= -POSE_PENETRATION_TOLERANCE || arrivalMinimum > initialDistance + CONTACT_MOVEMENT_TOLERANCE;
+}
+
+function polygonVertices(shape: RAPIER.Shape, position: RAPIER.Vector, rotation: number): RAPIER.Vector[] | undefined {
+  let vertices: ArrayLike<number>;
+  if (shape.type === RAPIER.ShapeType.ConvexPolygon) vertices = (shape as RAPIER.ConvexPolygon).vertices;
+  else if (shape.type === RAPIER.ShapeType.Cuboid) {
+    const half = (shape as RAPIER.Cuboid).halfExtents;
+    vertices = [-half.x, -half.y, half.x, -half.y, half.x, half.y, -half.x, half.y];
+  } else return undefined;
+  const cosine = Math.cos(rotation), sine = Math.sin(rotation);
+  return Array.from({ length: vertices.length / 2 }, (_, i) => ({
+    x: position.x + vertices[i * 2] * cosine - vertices[i * 2 + 1] * sine,
+    y: position.y + vertices[i * 2] * sine + vertices[i * 2 + 1] * cosine,
+  }));
+}
+
+/** Exact polygon separation avoids long-prism GJK distance false clearance. */
+function polygonSeparation(obstacle: RAPIER.Collider, shape: RAPIER.Shape, position: RAPIER.Vector, rotation: number,
+  immutableVertices?: RAPIER.Vector[]) {
+  const first = immutableVertices ?? polygonVertices(obstacle.shape, obstacle.translation(), obstacle.rotation());
+  const second = polygonVertices(shape, position, rotation);
+  if (!first || !second) return undefined;
+  let distance = -Infinity;
+  let normal = { x: 0, y: 1 }, point = first[0];
+  for (const polygon of [first, second]) for (let i = 0; i < polygon.length; i++) {
+    const a = polygon[i], b = polygon[(i + 1) % polygon.length];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    if (length === 0) continue;
+    const axis = { x: -(b.y - a.y) / length, y: (b.x - a.x) / length };
+    const project = (vertices: RAPIER.Vector[]) => vertices.map(vertex => vertex.x * axis.x + vertex.y * axis.y);
+    const p = project(first), q = project(second);
+    const outward = Math.min(...q) - Math.max(...p), inward = Math.min(...p) - Math.max(...q);
+    const separation = Math.max(outward, inward);
+    if (separation > distance) {
+      distance = separation;
+      normal = outward >= inward ? axis : { x: -axis.x, y: -axis.y };
+      point = first.reduce((best, vertex) => vertex.x * normal.x + vertex.y * normal.y > best.x * normal.x + best.y * normal.y ? vertex : best);
+    }
+  }
+  return { distance, normal1: normal, point1: point };
+}
+
+function convexEnvelope(vertices: number[]): RAPIER.ConvexPolygon {
+  const points = Array.from({ length: vertices.length / 2 }, (_, i) => ({ x: vertices[i * 2], y: vertices[i * 2 + 1] }))
+    .sort((a, b) => a.x - b.x || a.y - b.y)
+    .filter((point, i, sorted) => i === 0 || point.x !== sorted[i - 1].x || point.y !== sorted[i - 1].y);
+  const cross = (a: RAPIER.Vector, b: RAPIER.Vector, c: RAPIER.Vector) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  const half = (sorted: RAPIER.Vector[]) => {
+    const hull: RAPIER.Vector[] = [];
+    for (const point of sorted) {
+      while (hull.length > 1 && cross(hull[hull.length - 2], hull[hull.length - 1], point) <= 0) hull.pop();
+      hull.push(point);
+    }
+    return hull.slice(0, -1);
+  };
+  // Transient ConvexPolygon.vertices retains its input before WASM builds the
+  // hull. Explicit ordering gives both SAT and Rapier the same boundary edges.
+  const ordered = [...half(points), ...half([...points].reverse())];
+  return new RAPIER.ConvexPolygon(new Float32Array(ordered.flatMap(point => [point.x, point.y])), true);
+}
 export type LoadPreset = 'full' | 'light' | 'empty';
 interface CargoBody { definition: CargoDefinition; body: RAPIER.RigidBody; colliders: RAPIER.Collider[] }
 export interface SimulationSnapshot {
   scenarioId: string; tick: number; time: number; cameraX: number; cameraY: number;
+  cameraSpeed: number; cameraBlocked: boolean;
   turtle: { x: number; y: number; bodyX: number; bodyY: number; angle: number; bodyAngle: number; speed: number; verticalSpeed: number; biome: Biome; mass: number;
     grounded: boolean; jumpCharging: boolean; jumpChargeSeconds: number };
   shell: { x: number; y: number; angle: number };
@@ -40,6 +146,7 @@ export class PhysicsSimulation {
   private controller: RAPIER.KinematicCharacterController;
   private colliderIds = new Map<number, string>();
   private terrainSlopes = new Map<number, number>();
+  private terrainVertices = new Map<number, RAPIER.Vector[]>();
   private shellCollider: RAPIER.Collider;
   private angle = 0;
   private bodyAngle = 0;
@@ -57,6 +164,8 @@ export class PhysicsSimulation {
   private tickCount = 0;
   private cameraX: number;
   private cameraY: number;
+  private cameraSpeed = 0;
+  private cameraBlocked = false;
   private disposed = false;
 
   constructor(readonly scenario: Scenario, readonly tuning: Tuning, readonly load: LoadPreset = 'full') {
@@ -76,6 +185,10 @@ export class PhysicsSimulation {
         const collider = this.world.createCollider(shape.setFriction(strip.biome === 'rock' ? G.rockFriction : G.grassFriction)
           .setRestitution(0).setCollisionGroups(groups(TERRAIN, TURTLE | CARGO_GROUP | LOST)));
         this.terrainSlopes.set(collider.handle, (b.y - a.y) / (b.x - a.x));
+        // Only authored terrain is immutable. Added/moved solids are queried
+        // with their current Rapier transforms and never use this cache.
+        const vertices = polygonVertices(collider.shape, collider.translation(), collider.rotation());
+        if (vertices) this.terrainVertices.set(collider.handle, vertices);
       }
     }
     const position = { x: scenario.startX, y: scenario.startY + G.turtleHalfHeight + G.controllerOffset };
@@ -92,7 +205,7 @@ export class PhysicsSimulation {
     this.controller.setMaxSlopeClimbAngle(tuning.shellMaxAngle + climbTolerance);
     this.controller.setMinSlopeSlideAngle(tuning.shellMaxAngle + climbTolerance);
     this.shell = this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased()
-      .setTranslation(position.x, position.y + G.shellPivotY));
+      .setTranslation(position.x, position.y + tuning.shellPivotY));
     const shellShape = RAPIER.ColliderDesc.convexHull(new Float32Array(G.shellVertices));
     if (!shellShape) throw new Error('Invalid shell geometry');
     this.shellCollider = this.world.createCollider(shellShape.setFriction(tuning.cargoFriction)
@@ -111,7 +224,7 @@ export class PhysicsSimulation {
   private createCargo(d: CargoDefinition): void {
     const body = this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(this.scenario.startX + d.x,
-        this.scenario.startY + d.y + G.shellPivotY - G.cargoLayoutShellPivotY)
+        this.scenario.startY + d.y + this.tuning.shellPivotY - G.cargoLayoutShellPivotY)
       .setAdditionalMassProperties(d.mass, { x: 0, y: d.centerOfMassY },
         d.mass * (d.width * d.width + d.height * d.height) / 12)
       .setLinearDamping(this.tuning.cargoLinearDamping)
@@ -139,8 +252,8 @@ export class PhysicsSimulation {
   cancelJump(): void { this.jump.cancel(); }
 
   private shellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY) {
-    return { x: position.x - Math.sin(bodyAngle) * G.shellPivotY,
-      y: position.y + bodyOffsetY + Math.cos(bodyAngle) * G.shellPivotY, angle: bodyAngle + manualAngle };
+    return { x: position.x - Math.sin(bodyAngle) * this.tuning.shellPivotY,
+      y: position.y + bodyOffsetY + Math.cos(bodyAngle) * this.tuning.shellPivotY, angle: bodyAngle + manualAngle };
   }
 
   private supportOffset(position: RAPIER.Vector, bodyAngle: number, grounded: boolean): number {
@@ -162,17 +275,62 @@ export class PhysicsSimulation {
     return this.water ? approach(this.bodyOffsetY, 0, maximumShift) : this.bodyOffsetY;
   }
 
-  private castShellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY) {
+  private castShellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY):
+    { time_of_impact: number; normal1: RAPIER.Vector } | null {
     const next = this.shellPose(position, bodyAngle, manualAngle, bodyOffsetY);
     const current = this.shell.translation();
     const angleChange = next.angle - this.shell.rotation();
-    const flags = RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC;
-    const finalHit = this.world.castShape(next, next.angle, { x: 0, y: 0 }, this.shellCollider.shape,
-      G.controllerNudge, 0, true, flags, groups(TURTLE, TERRAIN));
-    if (finalHit) return finalHit;
     const delta = { x: next.x - current.x, y: next.y - current.y };
+    const flags = RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC;
+    const rounding = CONTACT_MOVEMENT_TOLERANCE;
+    const separation = (collider: RAPIER.Collider, shape: RAPIER.Shape, position: RAPIER.Vector, rotation: number) =>
+      polygonSeparation(collider, shape, position, rotation, this.terrainVertices.get(collider.handle));
+    const filter = (collider: RAPIER.Collider) => {
+      const polygon = separation(collider, this.shellCollider.shape, current, this.shell.rotation());
+      if (polygon) return polygon.distance > G.controllerNudge ||
+        !clearsContactPlane(current, this.shell.rotation(), delta, angleChange, polygon.point1, polygon.normal1);
+      // Numerical clearance is not a physical wall: permit sliding along or
+      // leaving an existing contact when the arrival hull remains outside it.
+      // Otherwise a wall can prevent the very upward jump needed to clear it.
+      const departure = collider.contactShape(this.shellCollider.shape, current, this.shell.rotation(), G.controllerNudge);
+      if (!departure || departure.distance < -rounding) return true;
+      const contactOffset = { x: departure.point2.x - current.x, y: departure.point2.y - current.y };
+      const contactTravel = {
+        x: delta.x + contactOffset.x * (Math.cos(angleChange) - 1) - contactOffset.y * Math.sin(angleChange),
+        y: delta.y + contactOffset.x * Math.sin(angleChange) + contactOffset.y * (Math.cos(angleChange) - 1),
+      };
+      if (contactTravel.x * departure.normal1.x + contactTravel.y * departure.normal1.y < -rounding) return true;
+      const arrival = collider.contactShape(this.shellCollider.shape, next, next.angle, G.controllerNudge);
+      if (arrival && arrival.distance < -rounding) return true;
+      // A departing contact point alone cannot justify ignoring a rotational
+      // envelope. Every vertex must clear this convex collider's supporting
+      // plane throughout the arc, including all interior derivative extrema.
+      return !clearsContactPlane(current, this.shell.rotation(), delta, angleChange, departure.point1, departure.normal1);
+    };
+    // A zero-velocity shape cast can miss existing overlap. Query endpoint
+    // intersections explicitly before the sweep, including every rotation.
+    const terrainColliders = this.world.colliders.getAll().filter(collider => !collider.isSensor() &&
+      !collider.parent()?.isDynamic() && ((collider.collisionGroups() >>> 16) & TERRAIN) !== 0 &&
+      (collider.collisionGroups() & TURTLE) !== 0);
+    for (const collider of terrainColliders) {
+      const polygon = separation(collider, this.shellCollider.shape, next, next.angle);
+      if (polygon) {
+        if (polygon.distance < -POSE_PENETRATION_TOLERANCE && filter(collider)) {
+          return { time_of_impact: 0, normal1: polygon.normal1 };
+        }
+        continue;
+      }
+      const contact = collider.contactShape(this.shellCollider.shape, next, next.angle, G.controllerNudge);
+      if (contact && contact.distance < -rounding) {
+        return { time_of_impact: 0, normal1: contact.normal1 };
+      }
+    }
+    const finalHit = this.world.castShape(next, next.angle, { x: 0, y: 0 }, this.shellCollider.shape,
+      G.controllerNudge, 0, true, flags, groups(TURTLE, TERRAIN), undefined, undefined,
+      collider => !separation(collider, this.shellCollider.shape, next, next.angle) && filter(collider));
+    if (finalHit) return finalHit;
     if (angleChange === 0) return this.world.castShape(current, next.angle,
-      delta, this.shellCollider.shape, G.controllerNudge / 2, 1, false, flags, groups(TURTLE, TERRAIN));
+      delta, this.shellCollider.shape, G.controllerNudge / 2, 1, false, flags, groups(TURTLE, TERRAIN), undefined, undefined, filter);
     // Rapier has no rotational sweep. The convex envelope of departure and
     // arrival hulls covers translation and their vertex chords. Inflate only
     // by the angular sagitta to cover the curved motion between those chords.
@@ -187,10 +345,25 @@ export class PhysicsSimulation {
           x * Math.sin(rotation) + y * Math.cos(rotation) + (endpoint ? delta.y : 0));
       }
     }
-    const envelope = new RAPIER.ConvexPolygon(new Float32Array(vertices), false);
+    const envelope = convexEnvelope(vertices);
     const sagitta = SHELL_ROTATION_RADIUS * (1 - Math.cos(angleChange / 2));
+    for (const collider of terrainColliders) {
+      if (!filter(collider)) continue;
+      const polygon = separation(collider, envelope, current, 0);
+      if (polygon) {
+        if (polygon.distance < sagitta - POSE_PENETRATION_TOLERANCE) {
+          return { time_of_impact: 0, normal1: polygon.normal1 };
+        }
+        continue;
+      }
+      const contact = collider.contactShape(envelope, current, 0, sagitta + G.controllerNudge / 2);
+      if (contact && contact.distance < sagitta + G.controllerNudge / 2) {
+        return { time_of_impact: 0, normal1: contact.normal1 };
+      }
+    }
     return this.world.castShape(current, 0, { x: 0, y: 0 }, envelope,
-      sagitta + G.controllerNudge / 2, 0, true, flags, groups(TURTLE, TERRAIN));
+      sagitta + G.controllerNudge / 2, 0, true, flags, groups(TURTLE, TERRAIN), undefined, undefined,
+      collider => !separation(collider, envelope, current, 0) && filter(collider));
   }
 
   private alignShell(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, grounded: boolean): RAPIER.Vector {
@@ -208,6 +381,31 @@ export class PhysicsSimulation {
         break;
       }
       fraction /= 2;
+    }
+    if (!accepted && manualAngle !== this.angle) {
+      // Forward translation may itself be blocked. A safe bounded correction
+      // in place must still be accepted so the player can leave that contact.
+      const origin = this.turtle.translation();
+      for (let attempt = 0, fraction = 1; attempt < POSE_CLEARANCE_SEARCH_STEPS; attempt++, fraction /= 2) {
+        const manual = this.angle + (manualAngle - this.angle) * fraction;
+        if (!this.castShellPose(origin, this.bodyAngle, manual)) {
+          this.angle = manual; position = origin; accepted = true;
+          break;
+        }
+      }
+    }
+    if (!accepted) {
+      // On a ramp join, automatic body leveling can cancel an intentional
+      // shell correction. Let the shell leave contact while retaining the
+      // last safe body pose/clearance; the ordinary grounded query catches up.
+      for (let attempt = 0, fraction = 1; attempt < POSE_CLEARANCE_SEARCH_STEPS; attempt++, fraction /= 2) {
+        const manual = this.angle + (manualAngle - this.angle) * fraction;
+        const offset = Math.max(this.bodyOffsetY, this.supportOffset(position, this.bodyAngle, grounded));
+        if (!this.castShellPose(position, this.bodyAngle, manual, offset)) {
+          this.angle = manual; this.bodyOffsetY = offset; accepted = true;
+          break;
+        }
+      }
     }
     if (!accepted) {
       // Keep the last safe angles and resolve translation against the actual
@@ -265,6 +463,11 @@ export class PhysicsSimulation {
     const previousShellY = this.shell.translation().y;
     const jumpFraction = this.jump.update(input, !this.water && this.grounded, dt, t.jumpMaxChargeSeconds);
     const launching = jumpFraction !== undefined && jumpFraction > 0;
+    // Rapier's solver integrates gravity over its solver substeps. Match the
+    // mean displacement of those semi-implicit substeps rather than taking
+    // one full-tick Euler step, which makes the support outrun falling cargo.
+    const gravityDisplacementCorrection = this.water ? 0 :
+      t.gravity * dt * (this.world.numSolverIterations - 1) / (2 * this.world.numSolverIterations);
     let launchVelocityChange = 0;
     let desiredManualAngle: number;
     if (this.water && region) {
@@ -293,8 +496,9 @@ export class PhysicsSimulation {
     // Follow the last supporting contact tangent so the KCC does not reduce
     // horizontal intent by projecting it a second time along an uphill slope.
     const supportSlope = this.grounded && this.verticalSpeed <= 0 ? this.groundSlope : 0;
-    const desiredMovement = { x: (this.speed - this.verticalSpeed * supportSlope) * dt,
-      y: (this.verticalSpeed + this.speed * supportSlope) * dt };
+    const movementVerticalSpeed = this.verticalSpeed + (!this.grounded || launching ? gravityDisplacementCorrection : 0);
+    const desiredMovement = { x: (this.speed - movementVerticalSpeed * supportSlope) * dt,
+      y: (movementVerticalSpeed + this.speed * supportSlope) * dt };
     this.controller.computeColliderMovement(this.turtleCollider, desiredMovement,
       RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
     const movement = this.controller.computedMovement();
@@ -339,7 +543,7 @@ export class PhysicsSimulation {
       // impulse the carrier could not execute. Rapier resolves support/gravity.
       const acceptedSupportSpeed = (this.shellPose(next, this.bodyAngle, this.angle).y - previousShellY) / dt;
       launchVelocityChange = acceptedSupportSpeed > 0 ? Math.max(0,
-        Math.min(launchVelocityChange, acceptedSupportSpeed - previousVerticalSpeed)) : 0;
+        Math.min(launchVelocityChange, acceptedSupportSpeed + gravityDisplacementCorrection - previousVerticalSpeed)) : 0;
       if (next.y !== requested.y) this.verticalSpeed = movement.y / dt;
     }
     this.turtle.setNextKinematicTranslation(next);
@@ -353,7 +557,12 @@ export class PhysicsSimulation {
       c.body.setLinearDamping(this.grounded || this.water ? t.cargoLinearDamping : 0);
       if (connected.has(c.definition.id)) {
         const velocity = c.body.linvel();
-        c.body.addForce({ x: c.definition.mass * (this.speed - velocity.x) * t.gripAssistance, y: 0 }, true);
+        // Substep contact impulses can leave a tiny relative vertical speed
+        // against a position-based carrier. Existing contact grip damps that
+        // drift during flight; no root connection means no remote force.
+        c.body.addForce({ x: c.definition.mass * (this.speed - velocity.x) * t.gripAssistance,
+          y: !this.grounded && !this.water && !launching ?
+            c.definition.mass * (this.verticalSpeed - velocity.y) * t.gripAssistance : 0 }, true);
         if (launching) {
           // One physical impulse shares the support's takeoff. Separated/lost
           // cargo receives no remote kick, and relative motion remains free.
@@ -382,7 +591,15 @@ export class PhysicsSimulation {
       c.body.resetForces(true);
     }
     this.tickCount++;
-    this.cameraX += t.cameraSpeed * dt;
+    // A solid obstacle can exhaust the rear window, but cannot make the
+    // camera push the carrier through geometry or leave it behind. Only the
+    // camera advance is reduced; physics, cargo and run time keep advancing.
+    const desiredCameraAdvance = t.cameraSpeed * dt;
+    const allowedCameraAdvance = Math.max(0, this.turtle.translation().x - this.cameraX - t.cameraBack);
+    const cameraAdvance = Math.min(desiredCameraAdvance, allowedCameraAdvance);
+    this.cameraX += cameraAdvance;
+    this.cameraSpeed = cameraAdvance / dt;
+    this.cameraBlocked = cameraAdvance < desiredCameraAdvance - CONTACT_MOVEMENT_TOLERANCE;
     this.cameraY = approach(this.cameraY, this.turtle.translation().y + this.bodyOffsetY - G.turtleHalfHeight, dt * t.cameraVerticalSpeed);
   }
 
@@ -413,7 +630,7 @@ export class PhysicsSimulation {
     const position = this.turtle.translation();
     return {
       scenarioId: this.scenario.id, tick: this.tickCount, time: this.tickCount / this.tuning.physicsHz,
-      cameraX: this.cameraX, cameraY: this.cameraY,
+      cameraX: this.cameraX, cameraY: this.cameraY, cameraSpeed: this.cameraSpeed, cameraBlocked: this.cameraBlocked,
       turtle: { x: position.x, y: position.y, bodyX: position.x, bodyY: position.y + this.bodyOffsetY, angle: this.angle, speed: this.speed,
         bodyAngle: this.bodyAngle, verticalSpeed: this.verticalSpeed, biome: this.biome, mass: this.mass,
         grounded: this.grounded, jumpCharging: this.jump.charging, jumpChargeSeconds: this.jump.chargeSeconds },
