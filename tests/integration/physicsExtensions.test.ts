@@ -320,11 +320,18 @@ describe('mass-dependent water with preserved entry momentum', () => {
     if (!glass) throw new Error('Missing glass');
     glass.body.setTranslation({ x: -10, y: 30 }, true);
     let sawSeparated = false;
-    for (let tick = 0; tick < simulation.tuning.physicsHz; tick++) {
+    const lossTicks = Math.ceil(simulation.tuning.lossGraceSeconds * simulation.tuning.physicsHz) + 2;
+    for (let tick = 0; tick < lossTicks; tick++) {
       simulation.step();
       const state = simulation.tracker.state('cocktailGlass');
-      if (state === 'separated') { sawSeparated = true; expect(simulation.mass).toBeCloseTo(fullMass, 6); }
+      expect(glass.body.userForce()).toEqual({ x: 0, y: 0 });
+      if (state === 'separated') {
+        sawSeparated = true;
+        expect(simulation.mass).toBeCloseTo(fullMass, 6);
+        expect(simulation.tracker.separatedSeconds('cocktailGlass')).toBeLessThan(simulation.tuning.lossGraceSeconds);
+      }
       if (state === 'lost') {
+        expect(simulation.tracker.separatedSeconds('cocktailGlass')).toBeCloseTo(simulation.tuning.lossGraceSeconds, 6);
         expect(simulation.snapshot().turtle.mass).toBeCloseTo(fullMass - glass.definition.mass, 6);
         expect(simulation.snapshot().contacts.some(edge => edge.a === 'cocktailGlass' || edge.b === 'cocktailGlass')).toBe(false);
         break;
