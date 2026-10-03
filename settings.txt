@@ -10,8 +10,8 @@ gravity=9.81
 # Normal levels compute their fixed zoom at load: each outer dead zone uses this viewport percentage.
 cameraVerticalSpeed=2
 cameraSpeed=2
-cameraRearPercent=15.4375
-cameraFrontPercent=30.875
+cameraRearPercent=20
+cameraFrontPercent=80
 cameraDeadZonePercent=40
 # Pressure/guard widths: metres; recovery: inverse seconds.
 cameraPressureWidth=1.15

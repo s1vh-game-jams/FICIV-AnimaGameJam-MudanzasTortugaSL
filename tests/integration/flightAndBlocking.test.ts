@@ -168,6 +168,18 @@ describe('independent airborne load regression', () => {
 });
 
 describe('blocked camera without carrier repositioning', () => {
+  it('keeps the wide-window wall approach finite when temporary hull vertices round to the same point', () => {
+    const simulation = create({ cameraRearPercent: 20, cameraFrontPercent: 80 }, 'full',
+      SCENARIOS.find(scenario => scenario.id === 'jump-wall')!);
+    // This real approach reached a near-zero rotation whose distinct doubles
+    // became duplicate float32 hull vertices and previously crashed Rapier.
+    for (let tick = 0; tick < simulation.tuning.physicsHz * 3; tick++) {
+      simulation.step({ horizontal: 1, vertical: -1 });
+      assertFinite(simulation);
+    }
+    expect(simulation.snapshot().turtle.x).toBeGreaterThan(simulation.scenario.startX);
+  });
+
   it('keeps the actual convex hull above a long floor and releases its rim when rotation is reversed', () => {
     const simulation = create({}, 'empty', { ...SCENARIOS[0], startX: 75 });
     const shell = simulation.world.colliders.getAll().find(collider => (collider.collisionGroups() >>> 16) === 8)!;
