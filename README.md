@@ -93,6 +93,8 @@ El salto se carga estando apoyado en terreno seco. Su intensidad de despegue aum
 
 En desniveles, cuerpo y caparazón siguen la inclinación del suelo; las teclas verticales permiten compensarla para estabilizar la mudanza.
 
+El salto máximo actual despega a **8 m/s**. Si un obstáculo bloquea a Don Tortuga, la cámara lo espera al alcanzar el margen trasero; vuelve a avanzar en cuanto el salto permite librarlo. La carga y el cronómetro siguen activos durante esa espera.
+
 ### Agua
 
 | Tecla | Acción |
@@ -167,7 +169,11 @@ Para conservar un ajuste hecho en el laboratorio:
 
 El build incorpora esos valores: cambiar el archivo del repositorio después de construir requiere reconstruir. Los ajustes de la sesión se conservan al reiniciar el tramo; **«Restaurar settings»** recupera los valores cargados del archivo. Exportar mantiene el tramo y la pausa. Un archivo inválido muestra el parámetro que hay que corregir.
 
-Los límites de cámara son **posiciones en porcentaje desde la izquierda de la escena**, no distancias desde cada borde. El zoom y los límites se pueden ajustar aquí; las partidas normales utilizarán el zoom fijado antes de empezar. La escena conserva su composición apaisada 16:9 al escalar.
+Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: un 40 % detrás y delante deja el 20 % central para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calcularán el zoom al cargar y lo mantendrán fijo. El escalado conserva la composición apaisada 16:9.
+
+**Altura del caparazón:** `shellPivotY`, en metros sobre el origen del cuerpo, ajusta el apoyo real y la altura inicial de la carga. Su valor por defecto vuelve a **0,30 m**; **0,42 m** reproduce la elevación anterior. Las formas y los colliders conservan sus dimensiones.
+
+El formato actual es **`schemaVersion=2`**. Para adaptar una exportación anterior, cambia la versión a 2, sustituye `cameraZoom` por `cameraDeadZonePercent=40` y añade `shellPivotY=0.30`; conserva los demás parámetros. La zona muerta tiene una interpretación nueva y no es una conversión numérica del zoom antiguo. Las exportaciones actuales ya incluyen las claves correctas.
 
 La guía de físicas y pruebas está en [docs/PHYSICS.md](docs/PHYSICS.md).
 
@@ -241,7 +247,7 @@ Vite los copiará al build sin mantener una segunda copia en `/src`.
 
 Los SVG originales combinan formas simples: la lámpara y el vaso tienen varios colliders; el sofá y la TV mantienen geometrías físicas sencillas. El fondo con parallax y el laboratorio usan formas de Pixi y HTML/CSS.
 
-La artista puede repintar los placeholders conservando dimensiones y anclajes sin cambiar los colliders. El caparazón está ligeramente elevado para dejar espacio a las patas. Las dos poses adicionales de carga de salto conservan el registro del cuerpo. El contrato de tamaños, pivotes y animación está en [docs/ASSETS.md](docs/ASSETS.md).
+La artista puede repintar los placeholders conservando dimensiones y anclajes sin cambiar los colliders. La altura del caparazón se afina en el laboratorio, con el apoyo original como valor por defecto. Las dos poses adicionales de carga de salto conservan el registro del cuerpo. El contrato de tamaños, pivotes y animación está en [docs/ASSETS.md](docs/ASSETS.md).
 
 ### Don Tortuga
 

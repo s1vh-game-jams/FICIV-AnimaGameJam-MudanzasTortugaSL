@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Prototype 1 controls/settings/physics extension in progress on codex/physics-controls-settings
+**Status:** Prototype 1 flight/camera/shell-height corrections in progress on `codex/physics-stability-camera`
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -207,7 +207,7 @@ Jam release on main
   - right input accelerates;
   - left input reduces speed;
   - no reverse;
-  - no full stop;
+  - no player-commanded full stop; physical obstacle waiting is defined by PHYS-023;
   - min/base/max speeds are tunable.
 
 ### PHYS-004 — Implement shell tilt control
@@ -367,6 +367,38 @@ Jam release on main
 - **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
 - **Acceptance:** arrows and WASD coexist without doubled axes; partial alias release works; Space edges consumed once; editor/button focus respected; C replaces D as collider shortcut.
 
+### PHYS-020 — Restore and expose shell height
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/physics-stability-camera`
+- **Acceptance:** adjustable `shellPivotY` defaults to original 0.30 m; changing height shifts the real support and initial cargo registration without changing shapes; current maximum launch is 8 m/s. Remaining human tuning import is tracked separately in PHYS-024.
+
+### PHYS-021 — Preserve independent cargo through high offscreen jumps
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/physics-stability-camera`
+- **Acceptance:** high full-charge jumps preserve the stack absent actual destabilizing forces, irrespective of visibility; finite independent bodies; separated/lost cargo gets no remote flight correction; unchanged global contact grace; meaningful real-Rapier regression coverage.
+- **Regression provenance:** investigated against the controls/settings source integrated by `e705e70`; precise introducing commit not yet established.
+
+### PHYS-022 — Replace adjustable zoom with per-side dead-zone framing
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/physics-stability-camera`
+- **Acceptance:** schema 2 replaces `cameraZoom` with `cameraDeadZonePercent`; laboratory character scale remains fixed; physical movement bounds are independent of dead zone; shared immutable level-load framing derives zoom and visible origin from the physical corridor and per-side viewport percentage; normal-level integration remains future level work; explicit export/migration instructions and preview.
+
+### PHYS-023 — Wait at a blocked rear movement margin
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/physics-stability-camera`
+- **Acceptance:** solid frontal blockage limits camera advance before crossing the rear margin; camera resumes as accepted forward motion allows it after jumping; world/time/cargo keep running; no collision bypass or character teleport; diagnostic wall route and grounded/full-charge traversal tests.
+
+### PHYS-024 — Adopt the human's supplied permanent tuning defaults
+- **Priority:** P0
+- **Status:** BLOCKED
+- **Blocked by:** unavailable original settings attachment; requested pasted contents or its current path.
+- **Acceptance:** preserve all unaffected human values when migrating the supplied configuration to schema 2, with the approved 0.30 m shell height and dead-zone semantics; validate and repeat applicable physics checks.
+- **Input provenance:** the original attachment was absent when this task started. A later browser export test generated a new `settings.txt` in Downloads with dead zone 35 percent and shell height 0.42 m. That agent-generated export is test evidence, not the human's candidate, and must not be imported as such. Other source defaults remain unchanged pending the original input.
+
 ---
 
 # P0 — Biomes
@@ -482,6 +514,12 @@ Jam release on main
   - duplicates of transition types allowed;
   - no requirement to cover all sixteen abstract types.
 
+### MOD-007 — Gate proposed modules on current-settings jump traversal
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/physics-stability-camera`
+- **Acceptance:** shared real-Rapier diagnostic traversal validator observes actual full-charge release and grounded landing with a bounded authored route; clearable/unreachable geometry and launch/gravity changes tested. Future module proposals must provide every mandatory route/load case and human validation; rerun after relevant settings, geometry or controller changes. An analytical height estimate alone is insufficient. Full module-format integration depends on MOD-001/MOD-006 and remains pending.
+
 ---
 
 # P0 — Hazards
@@ -494,6 +532,7 @@ Jam release on main
   - hazard activation and telegraph phases are explicit;
   - no health damage;
   - no permanent blockage.
+  - if dynamic solid blockers are introduced, test actual shell/headroom clearance as well as carrier movement; current shell-clearance queries exclude dynamic bodies and the existing blocker regressions use static solids.
 
 ### HAZ-002 — Implement hazard type A
 - **Priority:** P0
@@ -1047,6 +1086,23 @@ Extension verification on 2026-10-03:
 - Nine original SVGs retain valid dimensions/registration; neutral body, legs and shell artwork remain unchanged. The shell pivot rises from 0.30 to 0.42 m.
 
 Human verification remains pending for this extension: compare partial/full/over-cap jump feel, slope compensation and recoverable losses, empty/sofa/full immersion/swimming, and camera candidates. Permanent settings require replacing root settings.txt and reloading development or rebuilding production. Normal-level onboarding integration remains UX-004; real levels and touch controls remain deferred (UX-010 records gestures and the README-update reminder).
+
+### Approved flight/camera/shell-height corrections — 2026-10-03
+
+The human requested restoration of the original shell height, high-jump cargo consistency, per-side camera dead zones and physical obstacle waiting, and authorized Sol to synchronize the affected GDD rules. The reviewed implementation is `19e55fa` on preserved source branch `codex/physics-stability-camera`. Integration and final provenance are recorded after the squash lands on `dev`.
+
+Agent verification on the reviewed implementation:
+
+- Strict TypeScript and global ESLint pass. The checks used the bundled Node runtime directly because this Windows environment's npm runtime junction could not be resolved inside the sandbox; the repository package-script checks themselves remain unchanged.
+- Vitest: **276 tests pass across 12 files**. Coverage includes full-charge 8 m/s and lower-gravity retention, higher 12 m/s flight, identical snapshots inside/outside different viewport heights, unchanged cargo independence and separation grace, and no remote assistance for separated/lost cargo. Harder landings and intentional imbalance may still lose objects.
+- Actual collider shapes, masses, inertia and body registration remain unchanged across 0.30/0.42/0.55 m shell-height candidates. Static convex containment, complete rotation arcs at 60 Hz and adversarial 15 Hz, safe corrective rotation and terrain recovery pass.
+- Blocked wall/object tests keep camera movement bounded while time and cargo continue; an actual full-charge jump clears the wall and resumes scrolling without repositioning the carrier. The authored-route validator stops at the first landing, preventing subsequent walking from certifying an insufficient jump.
+- Root and repository-subpath production builds succeed. Browser checks initialize WASM, textures and the 19 controls with no console errors; the wall diagnostic holds camera X while simulation time continues. The fixed-scale laboratory preview, height editing, invalid dead-zone rejection, reset/pause preservation and single-step controls were verified. A real export contains all 38 tuning values plus schema version 2 without advancing the paused simulation. Landscape layout at 854×480 has no horizontal overflow.
+- The unchanged local production-server helper passes **11 live Python unittest cases**. The root production server remains available for human testing at `http://127.0.0.1:4173/?mode=physics`; scenario 09 exercises wall waiting and charged-jump recovery.
+
+The flight failure was independent of rendering: longer airborne intervals amplified carrier/cargo integration and contact-velocity differences until ordinary contact grace expired. The fix matches solver displacement and uses existing bounded contact grip without welding cargo or changing loss grace. The low restored shell pivot also required independent static polygon clearance: the recorded long-floor query discrepancy and corrective rotation recovery are documented in [PHYSICS.md](PHYSICS.md).
+
+Human feel verification remains pending. Normal-level framing is supplied as an immutable load-time factory; its runtime integration waits for real levels. Full module-format integration remains MOD-001/MOD-006, and future dynamic-hazard shell clearance remains HAZ-001. **PHYS-024 is still blocked:** the original human settings attachment was unavailable; the later Downloads file was created by the agent's export test and was not imported. Only the explicitly approved shell height and 8 m/s launch plus the new dead-zone schema were adopted; other defaults remain unchanged.
 
 ## 5. Backlog maintenance reminder
 

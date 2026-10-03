@@ -56,7 +56,7 @@ La Tortuga determina:
 - la velocidad deliberadamente lenta;
 - el caparazón curvo que sirve como plataforma física;
 - la inclinación del caparazón como herramienta de equilibrio;
-- la imposibilidad de detenerse completamente;
+- la imposibilidad de detenerse voluntariamente con el control de velocidad, con espera de cámara ante un bloqueo físico temporal;
 - su carácter resistente e indestructible;
 - la relación entre lentitud, anticipación y compromiso con las decisiones;
 - la broma narrativa de que el mejor profesional de mudanzas es alguien que siempre lleva su propia casa a cuestas.
@@ -385,12 +385,12 @@ flowchart LR
 
 ## 8.1. Principio general
 
-La Tortuga avanza siempre hacia la derecha.
+La Tortuga intenta avanzar siempre hacia la derecha. Un obstáculo puede detenerla temporalmente; la cámara la espera según la sección 9.
 
 El juego funciona como un *endless runner* lento:
 
-- la cámara tiene un avance constante;
-- la Tortuga nunca se detiene por completo;
+- la cámara tiene un avance automático, salvo la espera por bloqueo físico;
+- el jugador no puede detener voluntariamente a la Tortuga con el control de velocidad;
 - la Tortuga nunca retrocede por el nivel;
 - el jugador modifica su velocidad relativa;
 - la Tortuga dispone de una pequeña ventana horizontal dentro de la pantalla.
@@ -418,7 +418,7 @@ Reduce la velocidad de avance.
 
 No permite retroceder.
 
-No permite detenerse completamente.
+No permite detenerse voluntariamente. La detención física ante un obstáculo se resuelve con el salto y la espera de cámara, no con una orden de frenado.
 
 Consecuencias:
 
@@ -486,7 +486,9 @@ Mantener pulsada la **barra espaciadora** carga el salto mientras Don Tortuga es
 
 Durante la carga, Don Tortuga baja la cabeza y muestra concentración. **No existe barra, porcentaje ni indicador GUI de carga de salto.** La postura comunica la acción.
 
-El salto amplía las posibilidades de interacción y de geometría de los niveles. Una salida y un aterrizaje ordinarios deben permitir conservar la mudanza con ayuda física moderada; los objetos siguen siendo independientes y pueden perderse por errores reales.
+El salto amplía las posibilidades de interacción y de geometría de los niveles. Una salida y un aterrizaje ordinarios deben permitir conservar la mudanza con ayuda física moderada; los objetos siguen siendo independientes y pueden perderse por errores reales. Salir del campo visual no altera contactos, fuerzas ni pertenencia a la carga.
+
+La intensidad máxima actual es **8 m/s de velocidad vertical inicial**, ajustable. Ningún obstáculo obligatorio puede exigir más que un salto cargado al 100 % con los valores vigentes. La capacidad depende también de gravedad, dimensiones, espacio de aproximación, techo y aterrizaje: se valida mediante recorridos físicos reales, no solamente por altura teórica (sección 42).
 
 La ayuda de salto aparece después de las ayudas de velocidad y caparazón (sección 41.7).
 
@@ -494,7 +496,7 @@ La ayuda de salto aparece después de las ayudas de velocidad y caparazón (secc
 
 # 9. CONTRATO ENTRE CÁMARA Y TORTUGA
 
-La cámara avanza horizontalmente a velocidad constante.
+La cámara avanza horizontalmente a la velocidad automática configurada mientras el recorrido físico lo permite.
 
 La Tortuga ocupa una ventana horizontal dentro de pantalla.
 
@@ -530,7 +532,17 @@ Al aproximarse al límite delantero:
 
 Esto evita *clamps* violentos que podrían transmitir impulsos artificiales a la estructura.
 
-Los límites trasero y delantero se expresan respecto al ancho útil de la escena apaisada, manteniendo la composición al escalar a diferentes pantallas. Su ajuste determina cuánto puede desplazarse lateralmente Don Tortuga respecto a la cámara. El zoom elegido debe conservar estos márgenes y la lectura del terreno (sección 36).
+Los límites trasero y delantero determinan una ventana física de movimiento horizontal. La configuración de testeo utiliza una referencia de escala fija para ajustar esa ventana; el nivel normal encuadra su misma anchura física con las zonas muertas exteriores de la sección 36. Escalar la pantalla mantiene la composición.
+
+## 9.1. Espera de cámara ante obstáculos
+
+Si una pared u otro obstáculo sólido bloquea el avance, Don Tortuga puede quedar detenido temporalmente mientras el margen trasero se aproxima a él. **La cámara se detiene al agotarse ese margen**, sin empujarlo contra la pared ni dejarlo fuera de la ventana.
+
+El jugador conserva la capacidad de cargar y soltar el salto y de equilibrar el caparazón. La física de la carga y el cronómetro continúan: esta espera no es una pausa de partida ni una condición de fracaso.
+
+Cuando Don Tortuga consigue avanzar hacia la derecha —por ejemplo, al saltar por encima del obstáculo—, vuelve a permitir el avance automático de la cámara. La cámara continúa en cuanto el movimiento físico admite ese avance, aunque esperar más le conviniese al jugador. El control de velocidad no permite mantenerla detenida después de superar el bloqueo.
+
+Esta regla no sustituye la obligación de diseñar módulos superables. No hay teletransporte, desplazamiento a través de paredes ni rescate automático de la carga.
 
 ---
 
@@ -1540,9 +1552,11 @@ No puede ser secreta.
 
 # 36. DISEÑO DE CÁMARA
 
-La cámara utiliza un zoom elegido antes de comenzar y **fijo durante toda la partida**.
+La cámara calcula su zoom **al cargar cada nivel normal** a partir de la ventana física de movimiento y de una zona muerta exterior configurable. Ese zoom permanece **fijo durante toda la partida**.
 
-El zoom y los márgenes se pueden afinar en la pantalla especial de testeo. Los niveles normales utilizan esos valores por defecto y no ofrecen un control de zoom durante el recorrido.
+La zona muerta se expresa como porcentaje del ancho total del viewport y se reserva **a cada lado**, detrás del margen trasero y delante del delantero. Por ejemplo, un 40 % por lado deja el 20 % central para la ventana de movimiento. Más zona muerta aumenta el campo visible sin ampliar el rango físico de desplazamiento de Don Tortuga.
+
+El nivel de testeo mantiene una escala de personaje fija para comparar físicas y márgenes. Su tamaño visual no tiene por qué coincidir con el de un nivel normal. Los niveles normales no ofrecen control de zoom durante el recorrido.
 
 La escena está concebida para visualizarse en modo apaisado, también en móvil. El escalado mantiene la composición y los márgenes configurados.
 
@@ -1602,7 +1616,7 @@ El caparazón debe funcionar simultáneamente como:
 
 Su inclinación debe resultar evidente.
 
-El caparazón queda ligeramente elevado respecto al cuerpo para dar espacio visual a la animación de las patas, conservando la forma de ambos. Durante la carga del salto, la cabeza baja y la expresión comunica concentración.
+La altura relativa del caparazón es un parámetro de *tuning*, conservando la forma del cuerpo y del caparazón. Su ajuste mueve también el apoyo físico y el registro inicial de la carga; debe comprobarse su efecto sobre la estabilidad. La configuración inicial recupera la altura original del prototipo. Durante la carga del salto, la cabeza baja y la expresión comunica concentración.
 
 ---
 
@@ -2007,16 +2021,30 @@ El copy definitivo se ajustará durante la producción.
 
 La Tortuga siempre debe poder continuar.
 
+Puede quedar detenida **temporalmente** ante un obstáculo superable: la cámara espera según la sección 9.1 hasta que el jugador consigue avanzar. Esa espera nunca justifica una pared insalvable ni una geometría que requiera retroceder.
+
 Está prohibido diseñar:
 
 - pozos sin salida;
 - rocas que bloqueen permanentemente el camino;
 - geometría que atrape al personaje;
 - situaciones que requieran retroceder;
-- trampas que exijan detenerse completamente;
+- trampas que exijan una orden de detención voluntaria que los controles no ofrecen;
 - elementos caídos que puedan convertirse en un muro permanente.
 
 Los objetos perdidos dejan de interferir con el desplazamiento precisamente para evitar estas situaciones.
+
+## 42.1. Validación obligatoria de nuevos módulos
+
+**Cada propuesta de módulo de nivel debe probarse físicamente antes de incorporarse al pool.** Todas sus rutas obligatorias deben poder completarse con un salto al 100 % usando los valores actualizados de `settings.txt`: actualmente **8 m/s** de despegue máximo, junto con la gravedad y los restantes parámetros vigentes.
+
+- Probar las paredes, desniveles, huecos, techos, aproximaciones y aterrizajes con los colliders reales y la espera de cámara.
+- Cubrir las cargas previstas, incluida la ausencia de carga: perder objetos no puede volver obligatorio un salto imposible.
+- Registrar la configuración de físicas, la ruta y la secuencia de control que completaron cada prueba.
+- Repetir las pruebas al cambiar geometría, salto, gravedad, altura del caparazón, márgenes físicos o resolución del movimiento; una validación con parámetros antiguos no certifica los nuevos.
+- Acompañar las pruebas automatizadas de una comprobación manual de lectura y de ejecución razonable para el público del juego.
+
+La estimación `velocidad² / (2 × gravedad)` orienta sobre la altura disponible, pero no demuestra que una pared sea superable. Hace falta espacio y tiempo para despegar, librar la geometría y aterrizar. Un caso de prueba fallido impide certificar esa ruta hasta corregirla o demostrar un recorrido válido; no demuestra por sí solo que todas las secuencias de control posibles fallen.
 
 ---
 
@@ -2222,7 +2250,8 @@ Los siguientes valores deberán permanecer expuestos y fáciles de modificar dur
 - aceleración;
 - frenada;
 - límites trasero y delantero de la ventana respecto a cámara;
-- zoom de referencia, fijo durante la partida;
+- porcentaje de zona muerta exterior por lado, del que se calcula el zoom fijo al cargar un nivel;
+- altura relativa del caparazón;
 - tiempo máximo de carga de salto;
 - intensidad máxima de despegue;
 - velocidad angular;
@@ -2304,7 +2333,10 @@ El primer prototipo funcional debe comprobar:
 10. que la cámara no produzca correcciones físicas bruscas;
 11. que cargar y soltar el salto produzca una intensidad lineal y una trayectoria suave;
 12. que el terreno incline el conjunto y la compensación manual ayude a conservar la carga;
-13. que sin carga resulte más difícil alcanzar rutas profundas.
+13. que sin carga resulte más difícil alcanzar rutas profundas;
+14. que un salto alto conserve la consistencia física de la carga aunque salga del viewport, salvo desequilibrios reales;
+15. que un bloqueo frontal detenga la cámara en el margen trasero y que el avance se reanude al librarlo;
+16. que cada módulo nuevo supere recorridos de salto con los parámetros vigentes.
 
 ---
 
@@ -2465,6 +2497,8 @@ verificar que nunca aparece una transición incompatible
 ```text
 Comprobar límites de collider
 comprobar que objetos perdidos no bloqueen a Tortuga
+probar saltos cargados y aterrizajes de cada ruta obligatoria con settings vigentes
+comprobar espera y reanudación de cámara ante bloqueo frontal
 ```
 
 ---
@@ -2562,7 +2596,7 @@ Si la respuesta es no, probablemente no pertenece al núcleo del juego.
 
 **Mudanzas Tortuga, S.L.** es un juego 2D de físicas simplificadas para navegador protagonizado por una Tortuga que ayuda a las criaturas de un bosque amenazado a trasladar sus pertenencias.
 
-La Tortuga avanza constantemente hacia la derecha.
+La Tortuga intenta avanzar hacia la derecha; los bloqueos físicos temporales activan la espera de cámara de la sección 9.1.
 
 El jugador regula su velocidad, compensa la inclinación del terreno con el caparazón y carga saltos para conservar una estructura precaria de muebles, objetos delicados y cachivaches.
 

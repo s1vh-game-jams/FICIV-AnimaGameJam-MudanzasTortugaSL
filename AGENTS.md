@@ -110,6 +110,8 @@ Never rewrite the GDD merely to make current code easier to justify.
 
 **Scoped design authorization (2026-10-03):** the human authorized the root agent Sol to amend the GDD for configurable camera margins/fixed run zoom, settings-backed tuning, charged jump, strengthened water buoyancy, terrain-relative turtle/shell inclination, WASD and their directly affected onboarding/documentation. The later shell-height adjustment preserves body/shell shapes. This is task-specific permission for Sol, not a standing authorization for builder agents or subagents. They must treat the GDD as read-only and report design discrepancies; future GDD edits require specific human authorization.
 
+**Further scoped authorization (2026-10-03):** Sol may synchronize the newly approved adjustable original shell height, viewport-independent cargo flight, per-side camera dead zones/fixed level-load zoom, camera waiting at a physically blocked rear margin and mandatory current-settings jump traversal validation for proposed modules. Builder agents/subagents still cannot edit the GDD.
+
 ---
 
 ## 4. Language policy
@@ -502,6 +504,8 @@ Water must preserve the GDD's special relationship among retained mass, depth, b
 The designed level and potential Endless Run consume the **same module pool**.
 
 Author modules first to make the designed jam level good. If Endless Run is implemented, it uses the complete set of compatible available modules rather than a separate procedural-only pool.
+
+Every proposed module must include real-physics full-charge jump traversal evidence for its mandatory routes and supported loads, using current settings (currently 8 m/s maximum launch). Repeat validation after relevant geometry, launch/gravity, shell-height, movement-margin or controller changes. An analytical height bound alone cannot certify traversal; camera waiting never excuses an impossible wall. See GDD 42.1 and PHYSICS for the diagnostic validator.
 
 The jam does not require examples of all sixteen abstract biome transition combinations.
 
