@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Recovered human settings and local tester guide verified on `codex/human-settings-local-guide`, awaiting squash integration; human feel review remains pending
+**Status:** Recovered human settings and local tester guide integrated on `dev`; human feel review remains pending
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -174,8 +174,9 @@ Jam release on main
 
 ### BOOT-009 — Document copyable local-server workflows for human testers
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/human-settings-local-guide`
+- **Integration:** `e6efc0a` · documentation: `0921a4c`
 - **Acceptance:** existing Spanish README explains prerequisites and repository-root terminal setup; development and production URLs; copyable Vite/preview/Python commands; rebuild/reload behavior, Ctrl+C, occupied ports, matched subpath builds and configuration backups. Options match the installed tooling and tested helper.
 
 
@@ -404,16 +405,18 @@ Jam release on main
 
 ### PHYS-024 — Adopt the human's supplied permanent tuning defaults
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/human-settings-local-guide`
+- **Integration:** `e6efc0a` · implementation: `9d2f319`
 - **Acceptance:** preserve all unaffected human values when migrating the supplied configuration to schema 2, with the approved 0.30 m shell height and dead-zone semantics; validate and repeat applicable physics checks.
 - **Input provenance:** the original attachment was absent during the prior task. A later browser export test generated a new `settings.txt` in Downloads with dead zone 35 percent and shell height 0.42 m; that agent-generated export was not imported. The human has now pasted the recovered schema-1 backup directly into this chat, resolving the missing-input dependency.
 - **Migration:** all 36 shared numeric settings match the recovered values. Only movement margins change from the previously retained defaults: rear 20 percent, front 80 percent. Remove obsolete `cameraZoom`, retain schema 2, dead zone 40 percent and shell height 0.30 m. Current launch remains 8 m/s.
 
 ### PHYS-025 — Normalize transient shell hulls at Rapier precision
 - **Priority:** P0
-- **Status:** IN PROGRESS
+- **Status:** DONE
 - **Branch:** `codex/human-settings-local-guide`
+- **Fixed by:** `9d2f319` · squash integration: `e6efc0a`
 - **Depends on:** PHYS-024 validation
 - **Suspected introduced by:** reviewed implementation `19e55fa`, squash integration `3cbbd00`; the assumed-convex temporary envelope sorted/deduplicated double-precision vertices before float32 conversion.
 - **Evidence:** the recovered 20/80 movement window deterministically exposed a wall-approach pose where distinct double vertices became an identical float32 point. Rapier rejected the duplicate-edge polyline, raising `expected instance of RawShape` during the configured-reset regression.
@@ -1127,7 +1130,7 @@ Human feel verification remains pending. Normal-level framing is supplied as an 
 
 ### Recovered tuning and local tester guide — 2026-10-03
 
-The human supplied the recovered settings as pasted text, resolving PHYS-024 without relying on a later agent-generated download. Reviewed code/settings/test commit: `9d2f319`, on preserved branch `codex/human-settings-local-guide`. All **36 shared numeric values** match the supplied backup exactly. Movement margins are now 20/80 percent; schema 2 retains the approved 40 percent dead zone and 0.30 m shell pivot. The obsolete direct zoom was removed during migration; maximum launch remains 8 m/s. No shared value required an incompatibility adjustment.
+The human supplied the recovered settings as pasted text, resolving PHYS-024 without relying on a later agent-generated download. Reviewed code/settings/test commit: `9d2f319`; documentation: `0921a4c`, on preserved branch `codex/human-settings-local-guide`. Squash integration: `e6efc0a` on `dev`, with the same verified source tree. BOOT-009, PHYS-024 and PHYS-025 are complete. All **36 shared numeric values** match the supplied backup exactly. Movement margins are now 20/80 percent; schema 2 retains the approved 40 percent dead zone and 0.30 m shell pivot. The obsolete direct zoom was removed during migration; maximum launch remains 8 m/s. No shared value required an incompatibility adjustment.
 
 That movement window exposed PHYS-025: two distinct double-precision vertices in a transient shell envelope collapsed to the same float32 point, invalidating the assumed-convex native polyline. Coordinates are now quantized before ordering/deduplication, and Rapier normalizes the ordered hull. Independent SAT and rotation-clearance guards remain. The explicit full-load wall approach is covered as a finite-state regression; the configured-reset suite also passes.
 
