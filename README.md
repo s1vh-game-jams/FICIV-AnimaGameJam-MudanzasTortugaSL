@@ -146,7 +146,7 @@ Su objetivo es probar rápidamente:
 - flotación y corrientes;
 - parámetros de cámara y física.
 
-**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y ocho tramos diagnósticos de hierba, roca y agua, incluidos salto y pendientes máximas. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
+**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y nueve tramos diagnósticos de hierba, roca y agua, incluidos salto, pendientes máximas y espera de cámara ante una pared. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
 
 | Herramienta | Tecla |
 |---|---|
@@ -163,13 +163,14 @@ Los valores ajustables del laboratorio se cargan desde **`settings.txt`**, en la
 
 Para conservar un ajuste hecho en el laboratorio:
 
-1. Pulsa **«Exportar settings»** para descargar los valores actuales.
-2. Sustituye el `settings.txt` del repositorio por el archivo descargado.
-3. Recarga el servidor de desarrollo, o ejecuta **`npm run build`** si estás usando el build de producción.
+1. Guarda una copia del `settings.txt` del repositorio y de cualquier exportación anterior que quieras conservar, usando otro nombre o carpeta.
+2. Pulsa **«Exportar settings»** para descargar los valores actuales. Comprueba el destino y si el navegador propone reemplazar un archivo existente.
+3. Sustituye el `settings.txt` del repositorio por el archivo descargado cuando quieras adoptar esos valores.
+4. Recarga la página si usas el servidor de desarrollo. Con preview o el servidor Python, ejecuta **`npm run build`** y después recarga la página.
 
 El build incorpora esos valores: cambiar el archivo del repositorio después de construir requiere reconstruir. Los ajustes de la sesión se conservan al reiniciar el tramo; **«Restaurar settings»** recupera los valores cargados del archivo. Exportar mantiene el tramo y la pausa. Un archivo inválido muestra el parámetro que hay que corregir.
 
-Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: un 40 % detrás y delante deja el 20 % central para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calcularán el zoom al cargar y lo mantendrán fijo. El escalado conserva la composición apaisada 16:9.
+Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija; los valores por defecto son **20 % y 80 %**. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: un 40 % detrás y delante deja el 20 % central para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calcularán el zoom al cargar y lo mantendrán fijo. El escalado conserva la composición apaisada 16:9.
 
 **Altura del caparazón:** `shellPivotY`, en metros sobre el origen del cuerpo, ajusta el apoyo real y la altura inicial de la carga. Su valor por defecto vuelve a **0,30 m**; **0,42 m** reproduce la elevación anterior. Las formas y los colliders conservan sus dimensiones.
 
@@ -272,28 +273,131 @@ flowchart TD
 
 ---
 
-## 💻 Desarrollo local
+## 💻 Servidor web local para pruebas
 
-### Requisitos
+### 1. Preparar el entorno
 
 - Node.js **22.12 o posterior**
 - npm
-- Python 3 únicamente si se desea utilizar el servidor auxiliar de `/scripts/`
+- Un navegador moderno
+- Python **3.10 o posterior**, solo para la alternativa con `scripts/localServer.py`
 
-### Instalación
+Abre una terminal en la **raíz del repositorio**, la carpeta que contiene `package.json`, `settings.txt` y `scripts/`. En Windows puedes abrir esa carpeta en el Explorador, escribir `powershell` en la barra de direcciones y pulsar Enter. Los siguientes comandos funcionan en PowerShell y en terminales de macOS/Linux.
+
+Comprueba que Node y npm están disponibles:
+
+```bash
+node --version
+npm --version
+```
+
+Instala las dependencias la primera vez y cuando cambie `package-lock.json`:
 
 ```bash
 npm ci
-npm run dev
 ```
 
-Vite mostrará la dirección local, normalmente similar a:
+Abre siempre el juego mediante una dirección **HTTP** del servidor. Abrir `index.html` con doble clic no inicia Vite ni carga correctamente el proyecto.
 
-```text
-http://localhost:5173/
+### 2. Probar cambios mientras se desarrolla
+
+Inicia Vite con una dirección y un puerto explícitos:
+
+```bash
+npm run dev -- --port 5173 --strictPort
 ```
 
-### Checks
+Mantén esa terminal abierta y visita:
+
+- Menú: [http://127.0.0.1:5173/](http://127.0.0.1:5173/)
+- Laboratorio: [http://127.0.0.1:5173/?mode=physics](http://127.0.0.1:5173/?mode=physics)
+
+Vite detecta los cambios del código y de `settings.txt` y actualiza la página durante el desarrollo. Tras cambiar los valores por defecto, recarga la página para iniciar una sesión con la nueva configuración. Esta opción no necesita ejecutar un build después de cada edición.
+
+Para detener el servidor, pulsa **Ctrl+C** en su terminal. `--strictPort` hace que un puerto ocupado produzca un error claro, en lugar de abrir el juego en otro puerto inesperadamente.
+
+### 3. Probar el build de producción
+
+Esta opción permite comprobar lo que se servirá como aplicación estática. Construye el juego y arranca Vite preview:
+
+```bash
+npm run build
+npm run preview -- --port 4173 --strictPort
+```
+
+Abre el [menú](http://127.0.0.1:4173/) o el [laboratorio](http://127.0.0.1:4173/?mode=physics). Conserva la terminal abierta mientras haces pruebas y detén preview con **Ctrl+C**.
+
+Preview sirve los archivos ya construidos en `dist/`: editar el código, un asset o `settings.txt` no actualiza ese build por sí solo. Para probar nuevos cambios, abre una **segunda terminal en la raíz del repositorio**, ejecuta:
+
+```bash
+npm run build
+```
+
+Espera a que termine y recarga la página del navegador. Puedes mantener el servidor abierto mientras reconstruyes.
+
+### 4. Alternativa: servidor auxiliar con Python
+
+`scripts/localServer.py` sirve el mismo build de producción y no necesita paquetes Python adicionales. Comprueba primero que el intérprete elegido es Python 3.10 o posterior:
+
+```bash
+python --version
+```
+
+Si usas otro nombre de intérprete, comprueba la versión con `py -3 --version` en Windows o `python3 --version` en macOS/Linux.
+
+Después, desde la raíz del repositorio:
+
+```bash
+npm run build
+python scripts/localServer.py --directory dist --port 4173
+```
+
+Si en Windows utilizas el lanzador `py`, puedes sustituir la línea del servidor por:
+
+```powershell
+py -3 scripts/localServer.py --directory dist --port 4173
+```
+
+En macOS/Linux, si el comando instalado es `python3`, utiliza:
+
+```bash
+python3 scripts/localServer.py --directory dist --port 4173
+```
+
+Abre [http://127.0.0.1:4173/?mode=physics](http://127.0.0.1:4173/?mode=physics). El helper imprime también las direcciones de acceso y se detiene con **Ctrl+C**. Usa una segunda terminal para reconstruir con `npm run build` y recarga tras finalizar, igual que con preview.
+
+Sin `--directory` sirve el `dist/` del repositorio; una ruta relativa explícita se interpreta desde el directorio de la terminal. El servidor se enlaza a `127.0.0.1` por defecto. `--port 0` elige un puerto libre y muestra su dirección.
+
+### 5. Si el puerto está ocupado
+
+Detén el servidor anterior con **Ctrl+C** en su terminal o escoge otro puerto. Por ejemplo, para preview:
+
+```bash
+npm run preview -- --port 4180 --strictPort
+```
+
+Para el helper Python:
+
+```bash
+python scripts/localServer.py --directory dist --port 4180
+```
+
+En ambos casos abre [http://127.0.0.1:4180/?mode=physics](http://127.0.0.1:4180/?mode=physics). El servidor de desarrollo acepta el mismo cambio mediante `npm run dev -- --port 4180 --strictPort`.
+
+### 6. Comprobar la ruta de GitHub Pages
+
+Detén el servidor que estés usando en el puerto 4173 antes de iniciar este ejemplo:
+
+```bash
+npm run build:pages
+python scripts/localServer.py --directory dist --port 4173 --base-path /FICIV-AnimaGameJam-MudanzasTortugaSL/
+```
+
+Abre [http://127.0.0.1:4173/FICIV-AnimaGameJam-MudanzasTortugaSL/?mode=physics](http://127.0.0.1:4173/FICIV-AnimaGameJam-MudanzasTortugaSL/?mode=physics). `build:pages` sobrescribe `dist/` con ese prefijo. Para volver a la prueba desde la raíz, detén el servidor, ejecuta `npm run build` y arranca preview o el helper sin `--base-path`.
+
+La guía de configuración de despliegue está en [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+### Checks automatizados
 
 ```bash
 npm run typecheck
@@ -301,35 +405,6 @@ npm run lint
 npm run test
 npm run build
 ```
-
-### Probar el build de producción
-
-Opción recomendada:
-
-```bash
-npm run build
-npm run preview
-```
-
-Servidor auxiliar:
-
-```bash
-npm run build
-python scripts/localServer.py --directory dist --port 4173
-```
-
-El servidor ya es funcional. Sin `--directory` sirve el `dist/` del repositorio; con una ruta relativa usa el directorio actual. Se enlaza a `127.0.0.1` por defecto y se detiene con `Ctrl+C`. `--port 0` elige un puerto libre y muestra la URL.
-
-Para simular la ruta de GitHub Pages:
-
-```bash
-npm run build:pages
-python scripts/localServer.py --directory dist --port 4173 --base-path /FICIV-AnimaGameJam-MudanzasTortugaSL/
-```
-
-Abre `http://127.0.0.1:4173/FICIV-AnimaGameJam-MudanzasTortugaSL/?mode=physics`. Este comando sobrescribe `dist/`; vuelve a ejecutar `npm run build` para servir desde la raíz.
-
-Tras editar o reemplazar `settings.txt`, vuelve a construir antes de probar con preview o el servidor auxiliar. El helper sirve el build existente.
 
 Los tests del helper son independientes de npm:
 
