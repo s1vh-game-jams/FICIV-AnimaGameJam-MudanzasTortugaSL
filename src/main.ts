@@ -1,4 +1,5 @@
 import './styles/main.css';
+import { getJamServices } from './app/services';
 import { createTuning, exportSettings, TUNING_FIELDS, withTuning } from './game/config/tuning';
 import type { Tuning } from './game/config/tuning';
 import { createLevelCameraFraming } from './game/config/cameraFraming';
@@ -239,5 +240,12 @@ window.addEventListener('keydown', event => {
     event.preventDefault(); void showPlayground().catch(reportError);
   }
 });
-if (new URLSearchParams(location.search).get('mode') === 'physics') void showPlayground().catch(reportError);
-else showMenu();
+async function startApplication(): Promise<void> {
+  const services = getJamServices();
+  // Validate/read the packaged public catalog without requiring sign-in.
+  await services.levels.listPublishedLevels();
+  await services.session.getSession();
+  if (new URLSearchParams(location.search).get('mode') === 'physics') await showPlayground();
+  else showMenu();
+}
+void startApplication().catch(reportError);
