@@ -14,6 +14,7 @@ export interface SpriteVisualDefinition {
 
 export interface WalkVisualDefinition {
   readonly frames: readonly string[];
+  readonly chargeFrames: readonly string[];
   readonly width: number;
   readonly height: number;
   readonly anchorX: number;
@@ -58,6 +59,7 @@ export const VISUALS = {
   },
   turtle: {
     frames: ['sprites/turtle/walk-01.svg', 'sprites/turtle/walk-02.svg'],
+    chargeFrames: ['sprites/turtle/charge-walk-01.svg', 'sprites/turtle/charge-walk-02.svg'],
     width: 2.4,
     height: 0.9,
     anchorX: 0.5,
