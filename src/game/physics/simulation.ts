@@ -106,7 +106,10 @@ function polygonSeparation(obstacle: RAPIER.Collider, shape: RAPIER.Shape, posit
 }
 
 function convexEnvelope(vertices: number[]): RAPIER.ConvexPolygon {
-  const points = Array.from({ length: vertices.length / 2 }, (_, i) => ({ x: vertices[i * 2], y: vertices[i * 2 + 1] }))
+  // Deduplicate/order the actual float32 coordinates consumed by Rapier.
+  // Tiny departure/arrival differences can otherwise collapse after ordering
+  // and create a zero-length edge in an assumed-convex native polyline.
+  const points = Array.from({ length: vertices.length / 2 }, (_, i) => ({ x: Math.fround(vertices[i * 2]), y: Math.fround(vertices[i * 2 + 1]) }))
     .sort((a, b) => a.x - b.x || a.y - b.y)
     .filter((point, i, sorted) => i === 0 || point.x !== sorted[i - 1].x || point.y !== sorted[i - 1].y);
   const cross = (a: RAPIER.Vector, b: RAPIER.Vector, c: RAPIER.Vector) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
@@ -119,9 +122,10 @@ function convexEnvelope(vertices: number[]): RAPIER.ConvexPolygon {
     return hull.slice(0, -1);
   };
   // Transient ConvexPolygon.vertices retains its input before WASM builds the
-  // hull. Explicit ordering gives both SAT and Rapier the same boundary edges.
+  // hull. SAT needs ordered edges; native hull normalization also handles its
+  // own near-collinearity tolerance instead of trusting a fragile polyline.
   const ordered = [...half(points), ...half([...points].reverse())];
-  return new RAPIER.ConvexPolygon(new Float32Array(ordered.flatMap(point => [point.x, point.y])), true);
+  return new RAPIER.ConvexPolygon(new Float32Array(ordered.flatMap(point => [point.x, point.y])), false);
 }
 export type LoadPreset = 'full' | 'light' | 'empty';
 interface CargoBody { definition: CargoDefinition; body: RAPIER.RigidBody; colliders: RAPIER.Collider[] }

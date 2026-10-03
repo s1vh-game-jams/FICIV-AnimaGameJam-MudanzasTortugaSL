@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Prototype 1 flight/camera/shell-height corrections integrated on `dev`; human feel review and original tuning input remain pending
+**Status:** Recovered human settings and local tester guide verified on `codex/human-settings-local-guide`, awaiting squash integration; human feel review remains pending
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -171,6 +171,12 @@ Jam release on main
 - **Status:** DONE
 - **Integration:** `2d6e854` · branch: `codex/physics-playground`
 - **Acceptance:** reusable scripts/localServer.py supports root/subpath mounts, repository-relative default dist, clear option/bind errors and WASM serving; live standard-library tests pass.
+
+### BOOT-009 — Document copyable local-server workflows for human testers
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/human-settings-local-guide`
+- **Acceptance:** existing Spanish README explains prerequisites and repository-root terminal setup; development and production URLs; copyable Vite/preview/Python commands; rebuild/reload behavior, Ctrl+C, occupied ports, matched subpath builds and configuration backups. Options match the installed tooling and tested helper.
 
 
 ---
@@ -398,10 +404,20 @@ Jam release on main
 
 ### PHYS-024 — Adopt the human's supplied permanent tuning defaults
 - **Priority:** P0
-- **Status:** BLOCKED
-- **Blocked by:** unavailable original settings attachment; requested pasted contents or its current path.
+- **Status:** IN PROGRESS
+- **Branch:** `codex/human-settings-local-guide`
 - **Acceptance:** preserve all unaffected human values when migrating the supplied configuration to schema 2, with the approved 0.30 m shell height and dead-zone semantics; validate and repeat applicable physics checks.
-- **Input provenance:** the original attachment was absent when this task started. A later browser export test generated a new `settings.txt` in Downloads with dead zone 35 percent and shell height 0.42 m. That agent-generated export is test evidence, not the human's candidate, and must not be imported as such. Other source defaults remain unchanged pending the original input.
+- **Input provenance:** the original attachment was absent during the prior task. A later browser export test generated a new `settings.txt` in Downloads with dead zone 35 percent and shell height 0.42 m; that agent-generated export was not imported. The human has now pasted the recovered schema-1 backup directly into this chat, resolving the missing-input dependency.
+- **Migration:** all 36 shared numeric settings match the recovered values. Only movement margins change from the previously retained defaults: rear 20 percent, front 80 percent. Remove obsolete `cameraZoom`, retain schema 2, dead zone 40 percent and shell height 0.30 m. Current launch remains 8 m/s.
+
+### PHYS-025 — Normalize transient shell hulls at Rapier precision
+- **Priority:** P0
+- **Status:** IN PROGRESS
+- **Branch:** `codex/human-settings-local-guide`
+- **Depends on:** PHYS-024 validation
+- **Suspected introduced by:** reviewed implementation `19e55fa`, squash integration `3cbbd00`; the assumed-convex temporary envelope sorted/deduplicated double-precision vertices before float32 conversion.
+- **Evidence:** the recovered 20/80 movement window deterministically exposed a wall-approach pose where distinct double vertices became an identical float32 point. Rapier rejected the duplicate-edge polyline, raising `expected instance of RawShape` during the configured-reset regression.
+- **Acceptance:** quantize before hull ordering/deduplication and let Rapier normalize the ordered envelope; retain SAT/rotation clearance checks and human tuning values. Explicit real-physics wall approach remains finite; full reset, clearance and traversal suites pass.
 
 ---
 
@@ -1107,7 +1123,24 @@ Agent verification on the reviewed implementation:
 
 The flight failure was independent of rendering: longer airborne intervals amplified carrier/cargo integration and contact-velocity differences until ordinary contact grace expired. The fix matches solver displacement and uses existing bounded contact grip without welding cargo or changing loss grace. The low restored shell pivot also required independent static polygon clearance: the recorded long-floor query discrepancy and corrective rotation recovery are documented in [PHYSICS.md](PHYSICS.md).
 
-Human feel verification remains pending. Normal-level framing is supplied as an immutable load-time factory; its runtime integration waits for real levels. Full module-format integration remains MOD-001/MOD-006, and future dynamic-hazard shell clearance remains HAZ-001. **PHYS-024 is still blocked:** the original human settings attachment was unavailable; the later Downloads file was created by the agent's export test and was not imported. Only the explicitly approved shell height and 8 m/s launch plus the new dead-zone schema were adopted; other defaults remain unchanged.
+Human feel verification remains pending. Normal-level framing is supplied as an immutable load-time factory; its runtime integration waits for real levels. Full module-format integration remains MOD-001/MOD-006, and future dynamic-hazard shell clearance remains HAZ-001. **At this milestone PHYS-024 was blocked:** the original human settings attachment was unavailable; the later Downloads file was created by the agent's export test and was not imported. Only the explicitly approved shell height and 8 m/s launch plus the new dead-zone schema were adopted; other defaults remained unchanged until the human supplied the recovered text.
+
+### Recovered tuning and local tester guide — 2026-10-03
+
+The human supplied the recovered settings as pasted text, resolving PHYS-024 without relying on a later agent-generated download. Reviewed code/settings/test commit: `9d2f319`, on preserved branch `codex/human-settings-local-guide`. All **36 shared numeric values** match the supplied backup exactly. Movement margins are now 20/80 percent; schema 2 retains the approved 40 percent dead zone and 0.30 m shell pivot. The obsolete direct zoom was removed during migration; maximum launch remains 8 m/s. No shared value required an incompatibility adjustment.
+
+That movement window exposed PHYS-025: two distinct double-precision vertices in a transient shell envelope collapsed to the same float32 point, invalidating the assumed-convex native polyline. Coordinates are now quantized before ordering/deduplication, and Rapier normalizes the ordered hull. Independent SAT and rotation-clearance guards remain. The explicit full-load wall approach is covered as a finite-state regression; the configured-reset suite also passes.
+
+Agent verification of the completed implementation:
+
+- Strict TypeScript and global ESLint pass; **277 Vitest tests pass across 12 files**. The bundled Node runtime invoked the package tools directly because of the existing Windows sandbox/npm junction limitation; package scripts are unchanged.
+- All 36 shared human defaults were compared numerically against the pasted text. The complete settings codec/schema tests pass.
+- The unchanged Python server helper passes **11 live unittest cases**.
+- Root and repository-subpath production builds succeed. Real-browser checks on Vite development, Vite preview, root Python serving and subpath Python serving initialize the canvas, textures and Rapier WASM with the expected 20/80 margins, 40 percent dead zone, 0.30 m shell pivot and 8 m/s launch, without console errors.
+- The README's copyable local-server guide covers prerequisites, opening a repository-root terminal, dependency installation, explicit URLs/ports, rebuild/reload behavior, stopping servers, Python command alternatives, occupied ports, subpath builds and configuration backups. Tool help confirms the documented flags. The canonical file remains `README.md`; no duplicate `README.txt` was created.
+- Temporary development/preview/subpath servers were stopped after verification. The root production helper remains available at `http://127.0.0.1:4173/?mode=physics`; the browser laboratory was reset and paused at tick/time zero with the complete 13.6 kg load.
+
+Human feel verification of the wider movement corridor remains pending. The laboratory's physical corridor is approximately 10.11 m; its normal-level framing preview is approximately 50.53 m with the current 40 percent outer dead zones. Normal-level integration and authoring/readability checks remain Prototype 2 work. Main remains under human release control.
 
 ## 5. Backlog maintenance reminder
 

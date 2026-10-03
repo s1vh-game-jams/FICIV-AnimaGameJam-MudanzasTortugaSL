@@ -29,7 +29,7 @@ npm run build
 npm run preview
 ```
 
-Open `http://127.0.0.1:4173/?mode=physics`. Vite preview is a local verification server.
+Open `http://127.0.0.1:4173/?mode=physics`. Vite preview is a local verification server. The [README local-server guide](../README.md#-servidor-web-local-para-pruebas) provides tester-oriented setup, fixed-port commands, rebuild steps and troubleshooting.
 
 The standard-library Python helper is an alternative:
 
@@ -51,7 +51,7 @@ Supported options:
 
 The helper prints a ready URL, preserves WASM MIME handling, disables local caching and refuses traversal/symlink escapes from its document root. A mount without its trailing slash redirects while preserving the query string. Missing directories and occupied ports produce an explanatory error. Stop with `Ctrl+C`.
 
-Its tests require Python 3:
+The helper and its tests require Python 3.10 or newer. On Windows, `py -3` may replace `python`; on other systems, use `python3` if that is the installed Python 3 command:
 
 ```bash
 python -m unittest discover -s tests/python -v
