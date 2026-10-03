@@ -107,6 +107,8 @@ Sol alone has scoped permission to synchronize these affected GDD rules. Builder
 
 Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
 
+**Approved jam service foundation (2026-10-03):** the human confirmed a packaged static published-level catalog and browser-local Top 100, with remote/global services later. Levels reserve stable IDs, name, optional thumbnail, coordinate-based module/hazard geometry, versioned turtle/load configuration, versioned ranking and author user ID. Anonymous play remains mandatory. Account creation (email/password and Google), authenticated community authoring and remote publishing are post-jam; preserve compatible contracts rather than implementing them now. See [BACKEND.md](BACKEND.md). Prepare only an inactive Pages Actions template under `/scripts/`; publication awaits final art/licenses and release authorization.
+
 ---
 
 ## 2. Product statement
@@ -927,9 +929,14 @@ Desired designed-level leaderboard:
 Create a service boundary early:
 
 ```ts
+interface LeaderboardQuery {
+  levelId: string;
+  levelVersion: string;
+  physicsVersion: string;
+}
 interface LeaderboardService {
   submitScore(entry: ScoreEntry): Promise<void>;
-  getTopScores(levelId: string, limit?: number): Promise<ScoreEntry[]>;
+  getTopScores(query: LeaderboardQuery, limit?: number): Promise<ScoreEntry[]>;
 }
 ```
 
@@ -946,6 +953,8 @@ RemoteLeaderboardService → external API/backend
 ```
 
 Do not let `ScoreSystem` know which persistence implementation is active.
+
+The implemented local service caps each exact version partition at 100 and permits anonymous entries. The catalog/session/leaderboard composition is now available to application screens; score calculation, normal-level UI and real published content remain Prototype 2 work. [BACKEND.md](BACKEND.md) owns concrete schemas, persistence fallback and non-destructive remote/auth migration.
 
 ### 15.3 Security note
 

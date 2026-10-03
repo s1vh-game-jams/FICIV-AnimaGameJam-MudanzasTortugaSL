@@ -189,6 +189,8 @@ Current exports use `schemaVersion=2`. To migrate a version-1 export, retain its
 
 The human supplied the recovered version-1 tuning as text on 2026-10-03. All shared numeric values were retained, including the 20/80 percent movement margins and 8 m/s maximum jump. Only the obsolete version/zoom entries were migrated; the new dead-zone and shell-height settings retain their approved 40 percent/0.30 m values. Later browser downloads are session candidates and do not replace that source provenance. Keep a backup before replacing a tuned repository file or an earlier downloaded candidate.
 
+The human subsequently finalized the playground tuning in `fd12654`, promoted with `3b3d1f0` on main: `gripAssistance=2.0` and `lossGraceSeconds=1.33`. The jam service foundation preserves these values and the physical implementation. Regression observation windows must use the configured separation grace; assistance-force comparisons must account for the configured grip gain instead of silently assuming an older default.
+
 Physical coordinates use metres with positive Y upward; masses use kilograms, elapsed time uses seconds and angles use radians. Pixi converts physical Y to downward screen coordinates and scales the logical viewport to its host without changing physics.
 
 | Configuration group | Meaning |
