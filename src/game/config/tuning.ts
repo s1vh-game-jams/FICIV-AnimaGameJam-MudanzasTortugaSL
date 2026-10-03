@@ -14,7 +14,7 @@ type FixedTuning = { -readonly [K in keyof typeof FIXED_TUNING]: number };
 export type Tuning = AdjustableSettings & FixedTuning & { cameraBack: number; cameraFront: number };
 
 export const PHYSICS_GEOMETRY = {
-  turtleHalfWidth: 0.95, turtleHalfHeight: 0.24, shellPivotY: 0.40,
+  turtleHalfWidth: 0.95, turtleHalfHeight: 0.24, shellPivotY: 0.42,
   // Authored cargo y values reference the original support pivot.
   cargoLayoutShellPivotY: 0.30,
   shellVertices: [-1.1, -0.05, 1.1, -0.05, 1.1, 0, 0.8, 0.32, 0.6, 0.42, -0.6, 0.42, -0.8, 0.32, -1.1, 0],
