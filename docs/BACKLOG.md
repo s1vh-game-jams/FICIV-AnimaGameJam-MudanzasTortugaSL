@@ -333,6 +333,7 @@ Jam release on main
 ### PHYS-015 — Persist and export laboratory tuning defaults
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `22a656f` · branch: `codex/physics-controls-settings`
 - **Branch:** `codex/physics-controls-settings`
 - **Acceptance:** root settings.txt is canonical; strict shared numeric schema/codec; session edits and restore are independent; export round-trips current values; production rebuild workflow documented.
@@ -340,6 +341,7 @@ Jam release on main
 ### PHYS-016 — Add viewport-relative camera tuning and laboratory zoom
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `22a656f`, `287a7f9` · branch: `codex/physics-controls-settings`
 - **Depends on:** PHYS-015
 - **Acceptance:** rear/front viewport positions and zoom share simulation/render bounds; reset preserves pause; valid initial placement; CSS resize preserves composition; normal-run zoom is fixed.
@@ -347,18 +349,21 @@ Jam release on main
 ### PHYS-017 — Add soft charged jump
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `a03fc42`, `9284942` · branch: `codex/physics-controls-settings`
 - **Acceptance:** dry grounded Space hold/release; linear launch intensity; configurable default 3 s cap; no auto-launch at cap; maximum launch speed/shared gravity adjustable; safe lifecycle cancellation; independent supported cargo can accompany takeoff/landing without global grace extension.
 
 ### PHYS-018 — Convey terrain inclination through turtle/shell support
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `9284942` · branch: `codex/physics-controls-settings`
 - **Acceptance:** simulation-owned ground pose and rotated shell pivot; relative manual compensation; matched traversable slope/compensation limit; smooth joins and clear feet/shell; body and shell shapes preserved while shell pivot is raised.
 
 ### PHYS-019 — Add WASD aliases and input edge handling
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
 - **Acceptance:** arrows and WASD coexist without doubled axes; partial alias release works; Space edges consumed once; editor/button focus respected; C replaces D as collider shortcut.
 
@@ -428,6 +433,7 @@ Jam release on main
 ### BIOME-009 — Strengthen empty/heavy buoyancy and swimming
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `9284942` · branch: `codex/physics-controls-settings`
 - **Acceptance:** adjustable buoyancy; empty turtle resists sinking; retained mass enables deeper travel; smooth initial immersion and natural rise; up/down modulate velocity; empty/light/full loads surface and leave banks; terminal loss removes weight immediately.
 
@@ -728,12 +734,14 @@ Jam release on main
 ### UX-011 — Prepare four-message shared onboarding controller
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `a03fc42`, `287a7f9` · branch: `codex/physics-controls-settings`
 - **Acceptance:** timed per-run speed/balance/jump/swim sequence; pause/reset; first-water priority and pending-message resume; optional laboratory preview. Full normal-level integration remains UX-004.
 
 ### ART-004 — Register charged-head walking variants
 - **Priority:** P0
 - **Status:** DONE
+- **Integration:** `e705e70` · branch: `codex/physics-controls-settings`
 - **Source commits:** `a03fc42` · branch: `codex/physics-controls-settings`
 - **Acceptance:** two simple head-lowered/concentrated poses; existing body/leg geometry, canvas and anchors preserved; 60 logical slots remain; no charge GUI; artist contract updated for raised shell pivot.
 
@@ -1024,7 +1032,7 @@ Historical limitations / follow-ups at that original milestone:
 
 The human reported natural physical feel and intuitive controls in the initial playground, then approved the controls/settings/physics plan and requested a slightly higher shell without shape changes. This is positive baseline feedback, not final verification of the extension or every partial-loss criterion.
 
-Completed extension tasks: PHYS-015 through PHYS-019, BIOME-009, UX-011 and ART-004. Sol synchronized only the explicitly authorized GDD changes; builder/subagent GDD permissions remain unchanged. The source branch is preserved as `codex/physics-controls-settings`. Squash provenance will be recorded after integration; main remains untouched.
+Completed extension tasks: PHYS-015 through PHYS-019, BIOME-009, UX-011 and ART-004. Sol synchronized only the explicitly authorized GDD changes; builder/subagent GDD permissions remain unchanged. The source branch is preserved as `codex/physics-controls-settings`. Reviewed source implementation: `c9c527d`. Squash integration: `e705e70` on `dev`. Detailed commits and agent attribution remain on the preserved source branch; main remains untouched.
 
 Extension verification on 2026-10-03:
 
