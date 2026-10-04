@@ -1,5 +1,6 @@
 import { CARGO } from './cargo';
 import { CONTENT_SCHEMA_VERSION, type ContentCatalog } from '../../services/contracts';
+import { ENDLESS_MODULES } from '../modes/endless/modules';
 
 export const OFFICIAL_AUTHOR_ID = 'official-maintainer';
 export const OFFICIAL_TURTLE_CONFIGURATION_ID = 'official-full-load';
@@ -20,5 +21,8 @@ export const JAM_CATALOG: ContentCatalog = {
       x: item.x, y: item.y, angle: 0,
     })),
   }],
-  modules: [], hazards: [], levels: [],
+  modules: ENDLESS_MODULES,
+  hazards: ['branch', 'stump', 'tree'].map(kind => ({ schemaVersion: CONTENT_SCHEMA_VERSION,
+    id: kind, version: INITIAL_CONTENT_VERSION, kind, parameters: {} })),
+  levels: [],
 };

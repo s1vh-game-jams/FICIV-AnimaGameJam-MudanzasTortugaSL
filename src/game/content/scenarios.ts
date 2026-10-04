@@ -1,10 +1,10 @@
 export type Biome = 'grass' | 'rock' | 'water';
 export interface TerrainPoint { x: number; y: number }
-export interface TerrainStrip { biome: Exclude<Biome, 'water'>; points: readonly TerrainPoint[] }
+export interface TerrainStrip { biome: Exclude<Biome, 'water'>; points: readonly TerrainPoint[]; bottom?: number }
 export interface WaterRegion { left: number; right: number; surface: number; bottom: number }
 export interface Scenario {
   id: string; label: string; description: string; startX: number; startY: number;
-  endX: number; terrain: readonly TerrainStrip[]; water?: WaterRegion;
+  endX: number; terrain: readonly TerrainStrip[]; water?: WaterRegion; waters?: readonly WaterRegion[];
 }
 const flat = (biome: 'grass' | 'rock'): TerrainStrip => ({ biome, points: [{ x: -12, y: 0 }, { x: 130, y: 0 }] });
 export const SCENARIOS: readonly Scenario[] = [
