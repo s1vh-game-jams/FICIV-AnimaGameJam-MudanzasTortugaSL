@@ -1,7 +1,7 @@
 # Endless jam implementation plan
 
 **Date:** 2026-10-04
-**Status:** IMPLEMENTED — human approval recorded on 2026-10-04; verified candidate awaiting dev integration and human playtesting.
+**Status:** IMPLEMENTED — human approval recorded on 2026-10-04; integrated on `dev` in `5605d5c`, awaiting human playtesting.
 **Design authority:** [GDD](GDD.md), sections 16–17, 27, 33–35, 41–44.
 **Required scope:** [PRD](PRD.md), sections 9–10 and 16.
 **Task tracking:** [BACKLOG](BACKLOG.md).

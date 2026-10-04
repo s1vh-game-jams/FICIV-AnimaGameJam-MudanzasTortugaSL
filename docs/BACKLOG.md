@@ -1,10 +1,10 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Six-module Endless candidate verified on `codex/endless-jam`, awaiting squash integration into `dev`; human playtesting and release approval follow.
+**Status:** Six-module Endless prototype integrated on `dev` in `5605d5c`; source branch `codex/endless-jam` is preserved and synchronized. Human playtesting and release approval follow.
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
-**Current work (2026-10-04):** the human committed the six-module Endless scope revision as `cf0adc2` and approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md). Gameplay implementation is `be8d6fe` on `codex/endless-jam`; the exhaustive physical matrix passed and squash integration into `dev` is in progress. Human local verification follows.
+**Current work (2026-10-04):** the human committed the six-module Endless scope revision as `cf0adc2` and approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md). Gameplay implementation is `be8d6fe` on preserved `codex/endless-jam` (source head `5dcfc8a`), squash-integrated into `dev` as `5605d5c`. The final 618-test suite and exhaustive physical matrix passed. Human local verification follows.
 
 ---
 
@@ -438,13 +438,13 @@ Jam release on main
 
 ### BIOME-001 — Implement baseline grass behavior
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-012
 - **Acceptance:** permissive reference dry biome consistent with GDD.
 
 ### BIOME-002 — Implement water body detection/state
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-012
 - **Acceptance:**
   - enter/leave water state reliably;
@@ -453,7 +453,7 @@ Jam release on main
 
 ### BIOME-003 — Implement buoyancy and weight-dependent depth
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** BIOME-002
 - **Acceptance:**
   - turtle floats;
@@ -462,7 +462,7 @@ Jam release on main
 
 ### BIOME-004 — Implement depth-dependent rightward current
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** BIOME-003
 - **Acceptance:**
   - deeper position produces stronger rightward assistance;
@@ -470,13 +470,13 @@ Jam release on main
 
 ### BIOME-005 — Implement water impact damping
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** BIOME-002
 - **Acceptance:** major water entries do not significantly destabilize cargo, consistent with GDD intent.
 
 ### BIOME-006 — Implement second required dry biome
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-012
 - **Note:** rock selected by the human; grass/rock/water are the current jam set. Sand is deferred after the 2026-10-04 scope revision.
 
@@ -517,7 +517,7 @@ Jam release on main
 
 ### MOD-002 — Implement module placement/alignment
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-001
 - **Acceptance:**
   - next start aligns to previous end;
@@ -526,24 +526,24 @@ Jam release on main
 
 ### MOD-003 — Validate biome connector compatibility
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-001
 - **Acceptance:** incompatible output/input pairs cannot be silently chained.
 
 ### MOD-004 — Validate pool continuation safety
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-003
 - **Acceptance:** every selectable exit biome has at least one compatible next-entry module if Endless generation is enabled.
 
 ### MOD-005 — Add automated module metadata tests
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-001 through MOD-004
 
 ### MOD-006 — Author six-module pool for Endless jam
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** required biomes, MOD-002
 - **Acceptance:**
   - six transitions `AB BD DA / AD DB BA` with A=water, B=grass and D=rock;
@@ -554,7 +554,7 @@ Jam release on main
 
 ### MOD-007 — Gate proposed modules on current-settings jump traversal
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Branch:** `codex/physics-stability-camera`
 - **Diagnostic foundation:** `3cbbd00` · reviewed implementation: `19e55fa`; six-module integration and authored route/load evidence are supplied by `be8d6fe` on `codex/endless-jam`.
 - **Acceptance:** shared real-Rapier diagnostic traversal validator observes actual full-charge release and grounded landing with a bounded authored route; clearable/unreachable geometry and launch/gravity changes tested. Future module proposals must provide every mandatory route/load case and human validation; rerun after relevant settings, geometry or controller changes. An analytical height estimate alone is insufficient.
@@ -563,13 +563,13 @@ Jam release on main
 
 ### MOD-008 — Extend module/world geometry for sockets and route exits
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-001
 - **Acceptance:** preserve existing revisions/diagnostics; independent solids/removable supports, pose-aware support/material queries, multiple water regions, local bounds and three compatible sockets; normalize single exits and permit only early certified multi-exit commitment. Water joins align reference surface/bed/clearance. Review schema migration if incompatible changes are necessary.
 
 ### MOD-009 — Certify routes, loads, joins and trap combinations
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-006, MOD-007, MOD-008, HAZ-002 through HAZ-004
 - **Acceptance:** real-Rapier control traces for multiple jumps/swimming and accessible exits; full/sofa/empty/reachable partial loads; correct first landing; pit/stump/cone recovery and all generable compatible combinations; current settings/version evidence. Failed routes block content acceptance.
 
@@ -577,7 +577,7 @@ Jam release on main
 
 ### HAZ-001 — Implement hazard framework
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** module foundation
 - **Acceptance:**
   - hazard activation and telegraph phases are explicit;
@@ -587,25 +587,25 @@ Jam release on main
 
 ### HAZ-002 — Implement touch-triggered tree and falling pinecone
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** HAZ-001
 - **Acceptance:** non-blocking tree touch region; fixed-time delayed cone drop onto cargo; cone excluded from cargo graph and cleaned up before it can leave a permanent blocker; readable warning.
 
 ### HAZ-003 — Implement cracked branch over an escapable pit
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** HAZ-001
 - **Acceptance:** independently removable cover triggered by turtle passage; intact underlying pit/forward escape; current-settings recovery and readable warning.
 
 ### HAZ-004 — Implement hatch and rising stump
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** HAZ-001
 - **Acceptance:** explicitly lift the kinematic carrier through safe support handling; swept body/shell/cargo clearance, current-transform queries, fixed-time phases and guaranteed forward escape/retraction.
 
 ### HAZ-005 — Validate telegraph timing/readability
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** HAZ-002, HAZ-003, HAZ-004
 - **Acceptance:**
   - relevant threats meet GDD minimum anticipation at max allowed turtle speed;
@@ -628,7 +628,7 @@ Jam release on main
 
 ### LEVEL-002 — Implement timer
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-002
 - **Acceptance:** simulation-time timer, frozen in pause/results; Endless time never changes score. Shared implementation remains reusable by future designed levels.
 
@@ -654,12 +654,12 @@ Jam release on main
 
 ### APP-001 — Implement main menu
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** basic UI shell
 
 ### APP-002 — Implement mode selector
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** APP-001
 - **Acceptance:**
   - `Nivel personalizado — Próximamente` visible and disabled;
@@ -673,13 +673,13 @@ Jam release on main
 
 ### APP-004 — Implement results screen
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-004, ENDLESS-005
 - **Acceptance:** freeze final scene; show Endless score/pennants/time/difficulty/last loss and return to title. No delivery stamp/time points/perfect bonus.
 
 ### APP-005 — Validate full MVP navigation loop
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** APP-001, APP-002, APP-004, APP-006, ENDLESS-007, UX-001, UX-002
 - **Flow:** Main → Mode → Difficulty → Endless ↔ Pause → Results → Main.
 - **Acceptance:**
@@ -691,7 +691,7 @@ Jam release on main
 
 ### APP-006 — Implement Endless difficulty selector
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** APP-002, ENDLESS-001, UX-001
 - **Acceptance:** Fácil/Normal/Difícil before seed creation; Normal selected by default; keyboard/mouse and Esc return; chosen difficulty changes trap frequency while preserving approved physics.
 
@@ -708,13 +708,13 @@ Jam release on main
 
 ### CAM-002 — Validate fixed zoom/readability
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-006, ENDLESS-002
 - **Acceptance:** hazards and branches can be read at standard zoom.
 
 ### UX-001 — Implement keyboard menu navigation and focus states
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** APP-001
 - **Acceptance:**
   - arrows move selection;
@@ -726,7 +726,7 @@ Jam release on main
 
 ### UX-002 — Implement pause flow
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-002
 - **Acceptance:**
   - `Esc` opens/closes pause;
@@ -739,7 +739,7 @@ Jam release on main
 
 ### UX-003 — Implement Endless HUD
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-007, LEVEL-002
 - **Acceptance:**
   - displays all initial cargo icons;
@@ -750,7 +750,7 @@ Jam release on main
 
 ### UX-004 — Implement contextual onboarding messages
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-003, PHYS-004, BIOME-002, UX-002
 - **Messages:**
   1. `←/A →/D` + `velocidad`
@@ -770,7 +770,7 @@ Jam release on main
 
 ### UX-005 — Protect authored opening from onboarding overlap
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** UX-004, ENDLESS-002
 - **Acceptance:**
   - separate dry prologue is flat/safe and trap-free while speed, balance and jump messages display;
@@ -803,7 +803,7 @@ Jam release on main
 
 ### UX-008 — Implement grouped client loss notifications
 - **Priority:** P1
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-009, UX-003
 - **Acceptance:**
   - brief non-blocking call/text presentation;
@@ -815,7 +815,7 @@ Jam release on main
 
 ### UX-009 — Add Credits screen
 - **Priority:** P1
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** APP-001
 - **Acceptance:**
   - accessible from main menu;
@@ -866,13 +866,13 @@ Jam release on main
 
 ### ART-005 — Register simple Endless terrain/hazard/pennant placeholders
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** MOD-006, HAZ-001, ENDLESS-003
 - **Acceptance:** original simple SVG states in `public/sprites/{entity}/`; folded/deployed pennant; branch/hatch/stump/tree/cone visuals; ASSETS dimensions/anchors/provenance; Vite-safe URLs and independent colliders.
 
 ### PRESENT-001 — Apply Mudanzas Tortuga brand to main presentation
 - **Priority:** P1
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** APP-001, UX-001, UX-006
 
 ### FEEDBACK-001 — Add readable wobble/impact/loss feedback
@@ -936,48 +936,48 @@ Jam release on main
 
 ### ENDLESS-001 — Implement seeded RNG/service
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** module system
 - **Acceptance:** seed/difficulty/safe-count/version capture; independent stable gameplay streams; same content/settings/exit history reproduces selections regardless of rendering/preload timing; restart repeats the current descriptor.
 
 ### ENDLESS-002 — Implement compatible module selection
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-001, MOD-004
 - **Acceptance:** one continuous world uses all compatible certified six-module definitions; align every committed biome/height exit, preload before visibility/arrival, safe single-exit fallback and no gaps. Integrate the separate non-scoring prologue.
 
 ### ENDLESS-003 — Implement module boundary flags
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-002
 - **Acceptance:** visual-only folded/deployed pennant, no collider/sensor; turtle distance crossing once; selected-route height, above body/shell and roughly half initial stack; no scoring flag at prologue end.
 
 ### ENDLESS-004 — Implement Endless score accumulation
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-003
 - **Acceptance:** canonical cargo values; add n × retained value once after cargo-state updates, including grace; no time points; no award on same-tick terminal zero; regression coverage. Approved initial values are 100/250/400/500.
 
 ### ENDLESS-005 — End run at zero active cargo
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** PHYS-007, ENDLESS-002
 - **Acceptance:** terminal definitive zero, not one missing-contact tick; freeze simulation/timer/help/hazards/score and capture last loss/group for results.
 
 ### ENDLESS-006 — Bound streaming resources and long-run coordinate precision
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-002
 - **Acceptance:** dispose old solids/water/hazards/visuals/caches after all retained/separated cargo and interactions clear; bounded resident counts; fixed-tick rebasing or demonstrated equivalent precision strategy preserves bodies/camera/joins/logical distance/score/seed history.
 
 ### ENDLESS-007 — Enable Endless Run in mode selector
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-002 through ENDLESS-006, ENDLESS-008, MOD-009, HAZ-005
 
 ### ENDLESS-008 — Implement seeded trap occupancy and bounded difficulty curve
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** ENDLESS-001, MOD-006, HAZ-001
 - **Acceptance:** three compatible sockets; distinct sampled subset/type per instance; base expectations 0.5/0.75/1.5 for seed-selected 5–10 scoring modules; logarithmic saturation toward 1/1.25/2; easy never three; shared probability/rate configuration; no quota compensation or physics changes.
 
@@ -993,7 +993,7 @@ Jam release on main
 
 ### TEST-001 — Add score regression suite
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Acceptance:** Endless retained-value multiplier, grace inclusion, duplicate crossing, skipped boundaries and same-tick final-loss order; designed score cases remain SCORE-002.
 
 ### TEST-002 — Add cargo graph/hysteresis tests
@@ -1003,7 +1003,7 @@ Jam release on main
 
 ### TEST-003 — Add module compatibility/pool tests
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 
 ### TEST-011 — Keep physics regressions compatible with human tuning
 - **Priority:** P0
@@ -1015,7 +1015,7 @@ Jam release on main
 
 ### TEST-004 — Add production-build smoke test checklist
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Acceptance:** title/mode/difficulty/Endless/results and `?mode=physics`, public assets and Rapier WASM tested from production root/subpath builds; baseline diagnostics alone do not certify gameplay.
 
 ### TEST-005 — Playtest partial-loss behavior
@@ -1031,13 +1031,13 @@ Jam release on main
 
 ### TEST-007 — Test pause invariants
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** UX-002
 - **Acceptance:** physics and timer remain unchanged while paused; resume does not inject a simulation jump.
 
 ### TEST-008 — Test contextual onboarding state
 - **Priority:** P0
-- **Status:** IN PROGRESS — verified implementation be8d6fe; dev integration pending
+- **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
 - **Depends on:** UX-004
 - **Acceptance:**
   - timed dismissal without input;
@@ -1282,7 +1282,7 @@ Baseline checks on unchanged source during planning: strict TypeScript and ESLin
 
 ### Approved Endless implementation — 2026-10-04
 
-The human approved the plan and synchronized dev before implementation. The production implementation is `be8d6fe`, with partial-load coverage in `48759ce` and digital DA cargo recovery in `93e1da6`, on preserved branch `codex/endless-jam`. Squash integration/provenance is recorded here once created. The current scope is six grass/rock/water modules, three traps and the complete Endless navigation/pause/score/results loop; the full GDD retains four biomes.
+The human approved the plan and synchronized dev before implementation. The production implementation is `be8d6fe`, with partial-load coverage in `48759ce` and digital DA cargo recovery in `93e1da6`, on preserved branch `codex/endless-jam`. The verified source head is `5dcfc8a`; squash integration is `5605d5c` on `dev`, with an identical implementation tree. The detailed source branch remains available locally and remotely. The current scope is six grass/rock/water modules, three traps and the complete Endless navigation/pause/score/results loop; the full GDD retains four biomes.
 
 Agent verification:
 

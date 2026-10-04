@@ -6,7 +6,7 @@
 **Game-design authority:** `/docs/GDD.md`  
 **Operational entry point for agents:** `/AGENTS.md`
 
-**Scope revision (2026-10-04):** Endless Run is the required jam gameplay deliverable. The human approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) after committing the scope revision to `dev` as `cf0adc2`; implementation proceeds on `codex/endless-jam`.
+**Scope revision (2026-10-04):** Endless Run is the required jam gameplay deliverable. The human approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) after committing the scope revision to `dev` as `cf0adc2`; implementation from preserved `codex/endless-jam` is integrated on `dev` as `5605d5c`.
 
 ---
 
