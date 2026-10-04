@@ -13,6 +13,10 @@ type Mutable<T> = T extends readonly (infer Item)[] ? Mutable<Item>[] :
 /** Schema fixtures only: these definitions are not published game content or certified routes. */
 function fixture(): Mutable<ContentCatalog> {
   const catalog = structuredClone(JAM_CATALOG) as Mutable<ContentCatalog>;
+  // Isolate schema fixtures from the runtime pool so negative edits target
+  // their own authored fields regardless of future published catalog growth.
+  catalog.modules = [];
+  catalog.hazards = [];
   catalog.hazards.push({ schemaVersion: CONTENT_SCHEMA_VERSION, id: 'fixture-hazard', version: '1',
     kind: 'fixture-only', parameters: { strength: 1, enabled: true, label: 'Fixture' } });
   catalog.modules.push({ schemaVersion: CONTENT_SCHEMA_VERSION, id: 'fixture-module', version: '1',
@@ -36,11 +40,12 @@ function fixture(): Mutable<ContentCatalog> {
 }
 
 describe('StaticLevelCatalog', () => {
-  it('seeds only existing archetypes and a complete turtle load, without inventing levels', async () => {
+  it('publishes the shared six-module pool and three hazards without inventing designed levels', async () => {
     const service = new StaticLevelCatalog(JAM_CATALOG);
     expect(await service.listPublishedLevels()).toEqual([]);
-    expect(JAM_CATALOG.modules).toEqual([]);
-    expect(JAM_CATALOG.hazards).toEqual([]);
+    expect(JAM_CATALOG.modules.map(module => module.id).sort()).toEqual(['AB', 'AD', 'BA', 'BD', 'DA', 'DB']);
+    expect(JAM_CATALOG.hazards.map(hazard => hazard.id).sort()).toEqual(['branch', 'stump', 'tree']);
+    expect((await service.getModule({ id: 'AD', version: '1' }))?.sockets).toHaveLength(3);
     const turtle = await service.getTurtleConfiguration({ id: OFFICIAL_TURTLE_CONFIGURATION_ID, version: '1' });
     expect(turtle?.cargo).toEqual(CARGO.map(item => ({
       instanceId: item.id + '-1', archetype: { id: item.id, version: '1' }, x: item.x, y: item.y, angle: 0,

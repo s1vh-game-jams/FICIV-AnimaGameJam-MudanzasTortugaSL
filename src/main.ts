@@ -9,25 +9,81 @@ import { SCENARIOS } from './game/content/scenarios';
 import { ContextualHelp } from './game/systems/contextualHelp';
 import { PlaygroundRenderer } from './rendering/playgroundRenderer';
 import type { PhysicsSimulation, LoadPreset } from './game/physics/simulation';
+import { GameNavigation } from './app/navigation';
+import { publicAsset } from './utils/publicAsset';
+import { VISUALS } from './rendering/visualDefinitions';
+import type { Difficulty } from './game/config/endless';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 let cleanup: (() => void) | undefined;
 let routeVersion = 0;
+let activeRoute: 'menus' | 'playground' | 'endless' = 'menus';
 function showMenu(): void {
   routeVersion++; cleanup?.(); cleanup = undefined;
+  activeRoute = 'menus';
   history.replaceState(null, '', location.pathname);
-  app.innerHTML = `<section class="title-screen">
-    <div class="company-mark" aria-hidden="true">🐢</div>
-    <p class="eyebrow">Servicio de mudanzas del bosque</p>
-    <h1>MUDANZAS<br>TORTUGA, S.L.</h1>
-    <p class="tagline">Con la casa a cuestas.</p>
-    <p class="prototype-note">Estamos preparando nuestra primera ruta.</p>
-    <span class="status-pill">Prototipo de físicas · 0.1</span>
-  </section>`;
+  const navigation = new GameNavigation();
+  function draw(): void {
+    const title = navigation.screen === 'title';
+    const credits = navigation.screen === 'credits';
+    const heading = title ? 'MUDANZAS<br>TORTUGA, S.L.' : credits ? 'En buenas patas.'
+      : navigation.screen === 'mode' ? 'Elige tu<br>mudanza.' : '¿Cómo viene<br>el camino?';
+    const buttons = navigation.options.map((option, index) => `<button class="menu-option${index === navigation.selected ? ' selected' : ''}"
+      data-menu-index="${index}"${option.disabled ? ' disabled' : ''}><span class="selection-arrow" aria-hidden="true">${index === navigation.selected ? '►' : ''}</span>
+      ${option.label}${option.detail ? '<small>' + option.detail + '</small>' : ''}</button>`).join('');
+    app.innerHTML = `<section class="title-screen${title ? '' : ' selection-screen'}" data-screen="${navigation.screen}">
+      <div class="menu-card">
+        <p class="eyebrow">Servicio de mudanzas del bosque</p><h1>${heading}</h1>
+        ${title ? `<div class="title-cargo" aria-hidden="true">
+          <img class="title-turtle" src="${publicAsset(VISUALS.turtle.frames[0])}" alt="">
+          <img class="title-shell" src="${publicAsset(VISUALS.shell.path)}" alt="">
+          <img class="title-sofa" src="${publicAsset(VISUALS.sofa.path)}" alt="">
+          <img class="title-tv" src="${publicAsset(VISUALS.television.path)}" alt="">
+          <img class="title-lamp" src="${publicAsset(VISUALS.floorLamp.path)}" alt="">
+          <img class="title-glass" src="${publicAsset(VISUALS.cocktailGlass.path)}" alt="">
+          </div><p class="tagline">Con la casa a cuestas.</p>` : ''}
+        ${credits ? '<p>Un juego para Anima Valencia Game Jam 2026,<br>en FICIV — Festival Internacional de Cine Infantil de Valencia.</p><p>Gracias a quienes ayudan a transportar esta mudanza.</p>' : ''}
+        <nav class="menu-options" aria-label="${navigation.screen === 'difficulty' ? 'Dificultad' : 'Opciones'}">${buttons}</nav>
+        <p class="menu-key-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> confirmar${title ? '' : ' · <kbd>Esc</kbd> volver'}</p>
+      </div>
+    </section>`;
+    for (const button of app.querySelectorAll<HTMLButtonElement>('[data-menu-index]')) {
+      button.addEventListener('click', () => {
+        const effect = navigation.select(Number(button.dataset.menuIndex));
+        if (effect?.type === 'start') void showEndless(effect.difficulty).catch(reportError);
+        else draw();
+      });
+    }
+    app.querySelector<HTMLButtonElement>('.selected')?.focus();
+  }
+  const keys = (event: KeyboardEvent): void => {
+    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.code)) {
+      event.preventDefault(); navigation.move(event.code === 'ArrowDown' || event.code === 'ArrowRight' ? 1 : -1); draw();
+    } else if (event.code === 'Enter') {
+      event.preventDefault(); const effect = navigation.confirm();
+      if (effect?.type === 'start') void showEndless(effect.difficulty).catch(reportError);
+      else draw();
+    } else if (event.code === 'Escape') { event.preventDefault(); navigation.escape(); draw(); }
+  };
+  window.addEventListener('keydown', keys);
+  cleanup = () => window.removeEventListener('keydown', keys);
+  draw();
+}
+async function showEndless(difficulty: Difficulty): Promise<void> {
+  const version = ++routeVersion;
+  cleanup?.(); cleanup = undefined; activeRoute = 'endless';
+  app.innerHTML = '<section class="title-screen"><p class="eyebrow">Su hogar está en buenas patas.</p><h1>Preparando<br>la mudanza…</h1></section>';
+  const { mountEndlessGame } = await import('./app/endlessGame');
+  if (version !== routeVersion) return;
+  const dispose = await mountEndlessGame(app, difficulty, showMenu);
+  if (version !== routeVersion) { dispose(); return; }
+  cleanup = dispose;
 }
 async function showPlayground(): Promise<void> {
   const version = ++routeVersion;
   cleanup?.(); cleanup = undefined;
+  activeRoute = 'playground';
   history.replaceState(null, '', location.pathname + '?mode=physics');
   let tuning = createTuning();
   app.innerHTML = `<div class="playground">
@@ -236,7 +292,7 @@ function reportError(error: unknown): void {
   app.querySelector('pre')!.textContent = error instanceof Error ? error.message : String(error);
 }
 window.addEventListener('keydown', event => {
-  if (event.shiftKey && event.code === 'KeyP' && !location.search.includes('mode=physics')) {
+  if (event.shiftKey && event.code === 'KeyP' && activeRoute === 'menus' && app.querySelector('[data-screen="title"]')) {
     event.preventDefault(); void showPlayground().catch(reportError);
   }
 });

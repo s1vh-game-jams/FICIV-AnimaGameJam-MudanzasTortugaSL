@@ -1,12 +1,12 @@
 # Endless jam implementation plan
 
 **Date:** 2026-10-04
-**Status:** PROPOSED — awaiting human implementation approval.
+**Status:** IMPLEMENTED — human approval recorded on 2026-10-04; verified candidate awaiting dev integration and human playtesting.
 **Design authority:** [GDD](GDD.md), sections 16–17, 27, 33–35, 41–44.
 **Required scope:** [PRD](PRD.md), sections 9–10 and 16.
 **Task tracking:** [BACKLOG](BACKLOG.md).
 
-This file owns the implementation sequence, proposed tuning and verification gates. It does not certify authored geometry or an implemented playable mode. Documentation is left uncommitted on `dev` at the human's request; no gameplay, settings, dependency or asset changes are part of this preparation.
+This file owns the approved implementation sequence, initial tuning and verification gates. The human committed the preparation to `dev` as `cf0adc2` and subsequently approved implementation. The implementation is preserved on `codex/endless-jam`; actual traversal evidence admits all six modules to the pool.
 
 ## 1. Approved decisions and remaining plan assumptions
 
@@ -22,9 +22,9 @@ Approved by the human:
 - Subsequent logarithmic progression tends to base +0.5 without exceeding it.
 - A separate protected dry opening has no traps, early reachable water or scoring pennant and is excluded from that 5–10-module window.
 - Visual two-frame pennants, actual-route placement and the requested navigation loop.
-- GDD/PRD changes are authorized now; implementation starts only after plan approval.
+- GDD/PRD changes and implementation were explicitly authorized; preparation commit is `cf0adc2`.
 
-Proposals to validate with this plan:
+Initial implementation choices approved with this plan:
 
 - Use the six directed transitions `AB BD DA / AD DB BA`, A=water, B=grass, D=rock. The original GDD example lists abstract transition pairs, not eight existing geometries.
 - Use the probability tables and progression rate in section 3.
@@ -34,16 +34,16 @@ Proposals to validate with this plan:
 
 At the long-run limit, easy approaches one trap almost always and hard approaches two on average. Three remains forbidden in easy and occasional in hard. The latest lower base means avoid the earlier 2.5 hard-limit implication of at least 50% three-trap modules.
 
-## 2. Six-module content proposal
+## 2. Six-module content
 
-| Pair | Proposed identity | Gameplay geometry | Exit strategy |
+| Pair | Identity | Gameplay geometry | Exit strategy |
 |---|---|---|---|
 | BA: grass → water | Meadow and pond | Gentle dry undulations, a recoverable short drop, readable water entry and room to settle. | Single water connector with continuous surface/bed clearance. |
-| AB: water → grass | Gentle bank | Swim upward, optional dry stepping island, forgiving exit ramp and grass recovery space. | Single dry exit. |
+| AB: water → grass | Gentle bank | Swim upward, forgiving exit ramp and grass recovery space. The optional stepping island was omitted. | Single dry exit. |
 | BD: grass → rock | Rolling hills | Broad slopes, small raised rock shelf that invites a charged jump, space to land and rebalance. | Single rock exit, modest rise. |
-| DB: rock → grass | Ledge and clearing | Controlled rock descent, optional short jump shortcut and a softer grass landing. | Routes rejoin before one grass exit. |
+| DB: rock → grass | Ledge and clearing | Gentle descending slopes, an optional jump and softer grass recovery flats. | Single grass exit. |
 | DA: rock → water | Rocky ledge and pool | A readable dry approach and a drop into a sufficiently deep cushioning basin. | Single water exit, modest descent. |
-| AD: water → rock | Island and rocky bank | Surface/deeper swimming alternatives, dry recovery sections and a rock-bank exit. | Candidate for vertical choice; early certified commitment or internal rejoin. |
+| AD: water → rock | Island and rocky bank | Shallow finite island with surface/deeper swimming alternatives, dry recovery sections and a rock-bank exit. | Both paths rejoin before one rock exit. |
 
 Sketch local geometry first, around **50–80 m per module** as an initial pacing estimate; adjust lengths to provide three separated readable sockets, charging space and water/dry recovery. Heights are authored relative to entry, with modest net rises/descents. Dry slopes stay within current shell compensation; mandatory shelves/gaps retain a margin below demonstrated jump capability. These are authoring goals, not reachability certificates.
 
@@ -76,7 +76,7 @@ For one-based scoring-module index `n` and seeded window `S`:
 ```text
 S = seeded integer in [5, 10]
 k = max(0, n - S)
-L = 10                         # proposed progression scale, in modules
+L = 10                         # approved progression scale, in modules
 u = ln(1 + k / L)
 r = u / (1 + u)
 P(n) = (1 - r) × P_base + r × P_limit
@@ -103,7 +103,7 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ### Step 2 — Seed, difficulty and module selector
 
-**Ownership:** proposed `src/game/modes/endless/generator.ts`, `src/game/config/endless.ts` and module instance types.
+**Ownership:** `src/game/modes/endless/generator.ts`, `random.ts`, `src/game/config/endless.ts` and module instance types.
 
 - Capture seed, difficulty, pool/generator/settings versions and safe-window count at run creation.
 - Use stable per-instance/per-purpose random streams for module/count/socket/type choices. Sort candidate IDs stably; presentation and preload order cannot consume gameplay randomness.
@@ -115,7 +115,7 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ### Step 3 — Modules, joins and route certification
 
-**Ownership:** proposed `src/game/content/modules/`, module placement helpers and traversal cases; preserve `jumpValidation.ts` as the existing single-jump validator.
+**Ownership:** `src/game/modes/endless/modules.ts`, module placement helpers and `tests/integration/endlessTraversal.test.ts`; preserve `jumpValidation.ts` as the existing single-jump validator.
 
 - Author the safe prologue and six tabled definitions with three compatible sockets each.
 - Align biome, horizontal connector, relative height and continuous water geometry.
@@ -128,7 +128,7 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ### Step 4 — Three physical traps
 
-**Ownership:** proposed `src/game/entities/hazards/`, `src/game/systems/hazards.ts`, simulation interaction API and hazard configuration.
+**Ownership:** `src/game/physics/simulation.ts`, `worldContent.ts`, simulation interaction API and `src/game/config/hazards.ts`. The small jam hazard lifecycle is kept together with physical ownership.
 
 - Give hazards explicit idle/triggered/active/spent phases, fixed-time delays and cleanup.
 - Cracked branch: independent removable support over an authored pit; underlying forward escape stays intact.
@@ -140,7 +140,7 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ### Step 5 — Streaming and long-run safety
 
-**Ownership:** proposed `src/game/modes/endless/stream.ts`, resident-world lifecycle and renderer module containers.
+**Ownership:** `src/game/modes/endless/stream.ts`, resident-world lifecycle and renderer module containers.
 
 - Instantiate upcoming terrain before it enters the fixed visible field or can be reached by the carrier/retained cargo; use captured framing and physical bounds to compute the preload horizon.
 - Preserve one world and load through joins. Commit actual branch exits before downstream materialization.
@@ -152,7 +152,7 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ### Step 6 — Pennants, score and run termination
 
-**Ownership:** proposed `src/game/modes/endless/run.ts`, pure score state and canonical cargo point values.
+**Ownership:** `src/game/modes/endless/run.ts`, `score.ts` and canonical cargo point values.
 
 - After each physics tick's cargo-state update, detect new turtle distance crossings and add `n × retained value` once per boundary.
 - Count active plus separated cargo in grace. Final loss takes precedence over a crossing; time and hazard/scoring updates freeze at the terminal snapshot.
@@ -165,7 +165,7 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ### Step 7 — Shared renderer and replaceable placeholders
 
-**Ownership:** `src/rendering/playgroundRenderer.ts`, `visualDefinitions.ts`, new focused shared/Endless renderer as justified; `public/sprites/terrain/`, `public/sprites/hazards/{type}/`, `public/sprites/pennant/` and UI icons where needed.
+**Ownership:** `src/rendering/endlessRenderer.ts`, shared `visualDefinitions.ts`; `public/sprites/terrain/`, `public/sprites/hazards/` and `public/sprites/ui/` for the pennant frames. Preserve `playgroundRenderer.ts`.
 
 - Reuse turtle/cargo textures and authoritative snapshots. Capture `createLevelCameraFraming` once; keep fixed normal-run zoom through flight, water, blockers and resize. Preserve fixed laboratory framing/debug behavior.
 - Store simple original SVG shapes for new visible entities, including branch intact/broken, hatch/stump states, tree/cone and pennant folded/deployed. No raster-generation dependency or duplicate source assets is needed.
@@ -196,6 +196,8 @@ Store probability vectors/rate in canonical named configuration shared by game, 
 
 ## 5. Review and readiness
 
-The present work is documentation and planning only. Existing code supplies a diagnostic-only title/playground and services, not the six modules or any hazards/results. The proposed module geometry, moving-stump behavior and branch decisions must be implemented and validated before they can be described as safe.
+Implementation now supplies the six shared definitions, three traps, seeded difficulty, bounded streaming, fixed-zoom renderer and the navigation/scoring/results loop. The module pool uses single exits, with surface/submerged alternatives inside AD. Current-settings traversal and production browser checks are the admission gates; human playtesting remains necessary to assess fun and balance. BACKLOG records final evidence and integration provenance.
+
+The opt-in exhaustive certificate passed on implementation `be8d6fe`: 1,152 complete physical routes (six modules × 64 compatible trap arrangements × full/sofa/empty loads), within the 124 traversal cases. The final suite includes all 60 partial-load cases and two digital DA cargo-recovery regressions: 618 tests passed across 24 files. All 15 nonempty cargo subsets were physically observed after grace in each water module, and their carrier routes escaped; this is separate from loss-free play. The DA alternatives preserve a continuing load through keyboard-equivalent controls. Strict TypeScript, ESLint, root/subpath builds and real-browser flow/assets/WASM checks pass. [PHYSICS.md](PHYSICS.md#validating-new-module-proposals) owns the repeatable certificate command and control/evidence limits; BACKLOG records the final handoff evidence.
 
 Approval of this plan authorizes the ordered implementation above and its stated tuning assumptions. Subsequent genuine design contradictions are reported for a human decision; routine implementation choices stay within the approved scope.

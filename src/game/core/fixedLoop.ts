@@ -11,6 +11,8 @@ export class FixedLoop {
     let count = 0;
     while (this.accumulator + 1e-12 >= this.stepSeconds && count < this.maxSteps) {
       step(); this.accumulator -= this.stepSeconds; count++;
+      // A terminal cargo loss or pause can occur inside the callback burst.
+      if (this.paused) { this.accumulator = 0; break; }
     }
     if (count === this.maxSteps) this.accumulator = 0;
     return count;

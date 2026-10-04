@@ -20,6 +20,12 @@ export interface ModuleConnector { readonly biome: ContentBiome; readonly height
 export interface ContentPoint { readonly x: number; readonly y: number }
 export interface ModuleTerrain {
   readonly biome: Exclude<ContentBiome, 'water'>; readonly points: readonly ContentPoint[];
+  /** Optional finite lower solid bound, allowing islands above submerged routes. */
+  readonly bottom?: number;
+}
+export interface ModuleTrapSocket {
+  readonly id: string; readonly x: number; readonly y: number;
+  readonly compatible: readonly ('branch' | 'stump' | 'tree')[];
 }
 export interface ModuleWater {
   readonly left: number; readonly right: number; readonly surface: number; readonly bottom: number;
@@ -29,6 +35,8 @@ export interface ModuleDefinition extends VersionedContent {
   readonly start: ModuleConnector; readonly end: ModuleConnector;
   readonly terrain: readonly ModuleTerrain[]; readonly water?: readonly ModuleWater[];
   readonly hazards?: readonly ContentPlacement[];
+  readonly sockets?: readonly ModuleTrapSocket[];
+  readonly jumps?: readonly { readonly chargeAtX: number; readonly landingX: number }[];
 }
 export type HazardParameter = string | number | boolean;
 export interface HazardDefinition extends VersionedContent {
