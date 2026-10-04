@@ -511,7 +511,7 @@ Before adding systems, compare the idea against `/docs/PRD.md` and `/docs/BACKLO
 Prefer:
 
 - stable/tunable cargo physics;
-- completing the minimum designed level;
+- completing the six-module Endless jam run;
 - readable hazards and feedback;
 - the required biomes;
 - robust module composition;
@@ -523,7 +523,7 @@ Do not let optional work jeopardize the minimum jam build.
 Optional/deferred work includes, unless the backlog explicitly reprioritizes it:
 
 - remote Top 100 leaderboard;
-- Endless Run;
+- designed/customized levels and the fourth biome;
 - user-created level editor/content;
 - broad content expansion.
 

@@ -29,7 +29,7 @@ npm run build
 npm run preview
 ```
 
-Open `http://127.0.0.1:4173/?mode=physics`. Vite preview is a local verification server. The [README local-server guide](../README.md#-servidor-web-local-para-pruebas) provides tester-oriented setup, fixed-port commands, rebuild steps and troubleshooting.
+Open `http://127.0.0.1:4173/` for the title and playable Endless Run, or `http://127.0.0.1:4173/?mode=physics` for the laboratory. Vite preview is a local verification server. The [README local-server guide](../README.md#-servidor-web-local-para-pruebas) provides tester-oriented setup, fixed-port commands, rebuild steps and troubleshooting.
 
 The standard-library Python helper is an alternative:
 
@@ -103,7 +103,19 @@ After building, use a real browser:
 11. Repeat root and repository-subpath production access, public/charge textures, refresh and WASM initialization; inspect browser errors.
 12. At a reachable vertical blocker, exhaust the rear-margin space. Camera progression must hold while physics, time and jump charging continue; full-charge clearance must restore camera advance as accepted forward movement resumes.
 
-Automated physics and Python helper coverage complement this smoke check. Human partial-loss/game-feel testing remains necessary. Designed-level completion, results and full navigation cannot be certified by the physics-only milestone.
+Automated physics and Python helper coverage complement this laboratory smoke check. Human partial-loss/game-feel testing remains necessary.
+
+### Endless production smoke check
+
+Repeat on both root and repository-subpath builds:
+
+1. Navigate Title → Mode → Difficulty with arrows/Enter/Esc and mouse. Normal is selected initially; customized levels are visibly disabled. Start each difficulty and check texture/WASM loading and console errors.
+2. Inspect cargo icons, timer, score, deployed pennants and upcoming terrain. The separate dry opening has no scoring flag or traps. Complete the initial timed help before entering water.
+3. Pause and verify frozen physics/time/help/hazards. Continue is selected initially; restart and exit require confirmation with cancel selected. Restart preserves seed/difficulty/settings and resets help. Showing controls again keeps the game paused.
+4. Resize a landscape viewport, including 640×360. The captured world scale remains unchanged and the HUD remains usable. Blur/hide the page and verify automatic pause without a catch-up burst.
+5. Reach definitive zero cargo and inspect frozen results, score/pennants/time/difficulty/last loss. Return to title and start a fresh run. Confirm both hidden laboratory access paths still work.
+
+The 2026-10-04 implementation has browser evidence for the full flow, all difficulties, a real pennant award, definitive-zero results, pause/restart/help and root/subpath assets/WASM. Current-settings traversal is covered separately by the physical matrix in [PHYSICS.md](PHYSICS.md#validating-new-module-proposals). Final human balance/readability and live release approval remain outstanding; local production serving does not publish the game.
 
 ## 5. Future GitHub Pages release
 
@@ -120,7 +132,7 @@ After final art/licenses and explicit release approval:
 - do not auto-deploy `dev` or delete preserved auxiliary branches;
 - inspect the actual live root and physics route, textures and WASM after deployment.
 
-Before releasing Prototype 2, also verify designed-level completion, pause/results/navigation, onboarding/readability, absence of P0 softlocks, licensing/credits, updated backlog and human playtest approval. Every mandatory authored module route/load case must pass actual full-charge traversal with the release settings, including wall recovery and a first grounded landing at or beyond the authored target; rerun after jump, gravity, geometry, shell height or controller changes. Capture normal-level dead-zone framing once at level load and verify it stays fixed through jumps, camera holds and responsive resizing. Record the actual release commit and URL.
+Before releasing Prototype 2, verify the required six-module Endless run in each difficulty, pause/results/navigation, safe non-scoring onboarding, seeded trap progression, pennants, bounded streaming, readability, absence of P0 softlocks, licensing/credits, updated backlog and human playtest approval. Every accessible authored module route/load and trap combination must pass real traversal with the release settings; mandatory jumps include full charge, wall recovery and the first grounded landing at or beyond the target. Verify swimming/bank exits separately. Rerun after jump, gravity, geometry, shell height or controller changes, including the opt-in exhaustive physical certificate. Capture normal-run dead-zone framing once and verify it stays fixed through jumps, camera holds and resize. Repeat both production root and repository-subpath navigation/texture/WASM checks. Record the actual release commit and URL.
 
 ## 6. Service and migration boundaries
 

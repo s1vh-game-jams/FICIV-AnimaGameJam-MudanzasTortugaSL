@@ -12,7 +12,7 @@ cameraVerticalSpeed=2
 cameraSpeed=2
 cameraRearPercent=20
 cameraFrontPercent=80
-cameraDeadZonePercent=40
+cameraDeadZonePercent=10
 # Pressure/guard widths: metres; recovery: inverse seconds.
 cameraPressureWidth=1.15
 cameraGuardMargin=0.2

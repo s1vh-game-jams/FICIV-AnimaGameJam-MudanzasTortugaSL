@@ -6,7 +6,7 @@
 **Phase scope:** [PRD](PRD.md), sections 1.1, 8 and 19.
 **Task status and verification provenance:** [BACKLOG](BACKLOG.md).
 
-This document describes Prototype 1. The playground uses grass, rock and compact water diagnostics to investigate the physical core. These diagnostic surfaces do not constitute completion of the designed-level or full biome-foundation milestone. Tuning values remain provisional until human playtesting establishes the intended feel.
+This document describes the shared physical foundation used by the playground and the six-module Endless run. The human finalized playground settings on 2026-10-03 and approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) on 2026-10-04. Existing physical tuning, carrier shapes and charged jump remain unchanged; authored runtime content requires its own real-Rapier traversal evidence.
 
 ## 1. Architecture and ownership
 
@@ -31,6 +31,20 @@ Rapier owns physical bodies, colliders, contacts and world stepping. Pixi render
 | `src/rendering/playgroundRenderer.ts` | Snapshot-to-Pixi synchronization, debug overlays and responsive viewport scaling. |
 | `src/rendering/visualDefinitions.ts` | Visual asset paths, sizes, anchors and walk-animation slots. |
 | `src/utils/publicAsset.ts` | Public asset URLs based on Vite's deployment base. |
+| `src/game/physics/worldContent.ts` | Owned terrain/water/trap chunks and physical hazard snapshots. |
+| `src/game/config/hazards.ts` | Shared fixed-time branch, stump and pinecone dimensions/timings. |
+| `src/game/config/endless.ts`, `src/game/modes/endless/` | Seeded module selection, occupancy/progression, streaming, pennants and terminal multiplier scoring. |
+| `src/app/endlessGame.ts`, `src/rendering/endlessRenderer.ts` | Normal run lifecycle, frozen pause/results, HTML HUD and snapshot-only fixed-zoom presentation. |
+
+### Streamed world and traps
+
+`addWorldChunk` installs independent collider ownership, finite lower terrain bounds, support/material metadata and multiple water regions; `removeWorldChunk` removes its colliders, bodies and query metadata together. Water uses the matching local region; dry material follows nearby surface/contact rather than the first overlapping X strip. Finite island solids permit a submerged route beneath them. Module exits align water surface references and actual bed geometry separately. The jam pool uses single exits; AD's surface/submerged paths rejoin before its rocky bank.
+
+Branch covers are separate solids above an authored recess with a forward ramp. Turtle support contact starts a fixed delay and removes the cover. Closed stump hatches are visual ground: their buried cuboids remain disabled until activation and after retraction, avoiding a false side wall in Rapier's character controller. During rise, the position-based turtle receives the swept upward support displacement explicitly. Moving solids use their current transforms in shell clearance. Tree sensors trigger a delayed CCD pinecone; its collision groups affect cargo/terrain, exclude the carrier, and never enter the cargo contact graph. Pinecones retire after three seconds. Hazard phases advance only in simulation ticks.
+
+The shell guard retains exact polygon separation and full-arc clearance. A conservative swept AABB excludes distant solids before the exact tests, preserving geometry checks while reducing streaming cost. Origin rebasing shifts current/next body transforms, free colliders, authored query vertices, water, hazards and camera at a fixed-tick boundary. The mode separately preserves logical distance, height offset and seed/index history. Lost cargo remains available as terminal metadata; in Endless its physical body retires only behind both the carrier and captured visible left edge. Finite laboratory scenarios preserve inspectable body handles until reset. Resident chunks stay until retained/separated cargo and pending hazards no longer need them.
+
+`FixedLoop` rechecks its paused state after every callback so terminal loss cannot run extra physics ticks from a render-frame burst. Endless scoring processes definitive cargo loss before flag crossings, includes separation grace, and freezes on final zero. Pennants have no Rapier body, collider or sensor.
 
 ### Fixed simulation and lifecycle
 
@@ -81,7 +95,7 @@ rear viewport position = 100p percent
 front viewport position = 100(1 - p) percent
 ```
 
-Each outer dead zone occupies the chosen percentage of the complete normal-level viewport. The central corridor occupies the remaining `100 - 2 × cameraDeadZonePercent` percent. The accepted range is 0–45 percent per side. The default 40 percent reserves 40 percent on either side and leaves 20 percent for movement. The human's recovered defaults place the laboratory movement boundaries at 20 and 80 percent: approximately 3.37 and 13.47 m from camera X, a 10.11 m physical corridor. At 40 percent dead zone, a normal level would capture approximately 50.53 m of visible world; the laboratory keeps its fixed approximately 16.84 m span. Zoom is a derived framing result, not an adjustable setting.
+Each outer dead zone occupies the chosen percentage of the complete normal-level viewport. The central corridor occupies the remaining `100 - 2 × cameraDeadZonePercent` percent. The accepted range is 0–45 percent per side. The human approved a new default of **10 percent per side** on 2026-10-04, leaving 80 percent for movement. The recovered laboratory movement boundaries stay at 20 and 80 percent: approximately 3.37 and 13.47 m from camera X, a 10.11 m physical corridor. At 10 percent dead zone, a normal level captures approximately 12.63 m of visible world, at 101.33 logical pixels/metre and zoom 1.3333 relative to the laboratory; the laboratory keeps its fixed approximately 16.84 m span. Zoom is a derived framing result, not an adjustable setting.
 
 The configured movement margins locate the carrier's centre. At zero dead zone those centres reach the viewport edges, so small dead-zone candidates can clip body/shell artwork. Normal-level authoring must check the complete Don Tortuga/shell silhouette at both horizontal margins with the chosen corridor and dead zone. The factory preserves the requested percentages; it does not silently clamp framing or change zoom during a run to repair readability.
 
@@ -150,7 +164,7 @@ Open the playground with `Shift + P` from the title screen, or navigate directly
 | Parameter field | Apply a valid value and reset, preserving pause. |
 | Restore settings button | Restore the loaded settings.txt defaults and reset. |
 | Export settings button | Download current settings.txt without resetting or changing pause. |
-| Preview help checkbox | Test shared onboarding in the diagnostic scene; ordinary level integration remains pending. |
+| Preview help checkbox | Test the shared onboarding sequence used by Endless in the diagnostic scene. |
 | Title button | Dispose the playground and return to the title screen. |
 
 Keyboard shortcuts and movement do not intercept editing in the parameter/select fields. Focus the canvas again when returning to keyboard traversal.
@@ -185,9 +199,9 @@ Root settings.txt is authoritative for adjustable gameplay defaults, including s
 
 The versioned settings codec accepts numeric key=value entries, # comments, LF/CRLF and decimal exponents. It validates required/unknown/duplicate keys, finite bounds and cross-field relationships before applying a complete configuration. Errors identify settings.txt and the affected key/line. Spinner increments are conveniences rather than restrictions on valid fine decimal values.
 
-Current exports use `schemaVersion=2`. To migrate a version-1 export, retain its other tuning values, change `schemaVersion` to 2, remove `cameraZoom`, add `cameraDeadZonePercent=40` as a starting framing candidate and add `shellPivotY=0.30`. Review the dead zone separately: the old direct zoom and the new percentage have different meanings and no automatic numerical conversion. The codec rejects unsupported versions rather than guessing a migration. The schema contains 38 adjustable numeric values plus its version entry.
+Current exports use `schemaVersion=2`. To migrate a version-1 export, retain its other tuning values, change `schemaVersion` to 2, remove `cameraZoom`, add `cameraDeadZonePercent=10` as the current default framing candidate and add `shellPivotY=0.30`. Review the dead zone separately: the old direct zoom and the new percentage have different meanings and no automatic numerical conversion. The codec rejects unsupported versions rather than guessing a migration. The schema contains 38 adjustable numeric values plus its version entry.
 
-The human supplied the recovered version-1 tuning as text on 2026-10-03. All shared numeric values were retained, including the 20/80 percent movement margins and 8 m/s maximum jump. Only the obsolete version/zoom entries were migrated; the new dead-zone and shell-height settings retain their approved 40 percent/0.30 m values. Later browser downloads are session candidates and do not replace that source provenance. Keep a backup before replacing a tuned repository file or an earlier downloaded candidate.
+The human supplied the recovered version-1 tuning as text on 2026-10-03. All shared numeric values were retained, including the 20/80 percent movement margins and 8 m/s maximum jump. At that migration the new dead-zone/shell-height values were 40 percent/0.30 m. The later approved visual default changes only the dead zone to 10 percent; shell height and physical tuning remain the same. Later browser downloads are session candidates and do not replace that source provenance. Keep a backup before replacing a tuned repository file or an earlier downloaded candidate.
 
 The human subsequently finalized the playground tuning in `fd12654`, promoted with `3b3d1f0` on main: `gripAssistance=2.0` and `lossGraceSeconds=1.33`. The jam service foundation preserves these values and the physical implementation. Regression observation windows must use the configured separation grace; assistance-force comparisons must account for the configured grip gain instead of silently assuming an older default.
 
@@ -261,7 +275,19 @@ Every proposed module requires authored traversal cases for each mandatory route
 
 Use those cases to validate approach/charging space, wall height and width, headroom, landing room, connector joins and recovery at the rear camera margin. A passing case demonstrates that authored route/load/control sequence. A failed sequence blocks certification of that case but does not prove no alternative sequence exists. The module owner must adjust geometry or author and verify a viable sequence before acceptance.
 
-Repeat the full required route/load matrix after changes to launch speed, gravity, charge cap, shell registration, geometry, physical movement corridor or controller behavior. An idealized `v²/(2g)` height estimate is useful for sketching; it omits collision clearance, width, approach and landing constraints and cannot certify reachability. Prototype 1 diagnostics and helper tests do not constitute an implemented module pool or certified designed level.
+Repeat the full required route/load matrix after changes to launch speed, gravity, charge cap, shell registration, geometry, physical movement corridor or controller behavior. An idealized `v²/(2g)` height estimate is useful for sketching; it omits collision clearance, width, approach and landing constraints and cannot certify reachability. The six jam modules have authored full/sofa/empty traces, first-landing jumps, physical socket recovery and all compatible seams in `tests/integration/endlessTraversal.test.ts`.
+
+The normal suite checks every socket/type locally and representative complete three-trap combinations. The slower release certificate checks all 64 empty/branch/stump/tree socket arrangements for each module and full/sofa/empty starting load (1,152 complete physical routes):
+
+```powershell
+$env:ENDLESS_EXHAUSTIVE = '1'
+npm run test -- tests/integration/endlessTraversal.test.ts
+Remove-Item Env:ENDLESS_EXHAUSTIVE
+```
+
+On POSIX shells, use `ENDLESS_EXHAUSTIVE=1 npm run test -- tests/integration/endlessTraversal.test.ts`. A trap may be avoided by an observed airborne passage; activated traps must finish safely. Diagnostic traversal continues after cargo losses so it can certify carrier escape separately from retained-load playability. AD's surface path uses upward swimming, with early braking for the sofa; downward swimming gives its submerged path and recovers an upward hold beneath the solid island. This certifies available control sequences, not every arbitrary input or loss-free traversal. Human longevity/partial-loss playtesting remains separate.
+
+`endlessPartialLoads.test.ts` observes all 15 nonempty cargo subsets after real loss grace in each water module and records retained cargo separately from carrier escape. `endlessDaCargoRecovery.test.ts` demonstrates a cargo-preserving full-stack DA route using digital keyboard-equivalent controls: brake from local x=45 m, begin charging on dry support at x≥47 m, keep braking for the three-second charge, then accelerate on release. Neutral or downward swimming afterward retains sofa, TV and glass beyond the module. Its simple walking/relative-angle trace may lose everything; these alternatives demonstrate that the geometry permits continuation. Tested sofa-only variants still lose the last item, which is a valid run ending and a balance-playtest limitation, not proof that every possible control sequence fails.
 
 Inspect the production build in a browser as well as the development server. Check both playground access paths, public SVG textures, Rapier WASM loading, keyboard controls, pause/reset, scenario switching, resize behavior and asset loading below the configured repository subpath. A successful compilation or HTTP response alone does not prove initialization or visible play works.
 
@@ -269,11 +295,9 @@ Record actual automated results and human findings in the backlog and handoff. T
 
 ## 6. Current boundaries and follow-ups
 
-The laboratory intentionally has no designed-level scoring, delivery finish logic, hazard framework, complete menu flow, leaderboard, Endless Run, final art or audio. The shared four-message onboarding controller and optional preview are implemented; normal-level/menu integration remains pending. Sand and full authored biome transitions remain later work. These deferrals follow the current PRD phase and do not remove features from the GDD.
+The laboratory remains a diagnostic mode with finite endpoints and its own pause/reset interface. The playable Endless route supplies the three hazards, score, frozen results, complete navigation, confirmed restart/exit and protected onboarding through the same physical core. Sand, designed-level delivery rules, final art/audio and remote rankings remain later work under the PRD.
 
-The diagnostic pause/reset behavior is not the final player-facing pause menu with restart/exit confirmations. Early water diagnostics do not satisfy the designed level's onboarding-layout constraint. The finite scenario endpoint must not become a normal no-cargo failure condition.
-
-The independent polygon pose guard currently covers static convex/cuboid solids; it does not certify moving dynamic hazards. That future integration must validate collision filtering and swept moving-obstacle behavior when HAZ-001 begins, as tracked in the backlog.
+The streamed-world adapter supplies owned solids, multiple water regions, nearby material/support queries, finite island geometry, cleanup and origin rebasing. The independent polygon guard covers static and current-transform kinematic solids, including rising-stump support; dynamic pinecones interact with cargo/terrain through Rapier and remain outside the cargo graph. All six modules currently have a single committed exit; AD's vertical alternatives rejoin inside the module. Different-height exits require new commitment and downstream-visibility evidence before introduction.
 
 Visual assets live under `public/sprites/` and use the shared Vite-base-aware URL helper. Visual dimensions and anchors are presentation data; replacing artwork must not redefine collider behavior. Turtle walking uses two unique prototype keyframes across 60 logical slots per second. Additional artist frames can extend the visual definition later.
 

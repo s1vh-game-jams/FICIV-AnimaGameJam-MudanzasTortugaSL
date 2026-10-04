@@ -1,8 +1,8 @@
 # Asset Contract — Mudanzas Tortuga, S.L.
 
-**Scope:** Prototype 1 placeholder visuals and the handoff to the artist.
+**Scope:** Prototype 1 and Endless jam placeholder visuals and the handoff to the artist.
 **Visual metadata:** [visualDefinitions.ts](../src/rendering/visualDefinitions.ts)
-**Renderer:** [playgroundRenderer.ts](../src/rendering/playgroundRenderer.ts)
+**Renderers:** [playgroundRenderer.ts](../src/rendering/playgroundRenderer.ts), [endlessRenderer.ts](../src/rendering/endlessRenderer.ts)
 **Requirements:** [PRD, section 7](PRD.md#7-prototype-asset-strategy)
 **Licensing authority:** [LICENSE.md](../LICENSE.md)
 
@@ -10,7 +10,7 @@
 
 Static sprite source files live in `public/sprites/`. Vite copies these files into the production build; there is no second asset copy under `src/`.
 
-The current nine SVGs are original, repository-specific placeholders authored by OpenAI Codex, with subagent provenance `/root/placeholder_assets`. They use simple rectangles, ellipses, circles and paths with solid fills and labels. No third-party images, icon packs, textures or font files were imported. The SVGs reference the system font family `Arial, sans-serif`; they contain no external image/font URLs or scripts.
+The original nine turtle/cargo SVGs are repository-specific placeholders authored by OpenAI Codex, with subagent provenance `/root/placeholder_assets`. Eleven original Endless terrain/hazard/pennant SVGs were added by `/root/assets_validation` on 2026-10-04. They use simple rectangles, ellipses, circles and paths with solid fills, readable silhouettes and descriptive SVG titles. No third-party images, icon packs, textures or font files were imported. Printed text references the system font family `Arial, sans-serif`; the files contain no external image/font URLs or scripts.
 
 Original creative assets remain governed by the project's provisional licensing notice. This document does not change that notice or select a final license. Future imported assets must record their source, creator, license and required attribution before inclusion.
 
@@ -18,7 +18,7 @@ Original creative assets remain governed by the project's provisional licensing 
 
 All source SVGs have a transparent background. Their declared width and height match their `viewBox`, which starts at `0 0`. Source coordinates point right and down. Each asset currently uses 100 SVG units per visual metre.
 
-All normalized sprite anchors are `(0.5, 0.5)`. The centre below is measured in source SVG units.
+Turtle/cargo normalized sprite anchors are `(0.5, 0.5)`. The centre below is measured in source SVG units. The Endless table specifies its own anchors.
 
 | Metadata key | Source path under `public/` | SVG dimensions | Visual size in metres | Source centre |
 |---|---|---|---|---|
@@ -81,11 +81,29 @@ The artist can replace or paint over these placeholders while physics work conti
 
 Embedded labels are prototype scaffolding and may give way to final artwork. The playground also renders upright cargo-name callouts independently of the textures, with a minimum 14-pixel screen font size. Lost cargo is dimmed and marked `×`; temporarily separated cargo is marked `↔`. These presentation cues do not change physical state.
 
-Terrain, water, simple parallax trees and diagnostic markers currently use Pixi Graphics. Menu and tuning controls use HTML/CSS. They have no additional sprite files to repaint in this milestone.
+The laboratory terrain, water, simple parallax trees and diagnostic markers use Pixi Graphics. Menu and tuning controls use HTML/CSS. Endless terrain/material tiles and new entities have replaceable static source files below; physical geometry remains authored independently.
+
+### Endless terrain, hazards and pennants
+
+All paths below are relative to `public/`. Frame pairs preserve matching canvases and registration. Terrain tiles communicate material and can be scaled/tiled independently of physical polygon boundaries. Hazard artwork may be scaled to its authored socket geometry: the branch cover is 3.6 m wide, the hatch/stump is 2.8 m wide, and the stump's displayed rise follows its authoritative moving surface. These deliberate visual sizes do not redefine collider thickness.
+
+| Source path | SVG dimensions | Source size at 100 units/m | Anchor | Registration / frames |
+|---|---|---|---|---|
+| `sprites/terrain/grass.svg` | 400 × 100 | 4 × 1 m | renderer tile origin | Top edge is the grass surface; brown earth below. |
+| `sprites/terrain/rock.svg` | 400 × 100 | 4 × 1 m | renderer tile origin | Top edge is the rock surface. |
+| `sprites/terrain/water.svg` | 400 × 100 | 4 × 1 m | renderer tile origin | Translucent fill and bright surface ripples. |
+| `sprites/hazards/branch-intact.svg`, `branch-broken.svg` | 320 × 40 each | 3.2 × 0.4 m | `(0.5, 0.5)` | Same canvas; central crack becomes a broken opening. |
+| `sprites/hazards/hatch.svg` | 320 × 30 | 3.2 × 0.3 m | `(0.5, 0.5)` | Yellow upward chevron telegraphs the lift. |
+| `sprites/hazards/stump.svg` | 280 × 115 | 2.8 × 1.15 m | `(0.5, 0.5)` | Wood/ring silhouette; display tracks current lift height. |
+| `sprites/hazards/tree.svg` | 280 × 550 | 2.8 × 5.5 m | `(0.5, 1)` | Ground at canvas bottom; visible cone high in canopy. |
+| `sprites/hazards/pinecone.svg` | 60 × 90 | 0.6 × 0.9 m | `(0.5, 0.5)` | Scale-marked pinecone; independent projectile pose. |
+| `sprites/ui/pennant-folded.svg`, `pennant-deployed.svg` | 100 × 250 each | 1 × 2.5 m | `(0.5, 1)` | Pole base at canvas bottom; square flag/check only in deployed frame. |
+
+Pennants have no physical geometry. Their runtime height is 2 m, above the body/shell and roughly halfway up the initial stack; their base follows the visible connector. Deployment changes the frame once horizontal distance crosses the boundary. The SVG titles name small hazards accessibly without relying on text that would become illegible at normal-run scale. Hazard state frames mirror simulation-owned state. Asset loading uses `publicAsset` and remains separate from colliders, just like the turtle/cargo art.
 
 ## 6. Verification
 
-The nine original SVGs were parsed as XML. Dimensions, labels, distinct walking postures and matching body/paw registration between each walking/charging pair were checked.
+The original turtle/cargo SVGs and eleven Endless SVGs were parsed as XML. Dimensions, descriptive titles, paths without external dependencies and matching frame canvases were checked. Walking/charging pairs preserve distinct leg poses and matching body/paw registration. Runtime visibility and root/subpath loading require integrated browser smoke verification; its result belongs in DEPLOYMENT/BACKLOG.
 
 After replacing assets, verify:
 
