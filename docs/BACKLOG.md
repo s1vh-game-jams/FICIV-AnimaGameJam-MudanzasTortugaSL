@@ -714,7 +714,7 @@ Jam release on main
 
 ### CAM-003 — Use ten-percent visual dead zones for the jam
 - **Priority:** P1
-- **Status:** IN PROGRESS
+- **Status:** DONE — `7628134`; preserved source `3873634`
 - **Branch:** `codex/level-zoom-default`
 - **Authorization:** the human selected `cameraDeadZonePercent=10` as the new default and accepts reduced advance visibility for the jam; physical traversal checks and module reauthoring are not required for this visual adjustment.
 - **Scope:** one canonical visual setting; existing immutable load-time formula fits the unchanged 20/80 physical corridor into the central 80 percent. Visible width is approximately 12.63 m and zoom is 1.3333. Physics/controller code, physical tuning and authored modules are unchanged; no level-relative zoom metadata is implemented.
