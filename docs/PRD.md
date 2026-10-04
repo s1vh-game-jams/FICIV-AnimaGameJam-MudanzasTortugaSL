@@ -105,6 +105,8 @@ Agents should implement the clarification exactly and must not generalize it int
 
 **Approved stability/camera revision (2026-10-03):** expose shell height as `shellPivotY`, restoring the original 0.30 m default; replace adjustable zoom with a percentage dead zone on each side of the physical movement corridor; keep the laboratory's character scale fixed; compute and freeze normal-level framing when loading the level. The current maximum jump launch speed is 8 m/s. A physical obstacle can stop Don Tortuga and, once rear-margin space is exhausted, stop camera progression until accepted forward movement permits it to resume. Simulation and run time continue during this obstacle wait. Every proposed module must receive real traversal tests with the currently loaded jump settings. Cargo must remain physically simulated when outside the visible frame.
 
+**Approved visual default (2026-10-04):** `cameraDeadZonePercent=10` reserves 10 percent on each side and places the unchanged physical movement corridor in the central 80 percent. Only the canonical visual default changes; the load-time zoom formula, physical tuning and authored module geometry remain intact. The human accepts reduced advance visibility of terrain accidents for the jam, including an exception to the full-design three-second anticipation target, and will tune it manually if necessary; no new physical traversal certificate is required for this visual adjustment. Per-level relative zoom metadata remains future designed-level work.
+
 Sol alone has scoped permission to synchronize these affected GDD rules. Builder agents/subagents treat the GDD as read-only and report discrepancies.
 
 Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
@@ -718,7 +720,7 @@ Required:
 
 Camera progression normally uses its configured speed. At the rear movement margin, accepted physical forward movement limits camera advance when a solid ahead blocks Don Tortuga; a stationary blocked carrier holds the camera. Physics, jump charging, cargo and the run timer continue. Once forward movement becomes possible, the camera resumes automatically without requiring player consent or teleporting Don Tortuga. Clearing the obstacle must preserve upward jump movement and permit resumption during flight. This is obstacle handling, not voluntary pause.
 
-The laboratory maps rear/front percentages through its fixed 1280×720 composition at 76 pixels/metre. Those metre boundaries remain independent of `cameraDeadZonePercent`. At normal-level load, the framing factory fits that corridor between equal per-side outer dead zones and freezes the resulting zoom. No normal-level camera zoom changes occur during a run. Prototype 1 provides the shared factory and tests; normal-level integration remains Prototype 2 work.
+The laboratory maps rear/front percentages through its fixed 1280×720 composition at 76 pixels/metre. Those metre boundaries remain independent of `cameraDeadZonePercent`. At normal-level load, the framing factory fits that corridor between equal per-side outer dead zones and freezes the resulting zoom. No normal-level camera zoom changes occur during a run. The shared factory supplies the laboratory preview and the implemented Endless renderer.
 
 In water:
 

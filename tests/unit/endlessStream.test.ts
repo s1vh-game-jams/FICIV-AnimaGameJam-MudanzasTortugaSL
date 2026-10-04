@@ -30,7 +30,8 @@ describe('bounded seeded Endless resident geometry', () => {
   it('preloads beyond the entire fixed visible right edge and preserves retained/separated cargo', () => {
     const tuning = createTuning(), world = new FakeWorld();
     const stream = new EndlessStream(world, new EndlessGenerator(tuning, 'hard', 'stream'), tuning, 40);
-    const initial = frame(0);
+    // Approach the opening's end so preload is required even with a close visual frame.
+    const initial = frame(25);
     stream.ensureAhead(initial);
     const framing = createLevelCameraFraming(tuning);
     expect(stream.modules.at(-1)!.endX).toBeGreaterThan(initial.cameraX + framing.leftOffset + framing.visibleMetres);
@@ -47,13 +48,13 @@ describe('bounded seeded Endless resident geometry', () => {
     const tuning = createTuning(), world = new FakeWorld();
     const pool = ENDLESS_MODULES.filter(module => module.id === 'BA' || module.id === 'AB');
     const stream = new EndlessStream(world, new EndlessGenerator(tuning, 'easy', 'water-flag', pool), tuning, 40);
-    stream.ensureAhead(frame(0));
+    stream.ensureAhead(frame(25));
     const waterExit = stream.modules[0], flag = stream.pennants[0];
     expect(waterExit.exitBiome).toBe('water');
     expect(flag.y).toBeLessThan(waterExit.endHeight);
     expect(flag.y + 2).toBeGreaterThan(waterExit.endHeight);
     const originalHeight = flag.y;
-    stream.ensureAhead({ ...frame(20), cargo: [] });
+    stream.ensureAhead({ ...frame(30), cargo: [] });
     expect(stream.pennants[0].y).toBe(originalHeight);
   });
 
@@ -74,7 +75,7 @@ describe('bounded seeded Endless resident geometry', () => {
   it('keeps resource counts bounded over ten thousand concatenations', () => {
     const tuning = createTuning(), world = new FakeWorld();
     const stream = new EndlessStream(world, new EndlessGenerator(tuning, 'hard', 'ten-thousand'), tuning, 40);
-    let x = 0, peak = 0;
+    let x = 25, peak = 0;
     for (let index = 0; index < 10000; index++) {
       stream.ensureAhead(frame(x));
       stream.retireBehind(frame(x));

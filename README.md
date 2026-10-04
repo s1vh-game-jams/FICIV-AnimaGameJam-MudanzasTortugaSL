@@ -175,11 +175,11 @@ Para conservar un ajuste hecho en el laboratorio:
 
 El build incorpora esos valores: cambiar el archivo del repositorio después de construir requiere reconstruir. Los ajustes de la sesión se conservan al reiniciar el tramo; **«Restaurar settings»** recupera los valores cargados del archivo. Exportar mantiene el tramo y la pausa. Un archivo inválido muestra el parámetro que hay que corregir.
 
-Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija; los valores por defecto son **20 % y 80 %**. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: un 40 % detrás y delante deja el 20 % central para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calcularán el zoom al cargar y lo mantendrán fijo. El escalado conserva la composición apaisada 16:9.
+Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija; los valores por defecto son **20 % y 80 %**. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: el valor por defecto es **10 % por lado**, dejando el **80 % central** para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calculan el zoom al cargar y lo mantienen fijo. El escalado conserva la composición apaisada 16:9.
 
 **Altura del caparazón:** `shellPivotY`, en metros sobre el origen del cuerpo, ajusta el apoyo real y la altura inicial de la carga. Su valor por defecto vuelve a **0,30 m**; **0,42 m** reproduce la elevación anterior. Las formas y los colliders conservan sus dimensiones.
 
-El formato actual es **`schemaVersion=2`**. Para adaptar una exportación anterior, cambia la versión a 2, sustituye `cameraZoom` por `cameraDeadZonePercent=40` y añade `shellPivotY=0.30`; conserva los demás parámetros. La zona muerta tiene una interpretación nueva y no es una conversión numérica del zoom antiguo. Las exportaciones actuales ya incluyen las claves correctas.
+El formato actual es **`schemaVersion=2`**. Para adaptar una exportación anterior, cambia la versión a 2, sustituye `cameraZoom` por `cameraDeadZonePercent=10` y añade `shellPivotY=0.30`; conserva los demás parámetros. La zona muerta tiene una interpretación nueva y no es una conversión numérica del zoom antiguo. Las exportaciones actuales ya incluyen las claves correctas.
 
 La guía de físicas y pruebas está en [docs/PHYSICS.md](docs/PHYSICS.md).
 
