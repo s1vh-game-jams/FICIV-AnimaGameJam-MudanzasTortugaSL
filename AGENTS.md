@@ -112,6 +112,8 @@ Never rewrite the GDD merely to make current code easier to justify.
 
 **Further scoped authorization (2026-10-03):** Sol may synchronize the newly approved adjustable original shell height, viewport-independent cargo flight, per-side camera dead zones/fixed level-load zoom, camera waiting at a physically blocked rear margin and mandatory current-settings jump traversal validation for proposed modules. Builder agents/subagents still cannot edit the GDD.
 
+**Scoped Endless jam revision (2026-10-04):** the human authorizes Sol to update the GDD/PRD for the Endless-first jam objective, seeded compatible traps/difficulty, vertical exits, visual pennants and navigation. The human clarified six modules for the three current jam biomes, while preserving the GDD's complete four-biome design; statistical expectations with latest corrected base means 0.5/0.75/1.5; three compatible sockets per module; and a separate non-scoring protected opening. Documentation/planning changes must remain open on `dev`; gameplay implementation waits for explicit plan validation. Subagents still treat the GDD as read-only. See `/docs/ENDLESS_PLAN.md` for the proposed sequence and tuning.
+
 ---
 
 ## 4. Language policy
@@ -145,6 +147,7 @@ This table is mandatory project metadata.
 | `/docs/PHYSICS.md` | English | Current physical architecture, diagnostic controls, canonical configuration and tuning workflow. | Read for physics/playground changes. Keep implementation facts current; human feel validation remains separate. |
 | `/docs/ASSETS.md` | English | Original placeholder provenance, dimensions, anchors, animation and artist repaint contract. | Read before visual replacements or registration changes. Preserve physics/art separation and record imported licenses. |
 | `/docs/BACKEND.md` | English | Static jam service contracts; published level/catalog data, local Top 100 persistence, anonymous sessions and future remote/auth migration. | Read before content/service/persistence changes. Do not treat local rankings as global or author IDs as authentication. |
+| `/docs/ENDLESS_PLAN.md` | English | Proposed Endless jam implementation sequence, six-module sketches, probability/point-value proposals and verification gates. | Read for the current scope change. Implementation is pending human plan approval; proposals are not implemented or certified behavior. |
 
 ### Future documentation
 
@@ -493,8 +496,8 @@ Once definitively lost:
 
 **Game Jam prototype scope (PRD):**
 
-- at least **three of the four** GDD biomes;
-- **water is mandatory**.
+- **grass, rock and water**, the three existing runtime biomes;
+- sand is deferred; the complete GDD still contains four biomes.
 
 The complete-game design still contains all four biomes. Omitting one from the jam prototype is a scope decision, not a design change.
 
@@ -502,9 +505,9 @@ Water must preserve the GDD's special relationship among retained mass, depth, b
 
 ### Modules
 
-The designed level and potential Endless Run consume the **same module pool**.
+Endless Run and future designed levels consume the **same module pool**.
 
-Author modules first to make the designed jam level good. If Endless Run is implemented, it uses the complete set of compatible available modules rather than a separate procedural-only pool.
+The proposed six-module closed pool, subject to plan validation, is `AB BD DA / AD DB BA` with A=water, B=grass and D=rock. Endless uses all compatible certified definitions; future designed levels reuse them. Each jam module has three compatible trap sockets. Multi-exit modules require early unambiguous route selection and correct downstream alignment; otherwise use single exits.
 
 Every proposed module must include real-physics full-charge jump traversal evidence for its mandatory routes and supported loads, using current settings (currently 8 m/s maximum launch). Repeat validation after relevant geometry, launch/gravity, shell-height, movement-margin or controller changes. An analytical height bound alone cannot certify traversal; camera waiting never excuses an impossible wall. See GDD 42.1 and PHYSICS for the diagnostic validator.
 
@@ -512,8 +515,7 @@ The jam does not require examples of all sixteen abstract biome transition combi
 
 ### Hazards
 
-- minimum: two distinct hazard types;
-- desired: three;
+- required: cracked branch over an escapable pit, hatch/rising stump and tree/falling pinecone;
 - hazards destabilize cargo rather than damage Don Tortuga;
 - relevant threats must obey GDD telegraphing/readability rules.
 
@@ -533,22 +535,19 @@ Main Menu
   │     └── back to Main Menu
   │
   └── Mode Select
-        ├── Designed Levels
-        │     ↓
-        │   Level Select
-        │     ↓
-        │   Level 1
-        │     ↕
-        │   Pause
-        │     ↓
-        │   Results / delivery note
-        │     ├── Retry same level
-        │     └── Main Menu
-        │
-        └── Endless Run — "Próximamente"
+        ├── Nivel personalizado — "Próximamente" (disabled)
+        └── Carrera Infinita
+              ↓
+            Difficulty: Fácil / Normal / Difícil
+              ↓
+            Endless Run ↔ Pause
+              ↓
+            Endless results / frozen scene overlay
+              ↓
+            Main Menu
 ```
 
-If Endless Run is implemented, replace the disabled/coming-soon state without changing the overall navigation contract unnecessarily.
+The designed-level selector/delivery flow remains part of the complete GDD and is deferred with that mode. Endless is the required jam deliverable; implementation is pending validation of the plan.
 
 `physics-playground` is a hidden development route, not a normal mode selector entry.
 
@@ -574,12 +573,14 @@ While paused:
 
 ### 11.3 HUD
 
-Designed-level gameplay HUD:
+Endless jam gameplay HUD:
 
 - initial-cargo icon row;
 - lost objects become visually disabled/crossed out;
 - run timer;
-- no live designed-level score.
+- pennants/multiplier and cumulative score.
+
+Future designed levels retain their no-live-score HUD rule.
 
 Keep the right side visually clear enough for upcoming terrain, hazards, and branches.
 
@@ -594,7 +595,7 @@ For implementation, use these approved rules for GDD section 41.7:
 - help state is **not persisted across runs, browser sessions, or accounts**;
 - replaying the same level starts with fresh help state;
 - swimming help appears the first time Don Tortuga enters water during that run;
-- the authored jam level must not place reachable water so early that speed/balance/jump onboarding can overlap with swimming onboarding;
+- the authored non-scoring Endless prologue is dry, flat and trap-free so speed/balance/jump onboarding cannot overlap with swimming onboarding;
 - specifically, water should not be immediately after the start and should be unreachable before the first three messages have completed at the fastest permitted early-run traversal;
 - if malformed/community content nevertheless creates an overlap, the swimming message preempts an unfinished initial message, which remains pending until dry terrain;
 - future user-created levels are required to remain technically completable, but the engine cannot guarantee that user-authored onboarding layout is good design.
@@ -705,7 +706,10 @@ If a script is not implemented:
 
 Prioritize deterministic logic:
 
-- module biome compatibility;
+- module biome compatibility and every selectable vertical exit;
+- seeded difficulty distributions, 5–10-module base window, capped progression and distinct compatible sockets;
+- pennant once-only scoring, same-tick definitive-loss order and frozen Endless results;
+- streaming cleanup, coordinate precision/rebasing and moving-hazard recovery;
 - connector/height metadata;
 - infinite-pool dead-end validation;
 - seeded generation;

@@ -67,11 +67,14 @@ El objetivo mínimo de la jam incluye:
 |---|---|
 | 🐢 | 1 configuración de Don Tortuga y su montaña de objetos |
 | 📦 | 4 tipos de objeto físicamente diferentes |
-| 🗺️ | 1 nivel prediseñado construido mediante módulos reutilizables |
-| 🌊 | Al menos 3 biomas, incluyendo agua |
-| ⚠️ | Al menos 2 tipos de trampa; 3 como objetivo |
-| 🏁 | Meta, puntuación y pantalla de resultados |
-| ♾️ | Carrera Infinita visible como **«Próximamente»** si no llega a implementarse |
+| ♾️ | Carrera Infinita con **6 módulos** reutilizables y seed |
+| 🌊 | Hierba, roca y agua; el diseño completo conserva los 4 biomas |
+| ⚠️ | Rama resquebrajada, trampilla con tocón y árbol con piña |
+| 🎚️ | Fácil, Normal y Difícil; trampas variables por módulo y progresión limitada |
+| 🏁 | Banderines visuales, puntuación acumulada y resultados al perder toda la carga |
+| 🗺️ | Nivel personalizado visible como **«Próximamente»** |
+
+**Cambio de alcance del 04/10/2026:** estas son las metas del siguiente prototipo. La Carrera Infinita todavía no está implementada; el [plan detallado](docs/ENDLESS_PLAN.md) espera validación antes de empezar. La run tendrá un inicio seguro sin puntos y después 5–10 módulos con la frecuencia base elegida, antes de una subida que se aproxima a +0,5 trampas por módulo.
 
 El diseño completo vive en [`/docs/GDD.md`](docs/GDD.md).
 
@@ -216,7 +219,8 @@ La base de servicios de la jam ya incluye un **catálogo estático validado**, c
 │   ├── DEPLOYMENT.md     # builds, servidor y futuro despliegue
 │   ├── PHYSICS.md        # arquitectura y guía de tuning
 │   ├── ASSETS.md         # contrato para repintar los placeholders
-│   └── BACKEND.md        # catálogo y servicios locales; evolución futura
+│   ├── BACKEND.md        # catálogo y servicios locales; evolución futura
+│   └── ENDLESS_PLAN.md   # plan de carrera infinita pendiente de validación
 │
 ├── public/
 │   └── sprites/
@@ -267,10 +271,11 @@ Cada estado del prototipo —caminar y cargar el salto— utiliza **dos keyframe
 ```mermaid
 flowchart TD
     A[Menú principal] --> B[Selector de modo]
-    B --> C[Niveles prediseñados]
-    B --> D[Carrera Infinita<br/>Próximamente]
-    C --> E[Selector de niveles]
-    E --> F[Nivel 1]
+    B -.-> C[Nivel personalizado<br/>Próximamente]
+    B --> D[Carrera Infinita]
+    D --> E[Dificultad<br/>Fácil / Normal / Difícil]
+    E --> F[Run infinita]
+    F <--> P[Pausa]
     F --> G[Pantalla de resultados]
     G --> A
 ```
@@ -460,6 +465,7 @@ Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de trabajar con ramas, commi
 - [`docs/PHYSICS.md`](docs/PHYSICS.md) — arquitectura de físicas y tuning.
 - [`docs/ASSETS.md`](docs/ASSETS.md) — guía de repintado para la artista.
 - [`docs/BACKEND.md`](docs/BACKEND.md) — catálogo, ranking local, juego anónimo y futura migración remota.
+- [`docs/ENDLESS_PLAN.md`](docs/ENDLESS_PLAN.md) — plan de implementación de Carrera Infinita para revisar.
 - [`AGENTS.md`](AGENTS.md) — mapa operativo completo para Codex y otros agentes.
 
 ---

@@ -6,6 +6,8 @@
 **Game-design authority:** `/docs/GDD.md`  
 **Operational entry point for agents:** `/AGENTS.md`
 
+**Scope revision (2026-10-04):** Endless Run is the required jam gameplay deliverable. This documentation change is open for review on `dev`; gameplay implementation requires human approval of [ENDLESS_PLAN.md](ENDLESS_PLAN.md).
+
 ---
 
 ## 1. Purpose
@@ -74,7 +76,7 @@ Prototype 1 does **not** need the complete game flow, complete biome set, remote
 Primary deliverable:
 
 ```text
-one complete playable designed level
+one complete playable Endless Run with six reusable modules
 ```
 
 It implements the **Game Jam scope** defined by this PRD, including the current UI/UX baseline.
@@ -83,9 +85,9 @@ The complete GDD remains the reference for architectural compatibility and later
 
 Examples:
 
-- the GDD defines four biomes; Prototype 2 requires at least three, including water;
+- the GDD defines four biomes; Prototype 2 uses exactly the three established runtime biomes: grass, rock and water; sand remains later work;
 - the GDD defines level leaderboards; Prototype 2 may ship without a remote/global leaderboard;
-- the GDD defines Endless Run; Prototype 2 may display it as `Próximamente`.
+- the GDD defines designed levels; Prototype 2 displays `Nivel personalizado — Próximamente` and makes Endless Run playable.
 
 Operational rule:
 
@@ -106,6 +108,8 @@ Agents should implement the clarification exactly and must not generalize it int
 Sol alone has scoped permission to synchronize these affected GDD rules. Builder agents/subagents treat the GDD as read-only and report discrepancies.
 
 Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
+
+**Approved Prototype 2 revision (2026-10-04):** the human replaced the designed-level jam deliverable with Endless Run, corrected the initial pool to six modules for grass/rock/water, and explicitly preserved the complete GDD's four-biome design. Require cracked-branch pit, hatch/rising-stump and tree/falling-pinecone traps; a seed-selected 5–10-module base-frequency window; bounded logarithmic progression of at most +0.5 expected traps; visual two-frame route-specific pennants; and Title → Mode → Difficulty → Run → Results → Title. Clarifications approve statistical expectations, three compatible trap sockets per module and a separate protected opening with no scoring pennant. The latest human correction sets base means **0.5/0.75/1.5**, replacing the earlier 0.25/1/2; limiting means are **1/1.25/2**. Sol may synchronize these scoped GDD changes. Implementation waits for approval of the detailed plan; probability tables, progression rate and provisional geometry/point values in that plan are proposals, not implemented behavior.
 
 **Approved jam service foundation (2026-10-03):** the human confirmed a packaged static published-level catalog and browser-local Top 100, with remote/global services later. Levels reserve stable IDs, name, optional thumbnail, coordinate-based module/hazard geometry, versioned turtle/load configuration, versioned ranking and author user ID. Anonymous play remains mandatory. Account creation (email/password and Google), authenticated community authoring and remote publishing are post-jam; preserve compatible contracts rather than implementing them now. See [BACKEND.md](BACKEND.md). Prepare only an inactive Pages Actions template under `/scripts/`; publication awaits final art/licenses and release authorization.
 
@@ -163,7 +167,7 @@ Browser automation (e.g. Playwright) is optional and should only be added when i
 
 ## 4. Deployment model
 
-The game must not require a backend to start, play the designed level, calculate results, or use the physics playground.
+The game must not require a backend to start, play Endless Run, calculate results, or use the physics playground. Future designed levels retain the same static-play requirement.
 
 Expected deployment:
 
@@ -495,18 +499,20 @@ Do not build a full editor UI during the jam unless it materially accelerates tu
 
 The jam is considered functionally shippable when all requirements below are met with placeholder or final art as appropriate.
 
-### 9.1 One designed level
+### 9.1 One complete Endless Run
 
 Required:
 
-- exactly one playable designed level is sufficient;
-- it is assembled from reusable sections/modules;
-- it has a start;
-- it has a finish line;
-- it records run time;
-- it calculates score according to the GDD;
-- it reaches a results screen;
-- player can return to main menu.
+- a separate safe dry opening followed by a streamed six-module pool;
+- difficulty selected before seed creation;
+- biome/height-compatible generation using every compatible module;
+- seeded trap counts, sockets and compatible types, with the approved bounded progression;
+- module-boundary pennants and the GDD Endless score;
+- simulation time recorded, without a finish line or time score;
+- end on definitive loss of all retained cargo;
+- frozen results overlay/screen and return to title.
+
+Designed/customized-level gameplay, its selector, finish/delivery logic and scoring are deferred. Its disabled mode entry reads `Nivel personalizado — Próximamente`; the editor remains post-jam.
 
 ### 9.2 One turtle configuration
 
@@ -531,14 +537,7 @@ The final art may vary, but do not collapse them into near-identical physics pro
 
 ### 9.4 Biomes
 
-Minimum:
-
-- **three of the four GDD biome types**;
-- **water is mandatory**.
-
-The chosen other two may be selected based on production value and level needs.
-
-Ideal jam target: all four.
+Jam set: **grass, rock and water**, the three existing runtime biomes. Sand is deferred and is not a jam acceptance target. The complete GDD and content contracts retain all four biome identities.
 
 Required water behavior must preserve the GDD's special role:
 
@@ -550,19 +549,15 @@ Required water behavior must preserve the GDD's special role:
 
 ### 9.5 Hazards
 
-Minimum:
+Require all three distinct types: cracked branch over an escapable pit, hatch with a rising stump, and a touch-triggered tree dropping a pinecone after a short delay.
 
-- two mechanically distinct hazard/trap types.
-
-Ideal:
-
-- three.
+Each of the six modules has three authored sockets, each with a nonempty set of geometry-compatible types. Select sockets without replacement; at most one trap per socket. Count compatible **placements**, not decorations or ambient terrain, for difficulty. Validate all generable combinations, not only each trap in isolation.
 
 They must be readable/telegraphed and should attack cargo stability rather than health.
 
 ### 9.6 Core navigation loop
 
-Minimum flow:
+Required flow:
 
 ```text
 Main Menu
@@ -570,22 +565,19 @@ Main Menu
   │    └─ Main Menu
   │
   └─ Mode Select
-       ├─ Designed Levels
-       │    ↓
-       │  Level Select
-       │    ↓
-       │  Level 1
-       │    ↕
-       │  Pause
-       │    ↓
-       │  Results / delivery note
-       │    ├─ Retry Level 1
-       │    └─ Main Menu
-       │
-       └─ Endless Run — "Próximamente"
+       ├─ Nivel personalizado — "Próximamente" (disabled)
+       └─ Carrera Infinita
+            ↓
+          Difficulty: Fácil / Normal / Difícil
+            ↓
+          Endless Run ↔ Pause
+            ↓
+          Endless results (may overlay the frozen scene)
+            ↓
+          Main Menu
 ```
 
-The Designed Levels selector must exist even with only one level because it establishes the intended extensible flow.
+The designed-level selector is deferred with that mode. A new difficulty selector is required for Endless Run only.
 
 The jam prototype must support keyboard menu navigation:
 
@@ -600,13 +592,9 @@ Pause freezes both physics and run timer.
 
 ### 9.7 Scoring
 
-Implement the GDD's designed-level scoring:
+Implement the GDD Endless formula: crossing pennant `n` adds `n × sum(retained cargo point values)` exactly once. Retained cargo includes temporary separation within grace. Apply definitive cargo-loss state updates before scoring a crossing on the same fixed tick; zero cargo ends the run and awards no crossing points. Time does not alter score.
 
-- time component;
-- cargo component;
-- perfect-move bonus;
-- saved-item rules;
-- deterministic rounding/handling.
+Cargo definitions need explicit integer point values; current `CARGO` has none. Proposed values are listed in the implementation plan for approval/tuning. Designed-level time/cargo/perfect-bonus scoring and delivery stamps remain deferred.
 
 Version identifiers must be available for future leaderboard separation.
 
@@ -621,18 +609,16 @@ There is **one module pool**, not separate pools for designed and procedural con
 Workflow:
 
 ```text
-design useful modules
+author and certify six useful modules
       ↓
-assemble the handcrafted jam level
+jam Endless Run uses the full compatible pool
       ↓
-same available module pool
-      ↓
-optional Endless Run generator
+future designed levels reuse the same definitions
 ```
 
 Modules should therefore be:
 
-- useful in the designed level first;
+- useful in Endless Run now and reusable by future designed levels;
 - reusable;
 - compatible through GDD biome-connector rules;
 - vertically alignable through entrance/exit height metadata;
@@ -650,17 +636,29 @@ Allowed:
 
 Required:
 
-- enough variety to make the designed level interesting;
-- no dead end in the pool if Endless Run is enabled;
+- enough variety to make the six-module Endless pool interesting;
+- no dead end in the required Endless pool;
 - every selectable module output must have at least one compatible next module input.
 
 ### 10.3 Endless pool semantics
 
-If Endless Run is implemented, it uses **all compatible modules available in the pool**, subject to compatibility and any necessary safety constraints.
+Endless Run uses **all compatible modules available in the pool**, subject to compatibility and necessary safety constraints.
 
 Do not maintain an arbitrary manually curated "procedural subset" that excludes valid modules merely because they were originally authored for the designed level.
 
 Adding modules after the jam should automatically enrich Endless Run if they satisfy the module contract.
+
+The proposed initial three-biome adaptation, subject to plan validation, is `AB BD DA / AD DB BA`, with A=water, B=grass and D=rock. It supplies exactly six cross-biome definitions; it does not redefine the GDD's four-biome domain or require all nine possible three-biome pairs.
+
+### 10.3.1 Streaming, exits and geometry
+
+Definitions must distinguish authored local geometry/sockets from generated instance placements/traps. Preserve existing published revisions and support legacy single `end` connectors through normalization; introduce a reviewed schema version/migration only if an incompatible extension is necessary.
+
+Current heightfield diagnostics are not sufficient for removable bridge supports, pits, overhead clearance or overlapping vertical routes. Extend solid/support geometry and physical spatial queries using actual poses; never resolve terrain solely from horizontal X when several surfaces overlap. Water joins must align the authored reference surface, bed/clearance and route, not an arbitrary instantaneous turtle depth.
+
+Each exit declares an ID, biome, relative connector height, horizontal join zone and identifiable route. Commit an exit early enough to place and reveal the next module before it can be seen/reached. If this cannot be certified, use a single exit, optionally with internal routes that rejoin. No gap may wait for a late nearest-height guess.
+
+Keep several visible/upcoming modules ready. Remove old bodies, geometry-query caches, water regions, hazards and visuals only after no retained/separated cargo or pending interaction needs them. Long runs require bounded live resource counts and a precision strategy for accumulated horizontal/vertical coordinates; logical distance/index/score must survive any world-origin rebasing.
 
 ### 10.4 Future community levels
 
@@ -675,6 +673,8 @@ Every new module proposal must include authored real-Rapier traversal cases for 
 The shared `validateJumpTraversal` helper in `src/game/content/jumpValidation.ts` exercises an authored scenario and returns observed pass/outcome (including `landing-short`), launch, charge, first landing and settings evidence. A passing script certifies that route/load case only; a failed script blocks certification of that case and does not prove that all possible control sequences fail. Future modules must supply the full route/load matrix rather than relying on one successful diagnostic.
 
 Repeat traversal validation after jump, gravity, geometry, shell registration or controller settings change. The idealized `v²/(2g)` height bound is an initial design estimate; it cannot replace collision-aware traversal. Human readability and playtesting still follow automated validation. Walls or blocking objects that cannot be cleared with the configured maximum jump are invalid authored content.
+
+The matrix also covers accessible optional routes, empty/sofa-only/full loads, reachable partial-load arrangements, every compatible trap combination and adjacent joins. Water routes require swimming/ascent/bank-exit evidence; a dry-jump helper alone cannot certify them. Record versions, loaded settings and the successful input trace. No authored route is certified by this documentation revision.
 
 ---
 
@@ -817,12 +817,14 @@ A short resume countdown remains optional and should only be added if playtests 
 
 ### 14.3 HUD
 
-Designed-level HUD:
+Endless Run HUD:
 
 - cargo-status row containing all initial cargo icons;
 - definitively lost objects are disabled/crossed out with a small non-blocking animation;
 - run timer;
-- no live designed-level score.
+- pennants crossed/current multiplier and cumulative Endless score.
+
+Future designed-level HUD retains its no-live-score rule.
 
 Optional:
 
@@ -862,7 +864,9 @@ Prototype 1 supplies the tested shared help controller and an optional laborator
 
 ### 14.5 Results / delivery note
 
-Prototype 2 results are presented as a **delivery note (`albarán de entrega`)** and include:
+Prototype 2 Endless results show pennants crossed, cumulative score, elapsed time, difficulty and the last lost object (or simultaneous last-loss group). Freeze simulation, hazard timers and scoring on final loss; the overlay may retain the final rendered scene. `Volver a la portada` completes the required loop. They do not use delivery stamps, perfect bonuses or time points.
+
+For future designed levels, results are presented as a **delivery note (`albarán de entrega`)** and include:
 
 - run time;
 - delivered cargo icons;
@@ -882,7 +886,7 @@ displayPercentage = round(rawPercentage)
 
 This UI classification does not alter the perfect-bonus rule: `PerfectBonus` still follows the scoring rule defined by the GDD.
 
-Results actions:
+Future designed-level results actions:
 
 - **Retry** is selected by default and reloads the same level directly;
 - **Main Menu** returns to the title flow.
@@ -968,15 +972,9 @@ If a public remote leaderboard is added, document trust/validation limitations a
 
 ### 16.1 Jam status
 
-**Stretch goal.**
+**Required P0 gameplay deliverable.** Designed/customized levels are the coming-soon entry. See the approved scope revision in section 1.2 and the implementation approval gate in [ENDLESS_PLAN.md](ENDLESS_PLAN.md).
 
-The mode selector must show it even when unavailable:
-
-```text
-Carrera Infinita — Próximamente
-```
-
-### 16.2 If implemented
+### 16.2 Required behavior
 
 It must:
 
@@ -991,6 +989,22 @@ It must:
 
 Seed/reproduction behavior should be deterministic enough for debugging given the same content/version/configuration.
 
+### 16.3 Difficulty and deterministic generation
+
+Base expected traps per scoring module are **0.5 easy, 0.75 normal, 1.5 hard**. Every jam module exposes three compatible sockets. The safe prologue does not count as a module and awards no pennant. The seed selects an integer base-frequency window uniformly from 5 through 10 inclusive; modules 1 through that value retain exactly the base probability distribution. No compensation quota is required for a finite run.
+
+After the window, a bounded logarithmic curve raises the expectation toward **1 / 1.25 / 2**, never above base +0.5. Easy has zero probability of three traps for every index. Proposed probability vectors, saturating formula and rate are reviewable in ENDLESS_PLAN; they require plan approval before implementation.
+
+Use stable per-instance/per-purpose random streams for module selection, trap counts, socket subsets and types. Preload timing, frame cadence, decoration and hazard activation must not consume gameplay randomness. A replay descriptor reserves seed, difficulty, safe-window count, generator/pool versions, physics settings/version and committed exits; physical reproduction also requires controls. Changing player route may legitimately change compatible future content.
+
+### 16.4 Pennants and traps
+
+Pennants are presentation only: no physics body, collider, sensor or cargo contact. Once the turtle reaches a boundary distance, deploy the corresponding visible exit's two-frame flag and add its score once. Height is above body/shell and roughly halfway up the initial stack. No pennant is scored at the end of the safe prologue.
+
+The branch removes its support over a validated escapable pit. The rising stump requires explicit moving-support handling for the kinematic carrier and swept body/shell clearance, with a safe retraction/forward escape. A tree's touch zone may be a non-solid sensor; its delayed pinecone collides meaningfully with cargo without becoming a cargo-graph node and cannot leave a permanent blocker. Moving solids use current transforms, not cached immutable terrain vertices.
+
+All three traps are visibly legible at least three seconds before earliest effect at maximum **realizable** approach speed, including current/stump assistance; complex route decisions receive approximately four seconds or more. A post-touch delay does not replace advance telegraphing. Constrain incompatible combinations at authoring time while preserving three usable sockets and the required count distribution.
+
 ---
 
 ## 17. Performance
@@ -1001,7 +1015,7 @@ Prefer:
 
 - simplified colliders;
 - pooled/reused visuals where appropriate;
-- sensible module unloading if Endless Run is implemented;
+- bounded module/hazard unloading for required long Endless runs;
 - decoupled art/physics detail;
 - minimal runtime dependencies;
 - static assets;
@@ -1031,8 +1045,9 @@ npm run build
 P0/P1 tests should cover:
 
 - score formulas;
-- perfect bonus;
-- saved-item edge cases;
+- pennant once-only accumulation and final-loss ordering;
+- trap-count distributions, forbidden counts, 5–10-module windows and bounded logarithmic progression;
+- independent deterministic RNG streams and committed exits;
 - cargo state transitions;
 - contact-graph connection;
 - separation hysteresis;
@@ -1052,7 +1067,7 @@ P0/P1 tests should cover:
 - full-charge module traversal using current settings and representative load/route cases;
 - high airborne stacks remaining independently simulated beyond viewport edges;
 - empty/full water depth, ascent and bank-exit relationships;
-- results-stamp integer rounding and band selection;
+- final Endless result freeze and difficulty-separated records where implemented;
 - lost cargo no longer blocking gameplay;
 - public asset URL helper/base-path behavior where practical.
 
@@ -1083,7 +1098,7 @@ Prototype 2 — Game Jam playable prototype
 ├── Build 1 — Biome foundation
 ├── Build 2 — Module system
 ├── Build 3 — Hazards
-├── Build 4 — Designed level
+├── Build 4 — Endless generation and score
 ├── Build 5 — Application / UI / presentation
 └── Build 6 — Stretch
 ```
@@ -1112,8 +1127,8 @@ Exit criterion:
 
 ### Build 1 — Biome foundation
 
-- minimum three biomes including water;
-- target all four if schedule permits;
+- integrate established grass, rock and water into real module routes;
+- defer sand without changing the complete GDD;
 - stable transitions;
 - weight-dependent water behavior.
 
@@ -1129,29 +1144,30 @@ Exit criterion:
 
 ### Build 3 — Hazards
 
-- minimum two distinct hazards;
-- ideal three;
+- cracked branch/pit, hatch/rising stump and tree/pinecone;
+- seeded socket/type selection and compatible combinations;
 - telegraphing/readability;
 - no permanent blockage.
 
-### Build 4 — Designed level
+### Build 4 — Endless generation and score
 
-- handcrafted module sequence;
-- start/finish;
+- separate protected opening and six-module certified pool;
+- seeded compatible streaming and difficulty progression;
+- route-specific visual pennants and cumulative score;
 - timer;
-- scoring;
+- zero-retained-cargo end;
 - results.
 
 ### Build 5 — Application / UI / presentation
 
 - main menu;
 - mode select;
-- level select;
+- Endless difficulty select; disabled customized-level entry;
 - keyboard navigation/focus states;
 - pause and confirmations;
-- designed-level HUD;
+- Endless cargo/timer/pennant/score HUD;
 - contextual onboarding;
-- results delivery note and rounded delivery-status stamp;
+- frozen Endless results and title return;
 - retry/return flow;
 - Mudanzas Tortuga, S.L. brand presentation;
 - local personal-best display/storage where available;
@@ -1165,7 +1181,7 @@ Exit criterion:
 Only after core stability:
 
 - local/remote leaderboard improvements;
-- Endless Run;
+- later designed/customized-level work remains outside this jam plan;
 - additional modules/content;
 - extra presentation polish.
 
@@ -1178,11 +1194,14 @@ A jam candidate satisfies MVP when:
 - [ ] Runs in browser from a production Vite build.
 - [ ] No mandatory backend is required.
 - [ ] `physics-playground` remains accessible to testers.
-- [ ] Designed level is playable start-to-finish.
+- [ ] Endless Run is playable from safe opening to final cargo loss.
 - [ ] One turtle configuration exists.
 - [ ] Four distinct cargo archetypes exist.
-- [ ] At least three biomes exist, including water.
-- [ ] At least two distinct hazards exist.
+- [ ] Grass, rock and water are integrated; sand is deferred.
+- [ ] Six cross-biome modules form a closed compatible pool with three usable trap sockets each.
+- [ ] All three specified traps work, with safe recovery and validated generable combinations.
+- [ ] Seeded windows/distributions obey base means, easy never-three and the bounded +0.5 progression.
+- [ ] Module resources remain bounded and long-run coordinate precision is protected.
 - [ ] Cargo can be lost individually.
 - [ ] Lost cargo cannot softlock Don Tortuga.
 - [ ] Player can accelerate/brake and control shell angle on dry terrain using arrows or WASD.
@@ -1193,16 +1212,17 @@ A jam candidate satisfies MVP when:
 - [ ] Every mandatory module route passes current-settings full-charge traversal with its first grounded landing at or beyond the authored target.
 - [ ] Cargo physics and stability remain independent of viewport visibility.
 - [ ] Water changes controls/behavior according to the GDD.
-- [ ] Designed-level scoring works.
-- [ ] Main → Mode → Level Select → Level → Results → Main works.
+- [ ] Pennants are visual only, deploy at distance once and use the actual committed exit.
+- [ ] Endless multiplier score samples retained cargo after loss updates and ends at definitive zero.
+- [ ] Main → Mode → Difficulty → Endless → Results → Main works.
 - [ ] `Esc` pause freezes physics and timer and resumes safely.
 - [ ] Menus are fully navigable by keyboard and selected state does not depend only on color.
-- [ ] Designed-level HUD shows cargo state and timer without a live designed-level score.
+- [ ] Endless HUD shows cargo state, timer, pennants/multiplier and cumulative score.
 - [ ] Contextual help uses fixed 3–5 s timed messages with per-run (not persistent) seen state.
-- [ ] Authored jam level cannot reach first water before initial speed/balance/jump onboarding completes.
+- [ ] Separate non-scoring prologue cannot reach water or traps before initial speed/balance/jump onboarding completes.
 - [ ] `Show controls again` resets help while remaining paused.
-- [ ] Results use the delivery-note presentation and rounded integer percentage for the delivery-status stamp.
-- [ ] Endless Run appears as `Próximamente` if not implemented.
+- [ ] Results freeze the final scene and show score, pennants, time and last loss.
+- [ ] `Nivel personalizado — Próximamente` is visible and disabled.
 - [ ] Required threats are telegraphed/readable.
 - [ ] Placeholder/final art loads correctly under the configured Vite base path.
 - [ ] Relevant automated tests pass.
@@ -1223,14 +1243,12 @@ A jam candidate satisfies MVP when:
 - [ ] No client secret.
 - [ ] Trust model documented.
 
-### Endless Run
+### Future designed levels
 
-- [ ] Seeded.
-- [ ] Uses full compatible module pool.
-- [ ] Never selects an impossible next biome.
-- [ ] Boundary flags/multipliers work.
-- [ ] Ends at zero active cargo.
-- [ ] Can unload/recycle old modules if required for long runs.
+- [ ] Fixed sequence reuses the shared pool.
+- [ ] Finish/saved-item rules and time/cargo/perfect-bonus score.
+- [ ] Level selector, delivery note and rounded stamp.
+- [ ] Local records separated by meaningful content/physics versions.
 
 ---
 
@@ -1239,6 +1257,8 @@ A jam candidate satisfies MVP when:
 Unless explicitly reprioritized:
 
 - user level editor;
+- designed/customized playable level, finish logic and delivery scoring/UI;
+- sand, while retaining four-biome content compatibility;
 - community level publishing/sharing;
 - multiple turtle configurations;
 - mandatory all-16 module transition coverage;

@@ -40,6 +40,12 @@ Missing/blocked storage, quota failures, corrupt envelopes or unsupported future
 
 The service stores final scores supplied by gameplay; it does not implement the GDD score formula, results UI or personal-best screen. Those remain their tracked Prototype 2 tasks.
 
+## Planned Endless integration — pending implementation approval
+
+The 2026-10-04 jam scope prioritizes Endless Run with six grass/rock/water modules. The complete content contract retains sand. [ENDLESS_PLAN.md](ENDLESS_PLAN.md) describes the proposed extensions for three trap sockets, instance choices, solid geometry and optional route exits. The implemented catalog still has no modules/hazards/levels; this documentation change does not alter schema version 1 or reinterpret stored revisions.
+
+Preserve exact legacy content references and single-exit behavior during an additive extension; review an explicit schema migration if breaking changes are necessary. Do not populate the designed-level catalog with a fabricated fixed level to represent a procedural run. Optional Endless personal records need a distinct mode/difficulty/pool/generator/physics partition and reproduction metadata, using the existing robust storage/fallback approach. Designed-level Top 100 rules, including time tie-breaks, remain their own contract; time is not an Endless score component. This integration is future implementation work, not an existing adapter.
+
 ## Anonymous play and future accounts
 
 The jam session always returns `status: 'anonymous'`; it fabricates no guest account and stores no password/email. Published-level reads, normal play and future Endless Run must remain available anonymously. An author profile is attribution metadata, not a login. Optional `playerUserId` on a local score is likewise metadata, not proof of identity.

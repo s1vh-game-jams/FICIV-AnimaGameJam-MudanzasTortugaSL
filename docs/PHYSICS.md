@@ -6,7 +6,7 @@
 **Phase scope:** [PRD](PRD.md), sections 1.1, 8 and 19.
 **Task status and verification provenance:** [BACKLOG](BACKLOG.md).
 
-This document describes Prototype 1. The playground uses grass, rock and compact water diagnostics to investigate the physical core. These diagnostic surfaces do not constitute completion of the designed-level or full biome-foundation milestone. Tuning values remain provisional until human playtesting establishes the intended feel.
+This document describes the implemented Prototype 1. The human finalized its playground feel/settings on 2026-10-03. Grass, rock and compact water diagnostics establish the jam's three runtime biomes, but do not certify real module routes or hazard combinations. The next deliverable is the six-module Endless run in [ENDLESS_PLAN.md](ENDLESS_PLAN.md), pending implementation approval; the existing physical tuning is preserved.
 
 ## 1. Architecture and ownership
 
@@ -273,7 +273,9 @@ The laboratory intentionally has no designed-level scoring, delivery finish logi
 
 The diagnostic pause/reset behavior is not the final player-facing pause menu with restart/exit confirmations. Early water diagnostics do not satisfy the designed level's onboarding-layout constraint. The finite scenario endpoint must not become a normal no-cargo failure condition.
 
-The independent polygon pose guard currently covers static convex/cuboid solids; it does not certify moving dynamic hazards. That future integration must validate collision filtering and swept moving-obstacle behavior when HAZ-001 begins, as tracked in the backlog.
+The independent polygon pose guard currently covers static convex/cuboid solids; it does not certify moving dynamic hazards. That future integration must validate collision filtering and swept moving-obstacle behavior when HAZ-001 begins, as tracked in the backlog. In particular, the position-based carrier needs explicit moving-support handling for the rising stump; a moving collider alone does not establish safe lifting. Removable branches require a separate intact pit floor/escape, and pinecones must remain outside the cargo graph.
+
+The planned streaming adapter must preserve diagnostic endpoints while supporting module-owned solids, multiple water regions, pose-aware overlapping surfaces, relative terrain bounds and safe disposal/coordinate rebasing. Current X-only terrain lookup and absolute −20 m terrain fill do not certify vertical branching or an infinite world. No such adapter, trap system or module certification is implemented by the documentation revision.
 
 Visual assets live under `public/sprites/` and use the shared Vite-base-aware URL helper. Visual dimensions and anchors are presentation data; replacing artwork must not redefine collider behavior. Turtle walking uses two unique prototype keyframes across 60 logical slots per second. Additional artist frames can extend the visual definition later.
 

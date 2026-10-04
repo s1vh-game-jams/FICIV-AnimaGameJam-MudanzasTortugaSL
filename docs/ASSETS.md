@@ -83,6 +83,12 @@ Embedded labels are prototype scaffolding and may give way to final artwork. The
 
 Terrain, water, simple parallax trees and diagnostic markers currently use Pixi Graphics. Menu and tuning controls use HTML/CSS. They have no additional sprite files to repaint in this milestone.
 
+### Planned Endless placeholders — pending implementation approval
+
+The approved next scope requires replaceable original SVG placeholders under `public/sprites/terrain/`, `public/sprites/hazards/{type}/` and `public/sprites/pennant/`: terrain/material elements, intact/broken branch, hatch/rising stump, tree/pinecone and folded/deployed pennant. Register actual dimensions, anchors and frame paths here when authored; none of these files is added by the present planning change.
+
+Pennants have two simple frames and no physical geometry. Their runtime height is above the body/shell and roughly halfway up the initial stack; their base follows the visible selected connector. Hazard state frames mirror simulation-owned state. New art must use `publicAsset` and remain separate from colliders, just like the current turtle/cargo art.
+
 ## 6. Verification
 
 The nine original SVGs were parsed as XML. Dimensions, labels, distinct walking postures and matching body/paw registration between each walking/charging pair were checked.
