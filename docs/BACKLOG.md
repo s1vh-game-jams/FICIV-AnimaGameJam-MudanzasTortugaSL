@@ -712,6 +712,14 @@ Jam release on main
 - **Depends on:** MOD-006, ENDLESS-002
 - **Acceptance:** hazards and branches can be read at standard zoom.
 
+### CAM-003 — Use ten-percent visual dead zones for the jam
+- **Priority:** P1
+- **Status:** IN PROGRESS
+- **Branch:** `codex/level-zoom-default`
+- **Authorization:** the human selected `cameraDeadZonePercent=10` as the new default and accepts reduced advance visibility for the jam; physical traversal checks and module reauthoring are not required for this visual adjustment.
+- **Scope:** one canonical visual setting; existing immutable load-time formula fits the unchanged 20/80 physical corridor into the central 80 percent. Visible width is approximately 12.63 m and zoom is 1.3333. Physics/controller code, physical tuning and authored modules are unchanged; no level-relative zoom metadata is implemented.
+- **Verification:** all 340 existing unit cases pass across 14 files (15.51 seconds), including settings/framing/stream; strict TypeScript, ESLint and the production build pass. The real browser reports zoom 1.3333 before/after pause and resume, renders the complete initial stack, and has no console errors/warnings. Three stream fixtures approach the opening's end before expecting resident modules, accommodating the narrower visible field. No physical matrix was rerun; the previous certificate remains historical evidence.
+
 ### UX-001 — Implement keyboard menu navigation and focus states
 - **Priority:** P0
 - **Status:** DONE — `5605d5c`; source implementation `be8d6fe`
