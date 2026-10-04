@@ -112,7 +112,7 @@ Never rewrite the GDD merely to make current code easier to justify.
 
 **Further scoped authorization (2026-10-03):** Sol may synchronize the newly approved adjustable original shell height, viewport-independent cargo flight, per-side camera dead zones/fixed level-load zoom, camera waiting at a physically blocked rear margin and mandatory current-settings jump traversal validation for proposed modules. Builder agents/subagents still cannot edit the GDD.
 
-**Scoped Endless jam revision (2026-10-04):** the human authorizes Sol to update the GDD/PRD for the Endless-first jam objective, seeded compatible traps/difficulty, vertical exits, visual pennants and navigation. The human clarified six modules for the three current jam biomes, while preserving the GDD's complete four-biome design; statistical expectations with latest corrected base means 0.5/0.75/1.5; three compatible sockets per module; and a separate non-scoring protected opening. Documentation/planning changes must remain open on `dev`; gameplay implementation waits for explicit plan validation. Subagents still treat the GDD as read-only. See `/docs/ENDLESS_PLAN.md` for the proposed sequence and tuning.
+**Scoped Endless jam revision (2026-10-04):** the human authorizes Sol to update the GDD/PRD for the Endless-first jam objective, seeded compatible traps/difficulty, vertical exits, visual pennants and navigation. The human clarified six modules for the three current jam biomes, while preserving the GDD's complete four-biome design; statistical expectations with latest corrected base means 0.5/0.75/1.5; three compatible sockets per module; and a separate non-scoring protected opening. The human committed documentation to `dev` as `cf0adc2` and explicitly approved the implementation plan. Work uses the preserved `codex/endless-jam` branch and squash integration into `dev`. Subagents still treat the GDD as read-only. See `/docs/ENDLESS_PLAN.md` for the approved sequence and tuning.
 
 ---
 
@@ -147,7 +147,7 @@ This table is mandatory project metadata.
 | `/docs/PHYSICS.md` | English | Current physical architecture, diagnostic controls, canonical configuration and tuning workflow. | Read for physics/playground changes. Keep implementation facts current; human feel validation remains separate. |
 | `/docs/ASSETS.md` | English | Original placeholder provenance, dimensions, anchors, animation and artist repaint contract. | Read before visual replacements or registration changes. Preserve physics/art separation and record imported licenses. |
 | `/docs/BACKEND.md` | English | Static jam service contracts; published level/catalog data, local Top 100 persistence, anonymous sessions and future remote/auth migration. | Read before content/service/persistence changes. Do not treat local rankings as global or author IDs as authentication. |
-| `/docs/ENDLESS_PLAN.md` | English | Proposed Endless jam implementation sequence, six-module sketches, probability/point-value proposals and verification gates. | Read for the current scope change. Implementation is pending human plan approval; proposals are not implemented or certified behavior. |
+| `/docs/ENDLESS_PLAN.md` | English | Approved Endless jam implementation sequence, six-module scope, probability/point-value tuning and verification gates. | Read for Endless gameplay work. Preserve verification evidence and distinguish automated traversal from human feel validation. |
 
 ### Future documentation
 
@@ -507,7 +507,7 @@ Water must preserve the GDD's special relationship among retained mass, depth, b
 
 Endless Run and future designed levels consume the **same module pool**.
 
-The proposed six-module closed pool, subject to plan validation, is `AB BD DA / AD DB BA` with A=water, B=grass and D=rock. Endless uses all compatible certified definitions; future designed levels reuse them. Each jam module has three compatible trap sockets. Multi-exit modules require early unambiguous route selection and correct downstream alignment; otherwise use single exits.
+The approved six-module closed pool is `AB BD DA / AD DB BA` with A=water, B=grass and D=rock. Endless uses all compatible certified definitions; future designed levels reuse them. Each jam module has three compatible trap sockets. The current pool uses single exits; AD's surface/submerged alternatives rejoin internally. Multi-exit modules require early unambiguous route selection and correct downstream alignment; otherwise use single exits.
 
 Every proposed module must include real-physics full-charge jump traversal evidence for its mandatory routes and supported loads, using current settings (currently 8 m/s maximum launch). Repeat validation after relevant geometry, launch/gravity, shell-height, movement-margin or controller changes. An analytical height bound alone cannot certify traversal; camera waiting never excuses an impossible wall. See GDD 42.1 and PHYSICS for the diagnostic validator.
 
@@ -547,7 +547,7 @@ Main Menu
             Main Menu
 ```
 
-The designed-level selector/delivery flow remains part of the complete GDD and is deferred with that mode. Endless is the required jam deliverable; implementation is pending validation of the plan.
+The designed-level selector/delivery flow remains part of the complete GDD and is deferred with that mode. Endless is the required jam deliverable; the human approved its implementation plan on 2026-10-04. Gameplay, menus and laboratory share the existing physical core and canonical tuning.
 
 `physics-playground` is a hidden development route, not a normal mode selector entry.
 

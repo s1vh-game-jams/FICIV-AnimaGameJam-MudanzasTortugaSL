@@ -6,7 +6,7 @@
 **Game-design authority:** `/docs/GDD.md`  
 **Operational entry point for agents:** `/AGENTS.md`
 
-**Scope revision (2026-10-04):** Endless Run is the required jam gameplay deliverable. This documentation change is open for review on `dev`; gameplay implementation requires human approval of [ENDLESS_PLAN.md](ENDLESS_PLAN.md).
+**Scope revision (2026-10-04):** Endless Run is the required jam gameplay deliverable. The human approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) after committing the scope revision to `dev` as `cf0adc2`; implementation proceeds on `codex/endless-jam`.
 
 ---
 
@@ -109,7 +109,7 @@ Sol alone has scoped permission to synchronize these affected GDD rules. Builder
 
 Implementation and tuning details belong to [PHYSICS.md](PHYSICS.md); placeholder registration and repaint rules belong to [ASSETS.md](ASSETS.md).
 
-**Approved Prototype 2 revision (2026-10-04):** the human replaced the designed-level jam deliverable with Endless Run, corrected the initial pool to six modules for grass/rock/water, and explicitly preserved the complete GDD's four-biome design. Require cracked-branch pit, hatch/rising-stump and tree/falling-pinecone traps; a seed-selected 5–10-module base-frequency window; bounded logarithmic progression of at most +0.5 expected traps; visual two-frame route-specific pennants; and Title → Mode → Difficulty → Run → Results → Title. Clarifications approve statistical expectations, three compatible trap sockets per module and a separate protected opening with no scoring pennant. The latest human correction sets base means **0.5/0.75/1.5**, replacing the earlier 0.25/1/2; limiting means are **1/1.25/2**. Sol may synchronize these scoped GDD changes. Implementation waits for approval of the detailed plan; probability tables, progression rate and provisional geometry/point values in that plan are proposals, not implemented behavior.
+**Approved Prototype 2 revision (2026-10-04):** the human replaced the designed-level jam deliverable with Endless Run, corrected the initial pool to six modules for grass/rock/water, and explicitly preserved the complete GDD's four-biome design. Require cracked-branch pit, hatch/rising-stump and tree/falling-pinecone traps; a seed-selected 5–10-module base-frequency window; bounded logarithmic progression of at most +0.5 expected traps; visual two-frame route-specific pennants; and Title → Mode → Difficulty → Run → Results → Title. Clarifications approve statistical expectations, three compatible trap sockets per module and a separate protected opening with no scoring pennant. The latest human correction sets base means **0.5/0.75/1.5**, replacing the earlier 0.25/1/2; limiting means are **1/1.25/2**. Sol may synchronize these scoped GDD changes. The human approved the detailed plan after committing the documentation preparation as `cf0adc2`. Its probability tables, progression scale and cargo values are now implemented; the geometry uses six single-exit modules with AD's water alternatives rejoining internally.
 
 **Approved jam service foundation (2026-10-03):** the human confirmed a packaged static published-level catalog and browser-local Top 100, with remote/global services later. Levels reserve stable IDs, name, optional thumbnail, coordinate-based module/hazard geometry, versioned turtle/load configuration, versioned ranking and author user ID. Anonymous play remains mandatory. Account creation (email/password and Google), authenticated community authoring and remote publishing are post-jam; preserve compatible contracts rather than implementing them now. See [BACKEND.md](BACKEND.md). Prepare only an inactive Pages Actions template under `/scripts/`; publication awaits final art/licenses and release authorization.
 
@@ -594,7 +594,7 @@ Pause freezes both physics and run timer.
 
 Implement the GDD Endless formula: crossing pennant `n` adds `n × sum(retained cargo point values)` exactly once. Retained cargo includes temporary separation within grace. Apply definitive cargo-loss state updates before scoring a crossing on the same fixed tick; zero cargo ends the run and awards no crossing points. Time does not alter score.
 
-Cargo definitions need explicit integer point values; current `CARGO` has none. Proposed values are listed in the implementation plan for approval/tuning. Designed-level time/cargo/perfect-bonus scoring and delivery stamps remain deferred.
+Canonical `CARGO` definitions contain integer `scoreValue`: sofa 100, TV 250, floor lamp 400 and cocktail glass 500. These approved initial values can be tuned after playtesting. Designed-level time/cargo/perfect-bonus scoring and delivery stamps remain deferred.
 
 Version identifiers must be available for future leaderboard separation.
 
@@ -648,7 +648,7 @@ Do not maintain an arbitrary manually curated "procedural subset" that excludes 
 
 Adding modules after the jam should automatically enrich Endless Run if they satisfy the module contract.
 
-The proposed initial three-biome adaptation, subject to plan validation, is `AB BD DA / AD DB BA`, with A=water, B=grass and D=rock. It supplies exactly six cross-biome definitions; it does not redefine the GDD's four-biome domain or require all nine possible three-biome pairs.
+The approved three-biome pool is `AB BD DA / AD DB BA`, with A=water, B=grass and D=rock. The six definitions are shared static catalog content, with three compatible sockets each. All jam exits are single; the island's surface/submerged alternatives rejoin inside AD before its rocky bank. Water connector height means reference surface, with the bed described by terrain/water geometry. This does not redefine the GDD's four-biome domain or require all nine possible three-biome pairs.
 
 ### 10.3.1 Streaming, exits and geometry
 
@@ -958,7 +958,7 @@ RemoteLeaderboardService → external API/backend
 
 Do not let `ScoreSystem` know which persistence implementation is active.
 
-The implemented local service caps each exact version partition at 100 and permits anonymous entries. The catalog/session/leaderboard composition is now available to application screens; score calculation, normal-level UI and real published content remain Prototype 2 work. [BACKEND.md](BACKEND.md) owns concrete schemas, persistence fallback and non-destructive remote/auth migration.
+The implemented designed-level local service caps each exact version partition at 100 and permits anonymous entries. The shared catalog now includes the six jam modules and three hazard definitions; there are no published designed levels. Endless scoring/results are implemented without routing runs through designed-level rankings. Optional local Endless records remain separate deferred work. [BACKEND.md](BACKEND.md) owns concrete schemas, persistence fallback and non-destructive remote/auth migration.
 
 ### 15.3 Security note
 
@@ -972,7 +972,7 @@ If a public remote leaderboard is added, document trust/validation limitations a
 
 ### 16.1 Jam status
 
-**Required P0 gameplay deliverable.** Designed/customized levels are the coming-soon entry. See the approved scope revision in section 1.2 and the implementation approval gate in [ENDLESS_PLAN.md](ENDLESS_PLAN.md).
+**Required P0 gameplay deliverable.** Designed/customized levels are the coming-soon entry. The human approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) on 2026-10-04.
 
 ### 16.2 Required behavior
 
@@ -993,7 +993,7 @@ Seed/reproduction behavior should be deterministic enough for debugging given th
 
 Base expected traps per scoring module are **0.5 easy, 0.75 normal, 1.5 hard**. Every jam module exposes three compatible sockets. The safe prologue does not count as a module and awards no pennant. The seed selects an integer base-frequency window uniformly from 5 through 10 inclusive; modules 1 through that value retain exactly the base probability distribution. No compensation quota is required for a finite run.
 
-After the window, a bounded logarithmic curve raises the expectation toward **1 / 1.25 / 2**, never above base +0.5. Easy has zero probability of three traps for every index. Proposed probability vectors, saturating formula and rate are reviewable in ENDLESS_PLAN; they require plan approval before implementation.
+After the window, a bounded logarithmic curve raises the expectation toward **1 / 1.25 / 2**, never above base +0.5. Easy has zero probability of three traps for every index. The approved vectors/formula are recorded in ENDLESS_PLAN and implemented in `src/game/config/endless.ts`. The run descriptor stores seed, difficulty, safe window, pool/generator/physics revisions and a settings hash. Each module/count/socket/type purpose has its own stable seeded stream.
 
 Use stable per-instance/per-purpose random streams for module selection, trap counts, socket subsets and types. Preload timing, frame cadence, decoration and hazard activation must not consume gameplay randomness. A replay descriptor reserves seed, difficulty, safe-window count, generator/pool versions, physics settings/version and committed exits; physical reproduction also requires controls. Changing player route may legitimately change compatible future content.
 
@@ -1191,43 +1191,45 @@ Only after core stability:
 
 A jam candidate satisfies MVP when:
 
-- [ ] Runs in browser from a production Vite build.
-- [ ] No mandatory backend is required.
-- [ ] `physics-playground` remains accessible to testers.
-- [ ] Endless Run is playable from safe opening to final cargo loss.
-- [ ] One turtle configuration exists.
-- [ ] Four distinct cargo archetypes exist.
-- [ ] Grass, rock and water are integrated; sand is deferred.
-- [ ] Six cross-biome modules form a closed compatible pool with three usable trap sockets each.
-- [ ] All three specified traps work, with safe recovery and validated generable combinations.
-- [ ] Seeded windows/distributions obey base means, easy never-three and the bounded +0.5 progression.
-- [ ] Module resources remain bounded and long-run coordinate precision is protected.
-- [ ] Cargo can be lost individually.
-- [ ] Lost cargo cannot softlock Don Tortuga.
-- [ ] Player can accelerate/brake and control shell angle on dry terrain using arrows or WASD.
-- [ ] Space charge/release jump works with the configured cap and concentrated pose.
-- [ ] Terrain pitch affects the physical shell and permits manual compensation.
-- [ ] Normal-run framing uses the configured physical corridor and per-side dead zone, frozen at level load.
-- [ ] A physical blocker holds the camera at the rear margin while physics/time continue; clearing it restores automatic forward camera progression.
-- [ ] Every mandatory module route passes current-settings full-charge traversal with its first grounded landing at or beyond the authored target.
-- [ ] Cargo physics and stability remain independent of viewport visibility.
-- [ ] Water changes controls/behavior according to the GDD.
-- [ ] Pennants are visual only, deploy at distance once and use the actual committed exit.
-- [ ] Endless multiplier score samples retained cargo after loss updates and ends at definitive zero.
-- [ ] Main → Mode → Difficulty → Endless → Results → Main works.
-- [ ] `Esc` pause freezes physics and timer and resumes safely.
-- [ ] Menus are fully navigable by keyboard and selected state does not depend only on color.
-- [ ] Endless HUD shows cargo state, timer, pennants/multiplier and cumulative score.
-- [ ] Contextual help uses fixed 3–5 s timed messages with per-run (not persistent) seen state.
-- [ ] Separate non-scoring prologue cannot reach water or traps before initial speed/balance/jump onboarding completes.
-- [ ] `Show controls again` resets help while remaining paused.
-- [ ] Results freeze the final scene and show score, pennants, time and last loss.
-- [ ] `Nivel personalizado — Próximamente` is visible and disabled.
-- [ ] Required threats are telegraphed/readable.
-- [ ] Placeholder/final art loads correctly under the configured Vite base path.
-- [ ] Relevant automated tests pass.
-- [ ] `npm run build` passes.
-- [ ] Documentation/backlog are current.
+Checked items record implemented behavior and agent verification for the Endless candidate. Human balance/partial-loss and child/family readability remain TEST-005/TEST-006; live publication requires the separate main-promotion approval below. BACKLOG records the exact source, physical certificates and browser evidence.
+
+- [x] Runs in browser from a production Vite build.
+- [x] No mandatory backend is required.
+- [x] `physics-playground` remains accessible to testers.
+- [x] Endless Run is playable from safe opening to final cargo loss.
+- [x] One turtle configuration exists.
+- [x] Four distinct cargo archetypes exist.
+- [x] Grass, rock and water are integrated; sand is deferred.
+- [x] Six cross-biome modules form a closed compatible pool with three usable trap sockets each.
+- [x] All three specified traps work, with safe recovery and validated generable combinations.
+- [x] Seeded windows/distributions obey base means, easy never-three and the bounded +0.5 progression.
+- [x] Module resources remain bounded and long-run coordinate precision is protected.
+- [x] Cargo can be lost individually.
+- [x] Lost cargo cannot softlock Don Tortuga.
+- [x] Player can accelerate/brake and control shell angle on dry terrain using arrows or WASD.
+- [x] Space charge/release jump works with the configured cap and concentrated pose.
+- [x] Terrain pitch affects the physical shell and permits manual compensation.
+- [x] Normal-run framing uses the configured physical corridor and per-side dead zone, frozen at level load.
+- [x] A physical blocker holds the camera at the rear margin while physics/time continue; clearing it restores automatic forward camera progression.
+- [x] Every mandatory module route passes current-settings full-charge traversal with its first grounded landing at or beyond the authored target.
+- [x] Cargo physics and stability remain independent of viewport visibility.
+- [x] Water changes controls/behavior according to the GDD.
+- [x] Pennants are visual only, deploy at distance once and use the actual committed exit.
+- [x] Endless multiplier score samples retained cargo after loss updates and ends at definitive zero.
+- [x] Main → Mode → Difficulty → Endless → Results → Main works.
+- [x] `Esc` pause freezes physics and timer and resumes safely.
+- [x] Menus are fully navigable by keyboard and selected state does not depend only on color.
+- [x] Endless HUD shows cargo state, timer, pennants/multiplier and cumulative score.
+- [x] Contextual help uses fixed 3–5 s timed messages with per-run (not persistent) seen state.
+- [x] Separate non-scoring prologue cannot reach water or traps before initial speed/balance/jump onboarding completes.
+- [x] `Show controls again` resets help while remaining paused.
+- [x] Results freeze the final scene and show score, pennants, time and last loss.
+- [x] `Nivel personalizado — Próximamente` is visible and disabled.
+- [x] Required threats are telegraphed/readable.
+- [x] Placeholder/final art loads correctly under the configured Vite base path.
+- [x] Relevant automated tests pass.
+- [x] `npm run build` passes.
+- [x] Documentation/backlog are current.
 - [ ] `main` promotion has human approval before deployment.
 
 ---

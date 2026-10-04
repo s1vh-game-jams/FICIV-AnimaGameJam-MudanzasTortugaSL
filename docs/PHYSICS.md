@@ -6,7 +6,7 @@
 **Phase scope:** [PRD](PRD.md), sections 1.1, 8 and 19.
 **Task status and verification provenance:** [BACKLOG](BACKLOG.md).
 
-This document describes the implemented Prototype 1. The human finalized its playground feel/settings on 2026-10-03. Grass, rock and compact water diagnostics establish the jam's three runtime biomes, but do not certify real module routes or hazard combinations. The next deliverable is the six-module Endless run in [ENDLESS_PLAN.md](ENDLESS_PLAN.md), pending implementation approval; the existing physical tuning is preserved.
+This document describes the shared physical foundation used by the playground and the six-module Endless run. The human finalized playground settings on 2026-10-03 and approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) on 2026-10-04. Existing physical tuning, carrier shapes and charged jump remain unchanged; authored runtime content requires its own real-Rapier traversal evidence.
 
 ## 1. Architecture and ownership
 
@@ -31,6 +31,20 @@ Rapier owns physical bodies, colliders, contacts and world stepping. Pixi render
 | `src/rendering/playgroundRenderer.ts` | Snapshot-to-Pixi synchronization, debug overlays and responsive viewport scaling. |
 | `src/rendering/visualDefinitions.ts` | Visual asset paths, sizes, anchors and walk-animation slots. |
 | `src/utils/publicAsset.ts` | Public asset URLs based on Vite's deployment base. |
+| `src/game/physics/worldContent.ts` | Owned terrain/water/trap chunks and physical hazard snapshots. |
+| `src/game/config/hazards.ts` | Shared fixed-time branch, stump and pinecone dimensions/timings. |
+| `src/game/config/endless.ts`, `src/game/modes/endless/` | Seeded module selection, occupancy/progression, streaming, pennants and terminal multiplier scoring. |
+| `src/app/endlessGame.ts`, `src/rendering/endlessRenderer.ts` | Normal run lifecycle, frozen pause/results, HTML HUD and snapshot-only fixed-zoom presentation. |
+
+### Streamed world and traps
+
+`addWorldChunk` installs independent collider ownership, finite lower terrain bounds, support/material metadata and multiple water regions; `removeWorldChunk` removes its colliders, bodies and query metadata together. Water uses the matching local region; dry material follows nearby surface/contact rather than the first overlapping X strip. Finite island solids permit a submerged route beneath them. Module exits align water surface references and actual bed geometry separately. The jam pool uses single exits; AD's surface/submerged paths rejoin before its rocky bank.
+
+Branch covers are separate solids above an authored recess with a forward ramp. Turtle support contact starts a fixed delay and removes the cover. Closed stump hatches are visual ground: their buried cuboids remain disabled until activation and after retraction, avoiding a false side wall in Rapier's character controller. During rise, the position-based turtle receives the swept upward support displacement explicitly. Moving solids use their current transforms in shell clearance. Tree sensors trigger a delayed CCD pinecone; its collision groups affect cargo/terrain, exclude the carrier, and never enter the cargo contact graph. Pinecones retire after three seconds. Hazard phases advance only in simulation ticks.
+
+The shell guard retains exact polygon separation and full-arc clearance. A conservative swept AABB excludes distant solids before the exact tests, preserving geometry checks while reducing streaming cost. Origin rebasing shifts current/next body transforms, free colliders, authored query vertices, water, hazards and camera at a fixed-tick boundary. The mode separately preserves logical distance, height offset and seed/index history. Lost cargo remains available as terminal metadata; in Endless its physical body retires only behind both the carrier and captured visible left edge. Finite laboratory scenarios preserve inspectable body handles until reset. Resident chunks stay until retained/separated cargo and pending hazards no longer need them.
+
+`FixedLoop` rechecks its paused state after every callback so terminal loss cannot run extra physics ticks from a render-frame burst. Endless scoring processes definitive cargo loss before flag crossings, includes separation grace, and freezes on final zero. Pennants have no Rapier body, collider or sensor.
 
 ### Fixed simulation and lifecycle
 
@@ -150,7 +164,7 @@ Open the playground with `Shift + P` from the title screen, or navigate directly
 | Parameter field | Apply a valid value and reset, preserving pause. |
 | Restore settings button | Restore the loaded settings.txt defaults and reset. |
 | Export settings button | Download current settings.txt without resetting or changing pause. |
-| Preview help checkbox | Test shared onboarding in the diagnostic scene; ordinary level integration remains pending. |
+| Preview help checkbox | Test the shared onboarding sequence used by Endless in the diagnostic scene. |
 | Title button | Dispose the playground and return to the title screen. |
 
 Keyboard shortcuts and movement do not intercept editing in the parameter/select fields. Focus the canvas again when returning to keyboard traversal.
@@ -261,7 +275,19 @@ Every proposed module requires authored traversal cases for each mandatory route
 
 Use those cases to validate approach/charging space, wall height and width, headroom, landing room, connector joins and recovery at the rear camera margin. A passing case demonstrates that authored route/load/control sequence. A failed sequence blocks certification of that case but does not prove no alternative sequence exists. The module owner must adjust geometry or author and verify a viable sequence before acceptance.
 
-Repeat the full required route/load matrix after changes to launch speed, gravity, charge cap, shell registration, geometry, physical movement corridor or controller behavior. An idealized `v²/(2g)` height estimate is useful for sketching; it omits collision clearance, width, approach and landing constraints and cannot certify reachability. Prototype 1 diagnostics and helper tests do not constitute an implemented module pool or certified designed level.
+Repeat the full required route/load matrix after changes to launch speed, gravity, charge cap, shell registration, geometry, physical movement corridor or controller behavior. An idealized `v²/(2g)` height estimate is useful for sketching; it omits collision clearance, width, approach and landing constraints and cannot certify reachability. The six jam modules have authored full/sofa/empty traces, first-landing jumps, physical socket recovery and all compatible seams in `tests/integration/endlessTraversal.test.ts`.
+
+The normal suite checks every socket/type locally and representative complete three-trap combinations. The slower release certificate checks all 64 empty/branch/stump/tree socket arrangements for each module and full/sofa/empty starting load (1,152 complete physical routes):
+
+```powershell
+$env:ENDLESS_EXHAUSTIVE = '1'
+npm run test -- tests/integration/endlessTraversal.test.ts
+Remove-Item Env:ENDLESS_EXHAUSTIVE
+```
+
+On POSIX shells, use `ENDLESS_EXHAUSTIVE=1 npm run test -- tests/integration/endlessTraversal.test.ts`. A trap may be avoided by an observed airborne passage; activated traps must finish safely. Diagnostic traversal continues after cargo losses so it can certify carrier escape separately from retained-load playability. AD's surface path uses upward swimming, with early braking for the sofa; downward swimming gives its submerged path and recovers an upward hold beneath the solid island. This certifies available control sequences, not every arbitrary input or loss-free traversal. Human longevity/partial-loss playtesting remains separate.
+
+`endlessPartialLoads.test.ts` observes all 15 nonempty cargo subsets after real loss grace in each water module and records retained cargo separately from carrier escape. `endlessDaCargoRecovery.test.ts` demonstrates a cargo-preserving full-stack DA route using digital keyboard-equivalent controls: brake from local x=45 m, begin charging on dry support at x≥47 m, keep braking for the three-second charge, then accelerate on release. Neutral or downward swimming afterward retains sofa, TV and glass beyond the module. Its simple walking/relative-angle trace may lose everything; these alternatives demonstrate that the geometry permits continuation. Tested sofa-only variants still lose the last item, which is a valid run ending and a balance-playtest limitation, not proof that every possible control sequence fails.
 
 Inspect the production build in a browser as well as the development server. Check both playground access paths, public SVG textures, Rapier WASM loading, keyboard controls, pause/reset, scenario switching, resize behavior and asset loading below the configured repository subpath. A successful compilation or HTTP response alone does not prove initialization or visible play works.
 
@@ -269,13 +295,9 @@ Record actual automated results and human findings in the backlog and handoff. T
 
 ## 6. Current boundaries and follow-ups
 
-The laboratory intentionally has no designed-level scoring, delivery finish logic, hazard framework, complete menu flow, leaderboard, Endless Run, final art or audio. The shared four-message onboarding controller and optional preview are implemented; normal-level/menu integration remains pending. Sand and full authored biome transitions remain later work. These deferrals follow the current PRD phase and do not remove features from the GDD.
+The laboratory remains a diagnostic mode with finite endpoints and its own pause/reset interface. The playable Endless route supplies the three hazards, score, frozen results, complete navigation, confirmed restart/exit and protected onboarding through the same physical core. Sand, designed-level delivery rules, final art/audio and remote rankings remain later work under the PRD.
 
-The diagnostic pause/reset behavior is not the final player-facing pause menu with restart/exit confirmations. Early water diagnostics do not satisfy the designed level's onboarding-layout constraint. The finite scenario endpoint must not become a normal no-cargo failure condition.
-
-The independent polygon pose guard currently covers static convex/cuboid solids; it does not certify moving dynamic hazards. That future integration must validate collision filtering and swept moving-obstacle behavior when HAZ-001 begins, as tracked in the backlog. In particular, the position-based carrier needs explicit moving-support handling for the rising stump; a moving collider alone does not establish safe lifting. Removable branches require a separate intact pit floor/escape, and pinecones must remain outside the cargo graph.
-
-The planned streaming adapter must preserve diagnostic endpoints while supporting module-owned solids, multiple water regions, pose-aware overlapping surfaces, relative terrain bounds and safe disposal/coordinate rebasing. Current X-only terrain lookup and absolute −20 m terrain fill do not certify vertical branching or an infinite world. No such adapter, trap system or module certification is implemented by the documentation revision.
+The streamed-world adapter supplies owned solids, multiple water regions, nearby material/support queries, finite island geometry, cleanup and origin rebasing. The independent polygon guard covers static and current-transform kinematic solids, including rising-stump support; dynamic pinecones interact with cargo/terrain through Rapier and remain outside the cargo graph. All six modules currently have a single committed exit; AD's vertical alternatives rejoin inside the module. Different-height exits require new commitment and downstream-visibility evidence before introduction.
 
 Visual assets live under `public/sprites/` and use the shared Vite-base-aware URL helper. Visual dimensions and anchors are presentation data; replacing artwork must not redefine collider behavior. Turtle walking uses two unique prototype keyframes across 60 logical slots per second. Additional artist frames can extend the visual definition later.
 

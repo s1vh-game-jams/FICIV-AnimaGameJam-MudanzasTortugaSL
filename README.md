@@ -74,7 +74,9 @@ El objetivo mínimo de la jam incluye:
 | 🏁 | Banderines visuales, puntuación acumulada y resultados al perder toda la carga |
 | 🗺️ | Nivel personalizado visible como **«Próximamente»** |
 
-**Cambio de alcance del 04/10/2026:** estas son las metas del siguiente prototipo. La Carrera Infinita todavía no está implementada; el [plan detallado](docs/ENDLESS_PLAN.md) espera validación antes de empezar. La run tendrá un inicio seguro sin puntos y después 5–10 módulos con la frecuencia base elegida, antes de una subida que se aproxima a +0,5 trampas por módulo.
+**Prototipo jugable en `dev`:** desde la portada, elige Carrera Infinita y Fácil, Normal o Difícil. La run comienza con un tramo seco seguro sin puntos; después mantiene las medias de **0,5 / 0,75 / 1,5 trampas** durante 5–10 módulos y las eleva gradualmente hasta aproximarse a **1 / 1,25 / 2**. Cada banderín suma su número de módulo por el valor de la carga que conservas. Perder toda la mudanza termina la carrera y abre los resultados. El [plan detallado](docs/ENDLESS_PLAN.md) conserva las decisiones y comprobaciones del prototipo.
+
+`Esc` pausa el recorrido. Desde la pausa puedes continuar, volver a ver los controles o repetir la misma semilla; reiniciar y salir piden confirmación. La isla permite pasar por arriba nadando hacia la superficie o buscar el paso sumergido. Los gráficos son originales y simplificados, preparados para su sustitución por arte final.
 
 El diseño completo vive en [`/docs/GDD.md`](docs/GDD.md).
 
@@ -149,7 +151,7 @@ Su objetivo es probar rápidamente:
 - flotación y corrientes;
 - parámetros de cámara y física.
 
-**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y nueve tramos diagnósticos de hierba, roca y agua, incluidos salto, pendientes máximas y espera de cámara ante una pared. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
+**El laboratorio sigue disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y nueve tramos diagnósticos de hierba, roca y agua, incluidos salto, pendientes máximas y espera de cámara ante una pared. Permite ajustar la física compartida con Carrera Infinita.
 
 | Herramienta | Tecla |
 |---|---|
@@ -158,7 +160,7 @@ Su objetivo es probar rápidamente:
 | Avanzar un tick estando en pausa | `N` |
 | Mostrar/ocultar colliders, contactos y centros de masa | `C` |
 
-Los selectores permiten cambiar de escenario y comparar la mudanza completa, solo el sofá o Don Tortuga sin carga. Cambiar un parámetro reinicia la simulación conservando la pausa. «Previsualizar ayudas» prueba la secuencia velocidad, caparazón, salto y natación, preparada para los futuros niveles normales. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
+Los selectores permiten cambiar de escenario y comparar la mudanza completa, solo el sofá o Don Tortuga sin carga. Cambiar un parámetro reinicia la simulación conservando la pausa. «Previsualizar ayudas» prueba la misma secuencia de velocidad, caparazón, salto y natación que usa Carrera Infinita. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
 
 ### Ajustes permanentes y exportación
 
@@ -198,7 +200,7 @@ La versión de jam está concebida para funcionar como una aplicación estática
 
 El backend **no es obligatorio** para jugar. El leaderboard remoto se considera una mejora deseable y su integración queda desacoplada del núcleo del juego.
 
-La base de servicios de la jam ya incluye un **catálogo estático validado**, configuraciones versionadas de Tortuga/carga y un **Top 100 local por nivel y versión de físicas**, guardado en el navegador. Si el almacenamiento falla, los registros siguen disponibles durante la sesión. Se juega de forma anónima; las cuentas con correo/contraseña o Google, el editor y los rankings globales quedan para más adelante. Todavía no hay niveles reales ni interfaz de rankings. Los contratos y la evolución futura se explican en [docs/BACKEND.md](docs/BACKEND.md).
+La base de servicios de la jam incluye un **catálogo estático validado** con los seis módulos y tres trampas, configuraciones versionadas de Tortuga/carga y un **Top 100 local por nivel y versión de físicas** para futuros niveles diseñados. Si el almacenamiento falla, los registros siguen disponibles durante la sesión. Se juega de forma anónima; las cuentas con correo/contraseña o Google, el editor y los rankings globales quedan para más adelante. Los récords persistentes de Carrera Infinita y la interfaz de rankings quedan pendientes. Los contratos y la evolución futura se explican en [docs/BACKEND.md](docs/BACKEND.md).
 
 ---
 
@@ -220,7 +222,7 @@ La base de servicios de la jam ya incluye un **catálogo estático validado**, c
 │   ├── PHYSICS.md        # arquitectura y guía de tuning
 │   ├── ASSETS.md         # contrato para repintar los placeholders
 │   ├── BACKEND.md        # catálogo y servicios locales; evolución futura
-│   └── ENDLESS_PLAN.md   # plan de carrera infinita pendiente de validación
+│   └── ENDLESS_PLAN.md   # plan aprobado y comprobaciones de carrera infinita
 │
 ├── public/
 │   └── sprites/
@@ -266,7 +268,7 @@ Cada estado del prototipo —caminar y cargar el salto— utiliza **dos keyframe
 
 ---
 
-## 🔁 Flujo previsto para el siguiente prototipo
+## 🔁 Flujo del prototipo jugable
 
 ```mermaid
 flowchart TD

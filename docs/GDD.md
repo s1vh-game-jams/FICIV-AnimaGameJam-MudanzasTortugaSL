@@ -11,7 +11,7 @@
 **Estado del documento:** versión de diseño para Game Jam  
 **Naturaleza del documento:** documento vivo; los valores numéricos de físicas señalados como parámetros de *tuning* podrán modificarse a partir del prototipo y los *playtests* sin alterar las reglas fundamentales aquí descritas.
 
-**Cambio de alcance aprobado (2026-10-04):** la Carrera Infinita pasa a ser el objetivo jugable de la jam; el nivel diseñado queda para una fase posterior. El diseño completo conserva sus cuatro biomas. El PRD determina el subconjunto de biomas y módulos de esta entrega. Esta revisión recoge las reglas autorizadas; la implementación espera la validación humana del plan.
+**Cambio de alcance aprobado (2026-10-04):** la Carrera Infinita pasa a ser el objetivo jugable de la jam; el nivel diseñado queda para una fase posterior. El diseño completo conserva sus cuatro biomas. El PRD determina el subconjunto de biomas y módulos de esta entrega. Esta revisión recoge las reglas autorizadas y el plan de implementación ya ha recibido aprobación humana.
 
 ---
 
