@@ -1,6 +1,6 @@
 # Deployment — Mudanzas Tortuga, S.L.
 
-Local Vite production serving and repository-subpath builds are implemented. The main-only manual Pages workflow is active at `.github/workflows/jekyll-gh-pages.yml` (the historical filename does not imply a Jekyll build). The latest approved urgent `main` release is live: run `37374594628` successfully deployed commit `748876f` on 2026-10-05 at 21:16 UTC. The public page and its `index-DS8PM078.js` bundle return HTTP 200; that entry filename exactly matches the hosted build artifact. Types, lint and build pass; game/helper tests were explicitly skipped. The earlier `6e5061e` release had successful title/Normal-run browser verification; it does not certify the urgent physics changes.
+Local Vite production serving and repository-subpath builds are implemented. The main-only manual Pages workflow is active at `.github/workflows/jekyll-gh-pages.yml` (the historical filename does not imply a Jekyll build). The latest approved urgent `main` release is live: run `37378074587` successfully deployed commit `223c326` on 2026-10-05 at 21:46:58 UTC. The public page and its `index-BsQk27qo.js` bundle return HTTP 200; that entry filename exactly matches the hosted build artifact. Types, lint and build pass; game/helper tests were explicitly skipped. The earlier `6e5061e` release had successful title/Normal-run browser verification; it does not certify the urgent physics changes.
 
 ## 1. Build and branch contract
 
@@ -124,6 +124,8 @@ The 2026-10-05 local root/subpath builds also initialize the revised shared phys
 
 ## 5. GitHub Pages release from main
 
+**Urgent follow-up publication completed (2026-10-05):** source `bb9fe78` is preserved on `codex/jam-trap-recovery`; its squash integration `223c326` was explicitly promoted to `main`. [Run 37378074587](https://github.com/s1vh-game-jams/FICIV-AnimaGameJam-MudanzasTortugaSL/actions/runs/37378074587) checks out exact SHA `223c326482c0f456eb86850be6b2aa24102fea87` with `skip_tests=true`, `allow_game_test_failure=false` and `runner=ubuntu-24.04-arm`. Build succeeded at 21:46:42 UTC and deployment at 21:46:58 UTC. Public HTML and the matching `index-BsQk27qo.js` entry both return HTTP 200. Local and hosted type/lint checks passed. Physical changes are `endless-physics-urgent-2`: current-pose/friction-aware centering, 4 kg pinecones, and stump takeoff without subsequent lift or a separate rising-edge cargo impact. No gameplay tests, traversal recertification or post-change browser playtest were performed under the existing human waiver; subjective feel remains unverified. The human explicitly authorized publication without another confirmation.
+
 The active workflow is [.github/workflows/jekyll-gh-pages.yml](../.github/workflows/jekyll-gh-pages.yml), added to `main` by the human in `0e14828`. It builds Vite, not Jekyll. The original [scripts/pages-deploy.provisional.yml](../scripts/pages-deploy.provisional.yml) remains an inactive historical template.
 
 The workflow uses manual `workflow_dispatch` only, guards both jobs to `refs/heads/main`, checks out the exact dispatched `main` commit (`github.sha`), runs the existing type/lint/game/helper checks and `build:pages`, then uploads/deploys `dist/`. Build and deployment permissions are separate; publication uses the `github-pages` environment. Full action SHAs match the [official Vite Pages guide](https://vite.dev/guide/static-deploy.html#github-pages), rechecked on 2026-10-05, and the [GitHub custom workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). A local review/build cannot certify an Actions runner or successful Pages deployment.
@@ -171,4 +173,4 @@ A future remote leaderboard/auth/catalog must document provider, versioned score
 
 A hosting migration must update this document and the README, preserve static deployment where practical, and register any additional migration document in AGENTS.
 
-Still unresolved: first successful live publication, custom domain if desired, release/tag convention, remote leaderboard provider and the outstanding release audit items in BACKLOG. LICENSE.md already records the owner's mixed-license terms; this deployment task does not change them.
+Still unresolved: custom domain if desired, release/tag convention, remote leaderboard provider and the outstanding release audit items in BACKLOG. LICENSE.md already records the owner's mixed-license terms; this deployment task does not change them.
