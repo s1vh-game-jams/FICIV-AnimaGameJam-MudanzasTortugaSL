@@ -13,7 +13,7 @@ export const HAZARD_TUNING = Object.freeze({
   treeDelaySeconds: 0.32,
   coneHeight: 4.4,
   coneRadius: 0.28,
-  coneMass: 0.8,
+  coneMass: 1.6,
   coneLifetimeSeconds: 3,
   lostCargoRetireDistance: 35,
 });

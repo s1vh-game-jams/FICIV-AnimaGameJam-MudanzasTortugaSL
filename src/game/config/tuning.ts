@@ -16,6 +16,11 @@ export const WATER_CARGO_RESPONSE = {
   gripMultiplier: 3, frictionMultiplier: 1.5,
   linearDampingMultiplier: 1.5, angularDampingMultiplier: 2,
 } as const;
+/** Gentle physical recovery of a connected, calm stack; no position/angle locks. */
+export const CARGO_BALANCE_RESPONSE = {
+  positionGain: 4, maximumAcceleration: 1.2, deadZone: 0.04,
+  maximumShellAngle: 0.35, maximumRelativeSpeed: 0.8, maximumAngularSpeed: 0.6,
+} as const;
 /** Gentle grass motion: radians/seconds; separate from manual shell compensation. */
 export const GRASS_SHELL_RESPONSE = {
   maxSwayAngle: 2 * Math.PI / 180,

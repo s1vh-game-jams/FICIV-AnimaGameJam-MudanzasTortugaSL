@@ -22,7 +22,7 @@ Original creative assets remain governed by the project's provisional licensing 
 
 All source SVGs have a transparent background. Their declared width and height match their `viewBox`, which starts at `0 0`. Source coordinates point right and down. World assets use 100 SVG units per visual metre; HTML menu icons have their own pixel-sized canvas and CSS display size.
 
-Turtle/cargo normalized sprite anchors are `(0.5, 0.5)`. The centre below is measured in source SVG units. The Endless table specifies its own anchors.
+Turtle/cargo normalized sprite anchors are `(0.5, 0.5)`, except the shell's `(0.5, 0.30 / 0.68)` registration. The centre below is measured in source SVG units. The Endless table specifies its own anchors.
 
 | Metadata key | Source path under `public/` | SVG dimensions | Visual size in metres | Source centre |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@ Turtle/cargo normalized sprite anchors are `(0.5, 0.5)`. The centre below is mea
 | `floorLamp` | `sprites/cargo/floor-lamp/floor-lamp.svg` | 55 × 160 | 0.55 × 1.6 | 27.5, 80 |
 | `turtle.frames` | `sprites/turtle/walk-01.svg`, `sprites/turtle/walk-02.svg` | 240 × 90 each | 2.4 × 0.9 | 120, 45 |
 | `turtle.chargeFrames` | `sprites/turtle/charge-walk-01.svg`, `sprites/turtle/charge-walk-02.svg` | 240 × 90 each | 2.4 × 0.9 | 120, 45 |
-| `shell` | `sprites/turtle/shell.svg` | 220 × 60 | 2.2 × 0.6 | 110, 30 |
+| `shell` | `sprites/turtle/shell.svg` | 170 × 71 | 2.0 × 0.68 | 85, 35.5 |
 
 The laboratory render scale is fixed at 76 logical pixels per metre. Its 1280 × 720 logical scene scales uniformly to fit the host with letterboxing. Normal-level framing derives a separate scale from the physical movement corridor and configured outer dead zones at level load, then freezes that frame. Resizing uniformly scales the captured composition; asset dimensions remain in metres. The laboratory does not necessarily display the same apparent character size as a normal level.
 
@@ -47,9 +47,11 @@ Cargo sprites are centred on each object's geometric pose origin. A configured c
 Don Tortuga is split into two parts:
 
 - The walking body excludes the shell and stays right-facing. Its visual centre is 0.21 m above the corrected body origin (snapshot.turtle.bodyX/bodyY) in the body's local coordinates, placing its feet at the body's lower boundary. The body follows the simulation-owned corrected body origin and terrain pitch, rather than the fixed locomotion proxy's centre.
-- The shell has its own container at the simulation-owned physical shell pivot. Its local upward offset from that corrected body origin is the adjustable `shellPivotY`, rotated with terrain pitch. The default is restored to the original 0.30 m; the previous 0.42 m registration remains available as a tuning candidate. The sprite centre is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
+- The shell has its own container at the simulation-owned physical shell pivot. Its local upward offset from that corrected body origin is the adjustable `shellPivotY`, rotated with terrain pitch. The default is restored to the original 0.30 m; the previous 0.42 m registration remains available as a tuning candidate. The sprite registration point is a further 0.12 m above that pivot in shell-local coordinates. Shell rotation combines terrain pitch and manual compensation; the renderer mirrors the physical shell pose.
 
-With the current 0.6 m shell image height, its upper centre is 0.42 m above the shell pivot, matching the support's maximum height. `settings.txt` owns the pivot-height value; [tuning.ts](../src/game/config/tuning.ts) owns the unchanged collider shape and the original cargo-layout reference of 0.30 m. Initial cargo placement shifts by `shellPivotY - 0.30` before settling. Editing the support height does not add padding, resize artwork or alter collider geometry.
+The 2026-10-05 urgent visual revision shortens the shell from 2.2 m to 2.0 m and increases its displayed height from 0.60 m to 0.68 m, giving the existing artwork a fuller dome and a shorter front. The source SVG remains unchanged. Its vertical anchor is `0.30 / 0.68`, so the upper outline stays 0.42 m above the shell pivot, matching the support's maximum height; the image centre now sits 0.08 m above that pivot. Both renderers use the same visual anchor. This presentation adjustment changes no collider, physical pivot, cargo layout or tuning value.
+
+`settings.txt` owns the pivot-height value; [tuning.ts](../src/game/config/tuning.ts) owns the unchanged collider shape and the original cargo-layout reference of 0.30 m. Initial cargo placement shifts by `shellPivotY - 0.30` before settling. Editing the support height does not add padding, resize artwork or alter collider geometry.
 
 The broad sofa combines a back, seat, arms and feet. The television combines a screen/body and feet. The cocktail glass uses a cup, narrow stem and base. The lamp combines a shade, pole and base. These composed silhouettes convey the objects without requiring detailed physical geometry.
 
@@ -114,6 +116,8 @@ All paths below are relative to `public/`. Frame pairs preserve matching canvase
 Pennants have no physical geometry. Their runtime height is 2 m, above the body/shell and roughly halfway up the initial stack; their base follows the visible connector. Deployment changes the frame once horizontal distance crosses the boundary. The SVG titles name small hazards accessibly without relying on text that would become illegible at normal-run scale. Hazard state frames mirror simulation-owned state. Asset loading uses `publicAsset` and remains separate from colliders, just like the turtle/cargo art.
 
 ## 6. Verification
+
+The urgent shell presentation revision was applied without tests or browser verification at the human's explicit request to publish before the jam deadline. Its visual feel and collider-overlay comparison remain pending human review.
 
 The original turtle/cargo SVGs and eleven Endless SVGs were parsed as XML. Dimensions, descriptive titles, paths without external dependencies and matching frame canvases were checked. Walking/charging pairs preserve distinct leg poses and matching body/paw registration. Runtime visibility and root/subpath loading require integrated browser smoke verification; its result belongs in DEPLOYMENT/BACKLOG.
 

@@ -1,5 +1,6 @@
 import RAPIER from '@dimforge/rapier2d';
-import { PHYSICS_GEOMETRY as G, WATER_CARGO_RESPONSE as W, GRASS_SHELL_RESPONSE as B, validateTuning } from '../config/tuning';
+import { PHYSICS_GEOMETRY as G, WATER_CARGO_RESPONSE as W, GRASS_SHELL_RESPONSE as B,
+  CARGO_BALANCE_RESPONSE as E, validateTuning } from '../config/tuning';
 import type { Tuning } from '../config/tuning';
 import { CARGO } from '../content/cargo';
 import type { CargoDefinition, CargoKind } from '../content/cargo';
@@ -180,6 +181,7 @@ export class PhysicsSimulation {
   private angularSpeed = 0;
   private grassSway = new GrassSway();
   private grassSwayAngle = 0;
+  private cargoBalanceOffsets = new Map<CargoKind, number>();
   private jump = new JumpCharge();
   private speed = 0;
   private verticalSpeed = 0;
@@ -237,7 +239,10 @@ export class PhysicsSimulation {
     for (let i = 0; i < G.settleTicks; i++) this.world.step();
     this.contacts = this.readContacts();
     this.tracker.update(this.contacts, 0);
-    for (const c of this.cargo) c.body.setLinvel({ x: tuning.baseSpeed, y: 0 }, true);
+    for (const c of this.cargo) {
+      this.cargoBalanceOffsets.set(c.definition.id, c.body.translation().x - this.shell.translation().x);
+      c.body.setLinvel({ x: tuning.baseSpeed, y: 0 }, true);
+    }
   }
 
   private createCargo(d: CargoDefinition): void {
@@ -591,6 +596,27 @@ export class PhysicsSimulation {
       }
       fraction /= 2;
     }
+    if (!accepted && desiredMovement.y > 0) {
+      // Preserve a physically clear upward slide before an in-place sway
+      // correction can consume the manual jump or stump takeoff displacement.
+      const origin = this.turtle.translation();
+      this.controller.computeColliderMovement(this.turtleCollider, { x: 0, y: desiredMovement.y },
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
+      const upward = this.controller.computedMovement();
+      if (upward.y > 0) {
+        const rise = { x: origin.x + upward.x, y: origin.y + upward.y };
+        for (let attempt = 0, fraction = 1; attempt < POSE_CLEARANCE_SEARCH_STEPS; attempt++, fraction /= 2) {
+          const body = this.bodyAngle + (bodyAngle - this.bodyAngle) * fraction;
+          const manual = this.angle + (manualAngle - this.angle) * fraction;
+          const offset = this.supportOffset(rise, body, grounded);
+          if (!this.castShellPose(rise, body, manual, offset)) {
+            this.bodyAngle = body; this.angle = manual; this.bodyOffsetY = offset;
+            position = rise; accepted = true;
+            break;
+          }
+        }
+      }
+    }
     if (!accepted && manualAngle !== this.angle) {
       // Forward translation may itself be blocked. A safe bounded correction
       // in place must still be accepted so the player can leave that contact.
@@ -840,6 +866,8 @@ export class PhysicsSimulation {
       if (next.y !== requested.y) this.verticalSpeed = movement.y / dt;
     }
     this.turtle.setNextKinematicTranslation(next);
+    const supportPose = this.shellPose(next, this.bodyAngle, this.angle);
+    const supportHorizontalSpeed = (supportPose.x - this.shell.translation().x) / dt;
     const connected = new Set(this.tracker.connectedIds());
     const landingDamping = this.biome === 'grass' ? t.grassLandingDamping : t.rockLandingDamping;
     const grip = t.gripAssistance * (this.water ? W.gripMultiplier : 1);
@@ -855,16 +883,31 @@ export class PhysicsSimulation {
       if (this.water !== previousWater) for (const collider of c.colliders) collider.setFriction(t.cargoFriction * (this.water ? W.frictionMultiplier : 1));
       if (connected.has(c.definition.id)) {
         const velocity = c.body.linvel();
+        const offset = c.body.translation();
+        const localX = (offset.x - supportPose.x) * Math.cos(supportPose.angle) +
+          (offset.y - supportPose.y) * Math.sin(supportPose.angle);
+        const error = (this.cargoBalanceOffsets.get(c.definition.id) ?? c.definition.x) - localX;
+        const quiet = t.gripAssistance > 0 && vertical === 0 && !launching && (this.grounded || this.water) ?
+          clamp(1 - Math.abs(supportPose.angle) / E.maximumShellAngle, 0, 1) *
+          clamp(1 - Math.abs(velocity.x - supportHorizontalSpeed) / E.maximumRelativeSpeed, 0, 1) *
+          clamp(1 - Math.abs(c.body.angvel()) / E.maximumAngularSpeed, 0, 1) : 0;
+        const correction = Math.sign(error) * Math.max(0, Math.abs(error) - E.deadZone);
+        const centering = clamp(correction * E.positionGain, -E.maximumAcceleration, E.maximumAcceleration) * quiet;
         // Substep contact impulses can leave a tiny relative vertical speed
         // against a position-based carrier. Existing contact grip damps that
         // drift during flight; no root connection means no remote force.
-        c.body.addForce({ x: c.definition.mass * (this.speed - velocity.x) * grip,
+        c.body.addForce({ x: c.definition.mass * ((supportHorizontalSpeed - velocity.x) * grip + centering),
           y: !this.grounded && !this.water && !launching ?
             c.definition.mass * (this.verticalSpeed - velocity.y) * t.gripAssistance : 0 }, true);
         if (launching) {
           // One physical impulse shares the support's takeoff. Separated/lost
           // cargo receives no remote kick, and relative motion remains free.
-          c.body.applyImpulse({ x: 0, y: c.definition.mass * launchVelocityChange }, true);
+          // The moving stump/contact may already have accelerated this piece.
+          // Share the accepted takeoff velocity instead of adding a second
+          // full launch to its existing upward motion.
+          const sharedLaunchSpeed = previousVerticalSpeed + launchVelocityChange;
+          const impulseSpeed = clamp(sharedLaunchSpeed - velocity.y, -t.jumpMaxLaunchSpeed, t.jumpMaxLaunchSpeed);
+          c.body.applyImpulse({ x: 0, y: c.definition.mass * impulseSpeed }, true);
         }
       }
       if (this.water && !launching) {

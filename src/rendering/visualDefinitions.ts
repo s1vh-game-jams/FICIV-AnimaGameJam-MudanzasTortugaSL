@@ -70,10 +70,11 @@ export const VISUALS = {
   },
   shell: {
     path: 'sprites/turtle/shell.svg',
-    width: 2.2,
-    height: 0.6,
+    width: 2.0,
+    height: 0.68,
     anchorX: 0.5,
-    anchorY: 0.5,
+    // Keep the upper outline 0.30 m above the visual registration point.
+    anchorY: 0.30 / 0.68,
     label: 'CAPARAZÓN',
   },
 } as const satisfies {
