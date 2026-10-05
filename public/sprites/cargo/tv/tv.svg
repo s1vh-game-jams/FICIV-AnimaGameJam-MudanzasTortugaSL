@@ -1,12 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="80" height="90" viewBox="0 0 80 90" role="img" aria-labelledby="title">
-  <title id="title">Televisión: carga compacta y pesada</title>
-  <g stroke="#322d49" stroke-width="2" stroke-linejoin="round">
-    <path d="M20 76 L12 89 H27 L32 76 Z" fill="#655177"/>
-    <path d="M48 76 L53 89 H68 L60 76 Z" fill="#655177"/>
-    <rect x="1" y="1" width="78" height="77" rx="5" fill="#9c75c7"/>
-    <rect x="8" y="8" width="56" height="60" rx="3" fill="#d9c9eb"/>
+  <title id="title">Televisión: carga compacta y pesada (rojo teja con franja)</title>
+  <g fill="none" stroke="#172228" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M20 76 L12 89 H27 L32 76 Z" fill="#7A3E4F"/>
+    <path d="M48 76 L53 89 H68 L60 76 Z" fill="#7A3E4F"/>
+    <rect x="1" y="1" width="78" height="77" rx="6" fill="#BE6158"/>
+    <rect x="2" y="70" width="76" height="5" fill="#F6EBD3" stroke="none"/>
+    <path d="M3 64 H77 V67 H3 Z" fill="#7A3E4F" stroke="none"/>
+    <path d="M4 69 H76 M4 76 H76" stroke="#544441" stroke-width="1.2" stroke-dasharray="3 2.5"/>
+    <rect x="8" y="8" width="56" height="54" rx="5" fill="#D8CFB8"/>
+    <path d="M15 16 L25 26 M19 13 L31 25" stroke="#F6EBD3" stroke-width="2.5"/>
+    <rect x="66" y="6" width="10" height="10" rx="1" fill="#4AB8C2" stroke-width="1.5"/>
+    <path d="M68 8 l2 2 M68 14 l2 -2 M74 8 l-2 2 M74 14 l-2 -2" stroke="#544441" stroke-width="1.1"/>
+    <circle cx="71" cy="50" r="3" fill="#F2C230"/>
+    <circle cx="71" cy="60" r="3" fill="#F2C230"/>
   </g>
-  <circle cx="71" cy="56" r="3" fill="#322d49"/>
-  <circle cx="71" cy="66" r="3" fill="#322d49"/>
-  <text x="36" y="46" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#322d49">TV</text>
 </svg>

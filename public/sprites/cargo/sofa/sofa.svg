@@ -1,12 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="220" height="65" viewBox="0 0 220 65" role="img" aria-labelledby="title">
-  <title id="title">Sofá: carga ancha y baja</title>
-  <g stroke="#432a29" stroke-width="2" stroke-linejoin="round">
-    <rect x="12" y="49" width="22" height="15" rx="2" fill="#754e3b"/>
-    <rect x="186" y="49" width="22" height="15" rx="2" fill="#754e3b"/>
-    <rect x="15" y="1" width="190" height="42" rx="7" fill="#ef8354"/>
-    <rect x="16" y="31" width="188" height="23" rx="4" fill="#f4a068"/>
-    <rect x="1" y="18" width="23" height="39" rx="5" fill="#dc6a47"/>
-    <rect x="196" y="18" width="23" height="39" rx="5" fill="#dc6a47"/>
+  <title id="title">Sofá: carga ancha y baja (cuadros turquesa)</title>
+  <g fill="none" stroke="#172228" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="12" y="51" width="20" height="13" rx="2" fill="#8A5A2B"/>
+    <rect x="188" y="51" width="20" height="13" rx="2" fill="#8A5A2B"/>
+    <rect x="15" y="1" width="190" height="42" rx="8" fill="#4AB8C2"/>
+    <path d="M38 2 V28 M62 2 V28 M86 2 V28 M110 2 V28 M134 2 V28 M158 2 V28 M182 2 V28 M18 10 H202 M17 20 H203" stroke="#308CB9" stroke-width="3"/>
+    <path d="M17 28 H203 V37 Q203 40 200 40 H20 Q17 40 17 37 Z" fill="#308CB9" stroke="none"/>
+    <path d="M22 6 H198" stroke="#544441" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <rect x="16" y="31" width="188" height="23" rx="5" fill="#4AB8C2"/>
+    <rect x="18" y="45" width="184" height="7" rx="3" fill="#308CB9" stroke="none"/>
+    <path d="M110 33 V52"/>
+    <path d="M22 36 H104 M116 36 H198" stroke="#BDA370" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <rect x="1" y="17" width="24" height="40" rx="6" fill="#4AB8C2"/>
+    <rect x="195" y="17" width="24" height="40" rx="6" fill="#4AB8C2"/>
+    <rect x="3" y="44" width="20" height="11" rx="4" fill="#308CB9" stroke="none"/>
+    <rect x="197" y="44" width="20" height="11" rx="4" fill="#308CB9" stroke="none"/>
+    <rect x="6" y="23" width="12" height="12" rx="1" fill="#BE6158" stroke-width="1.5"/>
+    <path d="M8 25 l3 3 M8 33 l3 -3 M16 25 l-3 3 M16 33 l-3 -3" stroke="#544441" stroke-width="1.2"/>
+    <path d="M200 23 V51" stroke="#544441" stroke-width="1.5" stroke-dasharray="4 3"/>
   </g>
-  <text x="110" y="26" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#432a29">SOFÁ</text>
 </svg>
