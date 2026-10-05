@@ -13,6 +13,7 @@ import { JumpCharge } from '../systems/jumpCharge';
 import { HAZARD_TUNING as H } from '../config/hazards';
 import { createLevelCameraFraming } from '../config/cameraFraming';
 import type { HazardSnapshot, TrapPlacement, WorldChunk } from './worldContent';
+import { AUDIO_PHYSICS_TUNING as A } from '../../audio/physicsTuning';
 
 const groups = (member: number, filter: number) => (member << 16) | filter;
 const TERRAIN = 1, TURTLE = 2, CARGO_GROUP = 4, SHELL = 8, LOST = 16, PROJECTILE = 32;
@@ -134,8 +135,16 @@ interface CargoBody { definition: CargoDefinition; body: RAPIER.RigidBody; colli
 interface LiveTrap {
   placement: TrapPlacement; phase: HazardSnapshot['phase']; seconds: number; lift: number;
   solid?: RAPIER.Collider; body?: RAPIER.RigidBody; cone?: RAPIER.RigidBody;
+  hitSounded?: boolean; liftingTurtle?: boolean;
 }
 interface LiveChunk { content: WorldChunk; colliders: RAPIER.Collider[]; traps: LiveTrap[] }
+export type SimulationAudioEvent =
+  | { readonly type: 'cargoImpact'; readonly tier: 'light' | 'medium' | 'heavy' }
+  | { readonly type: 'landing'; readonly hard: boolean }
+  | { readonly type: 'waterEntry'; readonly large: boolean }
+  | { readonly type: 'waterExit' }
+  | { readonly type: 'hazard'; readonly name: 'branchCreak' | 'branchBreak' | 'stumpTrigger' | 'stumpHit' |
+    'pineconeRustle' | 'pineconeFall' | 'pineconeHit' };
 export interface SimulationSnapshot {
   scenarioId: string; tick: number; time: number; cameraX: number; cameraY: number;
   cameraSpeed: number; cameraBlocked: boolean;
@@ -145,6 +154,8 @@ export interface SimulationSnapshot {
   cargo: readonly { id: CargoKind; label: string; x: number; y: number; angle: number; state: CargoState; separatedSeconds: number }[];
   contacts: readonly ContactEdge[];
   hazards: readonly HazardSnapshot[];
+  /** Transient presentation events from this fixed tick; no physics side effects. */
+  audioEvents: readonly SimulationAudioEvent[];
 }
 
 /** Rapier alone owns all physical transforms. No renderer/DOM dependency. */
@@ -175,6 +186,7 @@ export class PhysicsSimulation {
   private groundAngle = 0;
   private biome: Biome = 'grass';
   private contacts: ContactEdge[] = [];
+  private audioEvents: SimulationAudioEvent[] = [];
   private tickCount = 0;
   private cameraX: number;
   private cameraY: number;
@@ -352,6 +364,7 @@ export class PhysicsSimulation {
     let liftDelta = 0;
     for (const chunk of this.chunks.values()) for (const trap of chunk.traps) {
       const p = trap.placement;
+      trap.liftingTurtle = false;
       const width = p.kind === 'branch' ? H.branchWidth : p.kind === 'stump' ? H.stumpWidth : H.treeTouchWidth;
       const touchingGround = Math.abs(position.x - p.x) <= width / 2 + G.turtleHalfWidth &&
         Math.abs(position.y + this.bodyOffsetY - G.turtleHalfHeight - p.y - trap.lift) < 0.25;
@@ -359,6 +372,8 @@ export class PhysicsSimulation {
         trap.solid.intersectsShape(this.turtleCollider.shape, this.turtleCollider.translation(), this.turtleCollider.rotation());
       if (trap.phase === 'idle' && (p.kind === 'tree' ? touchingTree : touchingGround)) {
         trap.phase = 'triggered'; trap.seconds = 0;
+        this.audioEvents.push({ type: 'hazard', name: p.kind === 'branch' ? 'branchCreak' :
+          p.kind === 'stump' ? 'stumpTrigger' : 'pineconeRustle' });
         if (p.kind === 'stump') trap.solid?.setEnabled(true);
       }
       if (trap.phase === 'idle' || trap.phase === 'spent') continue;
@@ -369,6 +384,7 @@ export class PhysicsSimulation {
           this.world.removeCollider(trap.solid, false); trap.solid = undefined;
         }
         trap.phase = 'spent';
+        this.audioEvents.push({ type: 'hazard', name: 'branchBreak' });
       } else if (p.kind === 'stump') {
         trap.phase = 'active';
         const elapsed = trap.seconds;
@@ -380,7 +396,10 @@ export class PhysicsSimulation {
           position.y + this.bodyOffsetY - G.turtleHalfHeight >= p.y + previous - 0.12 &&
           position.y + this.bodyOffsetY - G.turtleHalfHeight <= p.y + previous + 0.3;
         // Position-based KCC receives the upward swept support displacement explicitly.
-        if (above && trap.lift > previous) liftDelta = Math.max(liftDelta, trap.lift - previous);
+        if (above && trap.lift > previous) {
+          liftDelta = Math.max(liftDelta, trap.lift - previous);
+          trap.liftingTurtle = true;
+        }
         trap.body?.setNextKinematicTranslation({ x: p.x, y: p.y - H.stumpHeight / 2 + trap.lift });
         if (elapsed >= H.stumpRiseSeconds + H.stumpHoldSeconds + H.stumpRetractSeconds) {
           trap.phase = 'spent'; trap.solid?.setEnabled(false);
@@ -388,6 +407,7 @@ export class PhysicsSimulation {
       } else if (p.kind === 'tree') {
         if (trap.phase === 'triggered' && trap.seconds >= H.treeDelaySeconds) {
           trap.phase = 'active'; trap.seconds = 0;
+          this.audioEvents.push({ type: 'hazard', name: 'pineconeFall' });
           trap.cone = this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
             .setTranslation(p.x, p.y + H.coneHeight).setCcdEnabled(true));
           this.world.createCollider(RAPIER.ColliderDesc.ball(H.coneRadius).setMass(H.coneMass)
@@ -642,6 +662,8 @@ export class PhysicsSimulation {
 
   step(input: Controls = NO_CONTROLS): void {
     if (this.disposed) throw new Error('Simulation already disposed');
+    // Replace rather than clear so an already captured snapshot remains stable.
+    this.audioEvents = [];
     const dt = this.world.timestep;
     const t = this.tuning;
     const position = this.turtle.translation();
@@ -655,6 +677,8 @@ export class PhysicsSimulation {
     const previousWater = this.water;
     this.water = !!region && position.x >= region.left && position.x <= region.right &&
       bodyY <= region.surface + (previousWater ? t.waterExitMargin : G.turtleHalfHeight);
+    if (this.water !== previousWater) this.audioEvents.push(this.water ?
+      { type: 'waterEntry', large: -this.shell.linvel().y >= A.waterLargeEntrySpeed } : { type: 'waterExit' });
     if (this.water) this.biome = 'water';
     else {
       // Pick the nearby support top, rather than the first overlapping X strip.
@@ -781,6 +805,9 @@ export class PhysicsSimulation {
       grounded ||= !!hit && !!this.supportFromNormal(hit.collider, hit.normal1);
     }
     const landingDelta = grounded && !this.grounded && this.verticalSpeed < 0 ? -this.verticalSpeed : 0;
+    if (!this.water && landingDelta >= A.landingMinimumSpeed) {
+      this.audioEvents.push({ type: 'landing', hard: landingDelta >= A.landingHardSpeed });
+    }
     this.grounded = grounded;
     if (grounded && this.verticalSpeed < 0) this.verticalSpeed = 0;
     if (launching) {
@@ -833,6 +860,7 @@ export class PhysicsSimulation {
       }
     }
     this.world.step();
+    this.readAudioImpacts(next.y - position.y);
     this.contacts = this.readContacts();
     const previouslyLost = new Set(this.tracker.lostIds());
     this.tracker.update(this.contacts, dt);
@@ -885,6 +913,70 @@ export class PhysicsSimulation {
     return [...found.values()];
   }
 
+  /** Read solver impulses only: no event flags, forces or secondary physics model. */
+  private normalImpulse(first: RAPIER.Collider, second: RAPIER.Collider): number {
+    let impulse = 0;
+    this.world.contactPair(first, second, manifold => {
+      for (let i = 0; i < manifold.numContacts(); i++) impulse += Math.max(0, manifold.contactImpulse(i));
+    });
+    return impulse;
+  }
+
+  private inverseDynamicMass(collider: RAPIER.Collider): number {
+    const body = collider.parent();
+    return body?.isDynamic() && body.mass() > 0 ? 1 / body.mass() : 0;
+  }
+
+  private readAudioImpacts(turtleRise: number): void {
+    const pairs = new Map<string, { impulse: number; inverseMass: number }>();
+    const visited = new Set<string>();
+    for (const cargo of this.cargo) {
+      if (cargo.retired || this.tracker.state(cargo.definition.id) === 'lost') continue;
+      for (const collider of cargo.colliders) this.world.contactPairsWith(collider, other => {
+        const colliderPair = [collider.handle, other.handle].sort((a, b) => a - b).join('|');
+        if (visited.has(colliderPair)) return;
+        visited.add(colliderPair);
+        const otherId = this.colliderIds.get(other.handle);
+        if (otherId && otherId !== 'shell' && this.tracker.state(otherId) === 'lost') return;
+        const otherBody = other.parent();
+        // Multiple collider pieces still belong to one perceived body collision.
+        const otherKey = otherBody ? 'body:' + otherBody.handle : 'fixed:' + other.handle;
+        const bodyPair = ['body:' + cargo.body.handle, otherKey].sort().join('|');
+        const pair = pairs.get(bodyPair) ?? { impulse: 0,
+          inverseMass: this.inverseDynamicMass(collider) + this.inverseDynamicMass(other) };
+        pair.impulse += this.normalImpulse(collider, other);
+        pairs.set(bodyPair, pair);
+      });
+    }
+    const deltaV = Math.max(0, ...[...pairs.values()].map(pair => pair.impulse * pair.inverseMass));
+    if (deltaV >= A.cargoLightDeltaV) this.audioEvents.push({ type: 'cargoImpact',
+      tier: deltaV >= A.cargoHeavyDeltaV ? 'heavy' : deltaV >= A.cargoMediumDeltaV ? 'medium' : 'light' });
+    for (const chunk of this.chunks.values()) for (const trap of chunk.traps) {
+      if (trap.hitSounded) continue;
+      if (trap.placement.kind === 'stump') {
+        let cargoHit = false;
+        if (trap.solid?.isEnabled()) this.world.contactPairsWith(trap.solid, other => {
+          cargoHit ||= this.normalImpulse(trap.solid!, other) * this.inverseDynamicMass(other) >= A.cargoLightDeltaV;
+        });
+        if ((trap.liftingTurtle && turtleRise > CONTACT_MOVEMENT_TOLERANCE) || cargoHit) {
+          trap.hitSounded = true;
+          this.audioEvents.push({ type: 'hazard', name: 'stumpHit' });
+        }
+      } else if (trap.cone?.isValid()) {
+        const collider = trap.cone.collider(0);
+        let hit = false;
+        this.world.contactPairsWith(collider, other => {
+          const inverseMass = this.inverseDynamicMass(collider) + this.inverseDynamicMass(other);
+          hit ||= this.normalImpulse(collider, other) * inverseMass >= A.pineconeMinimumDeltaV;
+        });
+        if (hit) {
+          trap.hitSounded = true;
+          this.audioEvents.push({ type: 'hazard', name: 'pineconeHit' });
+        }
+      }
+    }
+  }
+
   snapshot(): SimulationSnapshot {
     const position = this.turtle.translation();
     return {
@@ -899,6 +991,7 @@ export class PhysicsSimulation {
         state: this.tracker.state(c.definition.id), separatedSeconds: this.tracker.separatedSeconds(c.definition.id) })),
       contacts: this.contacts,
       hazards: this.hazardSnapshots(),
+      audioEvents: this.audioEvents,
     };
   }
   debugVertices(): Float32Array { return this.world.debugRender().vertices; }
