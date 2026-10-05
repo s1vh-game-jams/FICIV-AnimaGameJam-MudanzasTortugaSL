@@ -114,6 +114,10 @@ Never rewrite the GDD merely to make current code easier to justify.
 
 **Scoped Endless jam revision (2026-10-04):** the human authorizes Sol to update the GDD/PRD for the Endless-first jam objective, seeded compatible traps/difficulty, vertical exits, visual pennants and navigation. The human clarified six modules for the three current jam biomes, while preserving the GDD's complete four-biome design; statistical expectations with latest corrected base means 0.5/0.75/1.5; three compatible sockets per module; and a separate non-scoring protected opening. The human committed documentation to `dev` as `cf0adc2` and explicitly approved the implementation plan. Work uses the preserved `codex/endless-jam` branch and squash integration into `dev`. Subagents still treat the GDD as read-only. See `/docs/ENDLESS_PLAN.md` for the approved sequence and tuning.
 
+**Scoped slope/water revision (2026-10-05):** the human authorizes Sol to fix descending terrain pitch, retain manual shell balance underwater, use held Space for assisted ascent with no commanded dive, strengthen bounded underwater cargo assistance, update per-run help and expose a secondary gear-labelled laboratory entry. Sol may synchronize the affected GDD and README; subagents continue treating the GDD as read-only. Physics changes apply to the shared game/laboratory core. Final jam publication remains a separate human-controlled task.
+
+**Approved Credits addition (2026-10-05):** the human supplied the exact centred dedication, Argorias Svartha's ArtStation link, signature, return button and copyright footer. GDD 41.5.6 records this presentation contract; the jam title must include the Credits entry.
+
 ---
 
 ## 4. Language policy
@@ -442,10 +446,11 @@ It is mandatory for the first prototype milestone and should remain useful throu
 
 Access contract:
 
-- from main menu: **`Shift + P`**
+- from main menu: visible secondary **⚙ Laboratorio de físicas**, keyboard/mouse operable;
+- existing main-menu shortcut: **`Shift + P`**;
 - direct/automation access: **`?mode=physics`**
 
-The normal player UI must not advertise the shortcut. `/README.md` intentionally documents it for testers/contributors.
+The title exposes the laboratory as a secondary tuning/testing entry, separate from the mode selector. `/README.md` also documents the shortcut and direct route for testers/contributors.
 
 The playground should grow only when it improves tuning/diagnosis. Useful capabilities include:
 
@@ -531,7 +536,7 @@ The complete UI/UX design is defined in **GDD section 41**. For the Game Jam pro
 
 ```text
 Main Menu
-  ├── Credits (recommended for the jam)
+  ├── Credits (required for the jam; GDD 41.5.6)
   │     └── back to Main Menu
   │
   └── Mode Select
@@ -549,7 +554,7 @@ Main Menu
 
 The designed-level selector/delivery flow remains part of the complete GDD and is deferred with that mode. Endless is the required jam deliverable; the human approved its implementation plan on 2026-10-04. Gameplay, menus and laboratory share the existing physical core and canonical tuning.
 
-`physics-playground` is a hidden development route, not a normal mode selector entry.
+`physics-playground` has a secondary visible title entry, separate from the normal mode selector. The shortcut/direct route remain supported.
 
 ### 11.2 Menu and pause behavior
 

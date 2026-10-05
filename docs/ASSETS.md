@@ -12,11 +12,13 @@ Static sprite source files live in `public/sprites/`. Vite copies these files in
 
 The original nine turtle/cargo SVGs are repository-specific placeholders authored by OpenAI Codex, with subagent provenance `/root/placeholder_assets`. Eleven original Endless terrain/hazard/pennant SVGs were added by `/root/assets_validation` on 2026-10-04. They use simple rectangles, ellipses, circles and paths with solid fills, readable silhouettes and descriptive SVG titles. No third-party images, icon packs, textures or font files were imported. Printed text references the system font family `Arial, sans-serif`; the files contain no external image/font URLs or scripts.
 
+The original laboratory gear icon was authored by OpenAI Codex subagent `/root/ui_game` on 2026-10-05 using eight rectangular teeth and a ring path. It contains no imported artwork, fonts, external references or scripts.
+
 Original creative assets remain governed by the project's provisional licensing notice. This document does not change that notice or select a final license. Future imported assets must record their source, creator, license and required attribution before inclusion.
 
 ## 2. Dimensions and anchors
 
-All source SVGs have a transparent background. Their declared width and height match their `viewBox`, which starts at `0 0`. Source coordinates point right and down. Each asset currently uses 100 SVG units per visual metre.
+All source SVGs have a transparent background. Their declared width and height match their `viewBox`, which starts at `0 0`. Source coordinates point right and down. World assets use 100 SVG units per visual metre; HTML menu icons have their own pixel-sized canvas and CSS display size.
 
 Turtle/cargo normalized sprite anchors are `(0.5, 0.5)`. The centre below is measured in source SVG units. The Endless table specifies its own anchors.
 
@@ -83,6 +85,14 @@ Embedded labels are prototype scaffolding and may give way to final artwork. The
 
 The laboratory terrain, water, simple parallax trees and diagnostic markers use Pixi Graphics. Menu and tuning controls use HTML/CSS. Endless terrain/material tiles and new entities have replaceable static source files below; physical geometry remains authored independently.
 
+### HTML menu icons
+
+| Source path under `public/` | SVG dimensions | HTML display | Placement |
+|---|---|---|---|
+| `sprites/ui/laboratory.svg` | 32 × 32 | 1 × 1 rem | Decorative gear before the secondary **Laboratorio de físicas** title entry. |
+
+The laboratory icon has no collider or world-space anchor. Its HTML image uses `publicAsset`, an empty `alt` and `aria-hidden="true"`; the adjacent button label provides the accessible name. Replace the file at the same path while preserving its transparent 32 × 32 canvas and centred silhouette.
+
 ### Endless terrain, hazards and pennants
 
 All paths below are relative to `public/`. Frame pairs preserve matching canvases and registration. Terrain tiles communicate material and can be scaled/tiled independently of physical polygon boundaries. Hazard artwork may be scaled to its authored socket geometry: the branch cover is 3.6 m wide, the hatch/stump is 2.8 m wide, and the stump's displayed rise follows its authoritative moving surface. These deliberate visual sizes do not redefine collider thickness.
@@ -104,6 +114,8 @@ Pennants have no physical geometry. Their runtime height is 2 m, above the body/
 ## 6. Verification
 
 The original turtle/cargo SVGs and eleven Endless SVGs were parsed as XML. Dimensions, descriptive titles, paths without external dependencies and matching frame canvases were checked. Walking/charging pairs preserve distinct leg poses and matching body/paw registration. Runtime visibility and root/subpath loading require integrated browser smoke verification; its result belongs in DEPLOYMENT/BACKLOG.
+
+The laboratory gear was also parsed as XML with its 32 × 32 dimensions, matching `viewBox` and descriptive title verified. The 2026-10-05 browser smoke confirms its smaller secondary-menu appearance and successful root/subpath loading; DEPLOYMENT/BACKLOG record the integrated checks.
 
 After replacing assets, verify:
 
