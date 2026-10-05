@@ -907,6 +907,29 @@ Jam release on main
 - **Evidence:** all 27 focused navigation/contextual-help tests and focused ESLint pass. Gear XML parses with matching 32 × 32 dimensions/viewBox and no external dependencies. Root/subpath browser review confirms the secondary gear entry, updated controls and centred exact Credits text, link, signature, footer and keyboard return. These checks are included in the final 640-case evidence; source implementation is `aa24e5d`.
 - **Provenance:** `/root/ui_game` implements UI, original icon, targeted tests and affected documentation; root Sol owns design synchronization and integration.
 
+### UX-013 — Apply the DESIGN.md "moving material" interface skin
+- **Priority:** P1
+- **Status:** DONE on `claude/serene-allen-172mnt` (pending human review and integration into `dev`)
+- **Scope:** presentation only — HTML/CSS menus, HUD, client notices, pause/confirmation/results overlays, physics-playground chrome and the style of the in-world help text. No physics, tuning, navigation/state, game loop, scoring, audio or world/entity sprite changes.
+- **Delivered:**
+  - DESIGN.md tokens as CSS custom properties (`src/styles/tokens.css`) and a TS `designTokens` object (`src/ui/designTokens.ts`);
+  - self-hosted Fredoka, Nunito and Permanent Marker Latin subsets (`src/assets/fonts/`, licenses alongside) bundled through `src/styles/fonts.css`, so root and Pages subpath builds resolve them without a network dependency;
+  - title as a company poster (brand-green band over paper), cardboard menu boxes with tape and sticker border, label buttons whose selection combines tape fill, ► and scale/−2° tilt, sealed "Próximamente" box with ink-striped tape;
+  - packing-list HUD with the difficulty as a marker label, tape timer, pennant/multiplier and score labels, all with the sticker border and scaled to the 1280×720 reference; the pause button moved into the top-left strip so the right ~40 % stays clear;
+  - lost cargo shown dimmed **and** crossed in `stamp_red` with a 250 ms shake; separated cargo wobbles ±6° at 2 Hz;
+  - client complaints alternate a call (round portrait + bubble) and an SMS card, both showing the crossed lost-object icon before the unchanged copy;
+  - pause as a sealed box with a marker title, confirmation as a taped note, Endless results as a delivery note (brand header, ruled paper, `carbon_blue` fields, total);
+  - help text uses Nunito 800 in ink with a paper outline at `gameplay_min_text`;
+  - `prefers-reduced-motion` removes shakes, wobbles and entrance motion.
+- **Verification:** strict TypeScript, ESLint, root and Pages builds pass. Vitest reports 51 failures in physics/settings suites that are identical on the unchanged base commit `8363f6f` and unrelated to this task. Manual headless-browser screenshots at 1280×720 and 390×780 covered title, Credits, mode, difficulty, run HUD, loss notice, pause, confirmation, results and laboratory.
+- **Open design questions (DESIGN.md §0/§9):**
+  - drawn 64 px keycaps under Don Tortuga with press feedback (§6.2) need new Pixi presentation work; the help remains text-based for now;
+  - "hover equals select" (§6.1) would change menu selection behaviour; hover currently only lifts the label;
+  - customer avatars (squirrel, doe, owl) await art; phone/envelope placeholders use only UI tokens;
+  - the value stamp and box row (§6.5) apply to designed-level results; GDD 41.5.5 excludes them from Endless results, so none is shown;
+  - the score caption "PUNTOS" and key-hint text are below the 28 px gameplay minimum as secondary labels;
+  - `/docs/DESIGN.md` still starts with a "placeholder" line and references a not-yet-present `ART.md`; AGENTS.md still describes DESIGN as a placeholder. Left for the owners to resolve.
+
 ### ART-004 — Register charged-head walking variants
 - **Priority:** P0
 - **Status:** DONE

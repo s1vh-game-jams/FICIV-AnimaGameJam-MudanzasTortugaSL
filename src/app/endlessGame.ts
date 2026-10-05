@@ -18,6 +18,15 @@ import { bindMenuFocus } from '../audio/menuAudio';
 
 const DIFFICULTY_LABELS: Readonly<Record<Difficulty, string>> = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil' };
 const LOSS_NOTICE_SECONDS = 4;
+// Presentation-only icons drawn with the DESIGN.md ink/tape tokens.
+const PENNANT_ICON = '<svg class="pennant-icon" viewBox="0 0 20 26" aria-hidden="true"><path d="M3 2v23" stroke="#172228" stroke-width="3" stroke-linecap="round"/><path d="M4.5 3.5h13l-4 5 4 5h-13z" fill="#F2C230" stroke="#172228" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+const PHONE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5 9 3l2 4.6-2.2 1.6a11 11 0 0 0 6 6l1.6-2.2L21 15l-.5 2.4A3 3 0 0 1 17.6 20 14.6 14.6 0 0 1 4 6.4a3 3 0 0 1 2.6-2.9z" fill="#F6EBD3" stroke="#172228" stroke-width="2" stroke-linejoin="round"/></svg>';
+const SMS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="3" fill="#F6EBD3" stroke="#172228" stroke-width="2"/><path d="M8 17v4l4-4" fill="#F6EBD3" stroke="#172228" stroke-width="2" stroke-linejoin="round"/><circle cx="8" cy="10.5" r="1.4" fill="#172228"/><circle cx="12" cy="10.5" r="1.4" fill="#172228"/><circle cx="16" cy="10.5" r="1.4" fill="#172228"/></svg>';
+
+function lostIcon(id: CargoKind): string {
+  const item = CARGO.find(entry => entry.id === id)!;
+  return `<span class="cargo-icon lost"><img src="${publicAsset(VISUALS[id].path)}" alt="${item.label}"><span class="cargo-cross" aria-hidden="true"></span></span>`;
+}
 
 /** Mounts one run. Restart repeats its seed and captured settings without reloading assets. */
 export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
@@ -27,17 +36,18 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
   navigation.beginRun();
   app.innerHTML = `<section class="endless-game" aria-label="Carrera Infinita">
     <div id="endless-canvas" tabindex="0" aria-label="Carrera. Esc para pausar."></div>
-    <header class="run-hud" aria-label="Estado de la mudanza">
-      <div class="run-brand">MUDANZAS TORTUGA, S.L. <span>${DIFFICULTY_LABELS[difficulty]}</span></div>
-      <div class="run-cargo" aria-label="Carga inicial">${CARGO.map(item =>
-        `<span class="cargo-icon" data-cargo="${item.id}" title="${item.label}"><img src="${publicAsset(VISUALS[item.id].path)}" alt="${item.label}"><span class="cargo-cross" aria-hidden="true">×</span></span>`).join('')}</div>
-      <div class="run-metrics"><output id="run-time" aria-label="Tiempo">00:00</output>
-        <span>⚑ <output id="run-pennants" aria-label="Banderines">0</output></span>
-        <span>×<output id="run-multiplier" aria-label="Multiplicador siguiente">1</output></span>
-        <strong><output id="run-score" aria-label="Puntuación">0</output> puntos</strong></div>
-    </header>
-    <button id="run-pause" class="run-pause" aria-label="Pausar recorrido" disabled>Pausa <kbd>Esc</kbd></button>
-    <p id="loss-notice" class="loss-notice" role="status" hidden></p>
+    <div class="run-topbar">
+      <header class="run-hud" aria-label="Estado de la mudanza">
+        <div class="packing-list sticker" aria-label="Carga inicial"><span class="packing-tag">${DIFFICULTY_LABELS[difficulty]}</span>${CARGO.map(item =>
+          `<span class="cargo-icon" data-cargo="${item.id}" title="${item.label}"><img src="${publicAsset(VISUALS[item.id].path)}" alt="${item.label}"><span class="cargo-cross" aria-hidden="true">×</span></span>`).join('')}</div>
+        <output id="run-time" class="run-timer sticker" aria-label="Tiempo">00:00</output>
+        <span class="run-pennants sticker">${PENNANT_ICON}<output id="run-pennants" aria-label="Banderines">0</output>
+          <span class="run-multiplier">×<output id="run-multiplier" aria-label="Multiplicador siguiente">1</output></span></span>
+        <span class="run-score sticker"><span class="run-score-label">Puntos</span><output id="run-score" aria-label="Puntuación">0</output></span>
+      </header>
+      <button id="run-pause" class="run-pause" aria-label="Pausar recorrido" disabled><span class="pause-icon" aria-hidden="true"></span><kbd>Esc</kbd></button>
+    </div>
+    <div id="loss-notice" class="loss-notice" role="status" hidden></div>
     <div id="run-overlay" class="run-overlay" hidden></div>
   </section>`;
   const host = app.querySelector<HTMLElement>('#endless-canvas')!;
@@ -121,21 +131,24 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
     if (navigation.screen === 'results') {
       const result = snapshot.result!;
       const lastLoss = result.lastLoss.map(id => CARGO.find(item => item.id === id)!.label).join(', ');
-      content = `<p class="eyebrow">Parte de servicio · Carrera Infinita</p>
-        <h1>La mudanza<br>queda por el camino.</h1>
-        <p class="result-score">${result.score.toLocaleString('es-ES')} <span>puntos</span></p>
-        <dl class="result-details"><div><dt>Banderines</dt><dd>${result.pennantsCrossed}</dd></div>
+      content = `<header class="note-head"><span class="note-brand">MUDANZAS TORTUGA, S.L.</span>
+          <p class="eyebrow">Parte de servicio · Carrera Infinita</p></header>
+        <div class="note-sheet"><h1>La mudanza<br>queda por el camino.</h1>
+        <dl class="note-fields"><div><dt>Banderines</dt><dd>${result.pennantsCrossed}</dd></div>
           <div><dt>Tiempo</dt><dd>${formatRunTime(result.time)}</dd></div>
           <div><dt>Dificultad</dt><dd>${DIFFICULTY_LABELS[result.difficulty]}</dd></div></dl>
-        <p class="last-loss">Última parada: ${lastLoss || 'la carga'}.</p>`;
+        <p class="note-lastloss last-loss"><span class="label">Última parada</span>${result.lastLoss.map(lostIcon).join('')}
+          <span class="value">${lastLoss || 'la carga'}.</span></p>
+        <div class="note-total"><span class="label">Total</span><p class="result-score">${result.score.toLocaleString('es-ES')} <span>puntos</span></p></div></div>`;
     } else if (navigation.screen === 'confirm') {
-      content = `<p class="eyebrow">Un momento, por favor</p><h1>${navigation.confirmation === 'restart' ? '¿Repetimos<br>el recorrido?' : '¿Volvemos<br>a la portada?'}</h1>
+      content = `<header class="card-head"><p class="eyebrow">Un momento, por favor</p></header><h1>${navigation.confirmation === 'restart' ? '¿Repetimos<br>el recorrido?' : '¿Volvemos<br>a la portada?'}</h1>
         <p>${navigation.confirmation === 'restart' ? 'La mudanza empieza de nuevo en la misma ruta.' : 'Esta mudanza termina aquí.'}</p>`;
     } else {
-      content = `<p class="eyebrow">Descanso del servicio</p><h1>En pausa.</h1>
+      content = `<header class="card-head"><p class="eyebrow">Descanso del servicio</p></header><h1>En pausa.</h1>
         ${helpReset ? '<p role="status">Los controles volverán al continuar.</p>' : ''}`;
     }
-    overlay.innerHTML = `<section class="menu-card overlay-card" role="dialog" aria-modal="true"
+    const variant = navigation.screen === 'results' ? 'is-results' : navigation.screen === 'confirm' ? 'is-confirm' : 'is-pause';
+    overlay.innerHTML = `<section class="menu-card overlay-card ${variant}" role="dialog" aria-modal="true"
       aria-label="${navigation.screen === 'results' ? 'Resultados' : navigation.screen === 'confirm' ? 'Confirmación' : 'Pausa'}">
       ${content}<nav class="menu-options" aria-label="Opciones">${buttons()}</nav></section>`;
     for (const button of overlay.querySelectorAll<HTMLButtonElement>('[data-menu-index]')) {
@@ -172,7 +185,10 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
       ? ['La mudanza está tomando varios caminos.', 'Servicio de reparto… demasiado repartido.']
       : ['¿Mi ' + labels + ' también se muda por su cuenta?', 'Don Tortuga: parada para ' + labels + '.'];
     const call = noticeIndex % 2 === 0;
-    notice.textContent = (call ? '☎ ' : '✉ ') + messages[noticeIndex++ % messages.length];
+    notice.dataset.kind = call ? 'call' : 'sms';
+    notice.innerHTML = `<span class="notice-avatar sticker">${call ? PHONE_ICON : SMS_ICON}</span><span class="notice-body sticker">
+      <span class="notice-items">${ids.map(lostIcon).join('')}</span><span class="notice-text"></span></span>`;
+    notice.querySelector('.notice-text')!.textContent = messages[noticeIndex++ % messages.length];
     const event = call ? 'clientCall' : 'notification';
     if (terminal) audio.playUI(event); else audio.playGameplay(AUDIO_FILES.ui[event]);
     notice.hidden = false; noticeUntil = run.snapshot().time + LOSS_NOTICE_SECONDS;
