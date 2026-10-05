@@ -69,33 +69,43 @@ function connector(value: unknown, path: string): RecordValue {
   finite(record.height, path + '.height'); return record;
 }
 function moduleGeometry(value: unknown, path: string, hazards: Map<string, RecordValue>): RecordValue {
-  const record = versioned(value, path, ['name', 'length', 'start', 'end', 'terrain', 'water', 'hazards']);
+  const record = versioned(value, path, ['name', 'length', 'start', 'end', 'terrain', 'water', 'hazards', 'sockets', 'jumps']);
   text(record.name, path + '.name', 80); finite(record.length, path + '.length');
   if (record.length <= 0) fail(path + '.length', 'must be positive');
   const start = connector(record.start, path + '.start'), end = connector(record.end, path + '.end');
   const terrain = array(record.terrain, path + '.terrain');
   if (!terrain.length) fail(path + '.terrain', 'requires actual terrain geometry');
   let previous: RecordValue | undefined;
+  const waterEndpoint = (x: number, connector: RecordValue, height: unknown) =>
+    connector.biome === 'water' && typeof height === 'number' && height < (connector.height as number) &&
+    Array.isArray(record.water) && record.water.some(value => {
+      const region = object(value, path + '.water');
+      return (region.left as number) <= x && (region.right as number) >= x &&
+        region.surface === connector.height && height >= (region.bottom as number);
+    });
   terrain.forEach((value, i) => {
-    const stripPath = `${path}.terrain[${i}]`, strip = object(value, stripPath, ['biome', 'points']);
+    const stripPath = `${path}.terrain[${i}]`, strip = object(value, stripPath, ['biome', 'points', 'bottom']);
     if (!['grass', 'rock', 'sand'].includes(strip.biome as string)) fail(stripPath + '.biome', 'is unknown');
     const points = array(strip.points, stripPath + '.points');
     if (points.length < 2) fail(stripPath + '.points', 'requires at least two points');
+    if (strip.bottom !== undefined) finite(strip.bottom, stripPath + '.bottom');
+    const supplemental = !!previous && previous.x === record.length && strip.bottom !== undefined;
     let stripPrevious: RecordValue | undefined;
     points.forEach((value, j) => {
       const pointPath = `${stripPath}.points[${j}]`, point = object(value, pointPath, ['x', 'y']);
       finite(point.x, pointPath + '.x'); finite(point.y, pointPath + '.y');
+      if (strip.bottom !== undefined && (strip.bottom as number) >= (point.y as number)) fail(stripPath, 'bottom must be below every top point');
       if (point.x < 0 || point.x > (record.length as number)) fail(pointPath + '.x', 'must lie within module length');
       if (stripPrevious && point.x <= (stripPrevious.x as number)) fail(pointPath + '.x', 'must increase strictly');
-      if (j === 0) {
+      if (j === 0 && !supplemental) {
         if (previous && (point.x !== previous.x || point.y !== previous.y)) fail(stripPath, 'has a discontinuous terrain join');
-        if (!previous && (point.x !== 0 || point.y !== start.height)) fail(stripPath, 'must meet the start connector');
+        if (!previous && (point.x !== 0 || (point.y !== start.height && !waterEndpoint(0, start, point.y)))) fail(stripPath, 'must meet the start connector');
       }
       stripPrevious = point;
     });
-    previous = stripPrevious;
+    if (!supplemental) previous = stripPrevious;
   });
-  if (!previous || previous.x !== record.length || previous.y !== end.height) fail(path + '.terrain', 'must meet the end connector');
+  if (!previous || previous.x !== record.length || (previous.y !== end.height && !waterEndpoint(record.length as number, end, previous.y))) fail(path + '.terrain', 'must meet the end connector');
   if (record.water !== undefined) array(record.water, path + '.water').forEach((value, i) => {
     const waterPath = `${path}.water[${i}]`, region = object(value, waterPath, ['left', 'right', 'surface', 'bottom']);
     for (const key of ['left', 'right', 'surface', 'bottom']) finite(region[key], waterPath + '.' + key);
@@ -105,6 +115,24 @@ function moduleGeometry(value: unknown, path: string, hazards: Map<string, Recor
     }
   });
   if (record.hazards !== undefined) placements(record.hazards, path + '.hazards', hazards, new Set<string>());
+  if (record.sockets !== undefined) {
+    const ids = new Set<string>();
+    array(record.sockets, path + '.sockets').forEach((value, i) => {
+      const socketPath = `${path}.sockets[${i}]`, socket = object(value, socketPath, ['id', 'x', 'y', 'compatible']);
+      text(socket.id, socketPath + '.id'); finite(socket.x, socketPath + '.x'); finite(socket.y, socketPath + '.y');
+      if (ids.has(socket.id as string)) fail(socketPath, 'duplicate socket');
+      ids.add(socket.id as string);
+      if ((socket.x as number) <= 0 || (socket.x as number) >= (record.length as number)) fail(socketPath, 'socket must lie inside module');
+      const types = array(socket.compatible, socketPath + '.compatible');
+      if (!types.length || new Set(types).size !== types.length || types.some(type => !['branch', 'stump', 'tree'].includes(type as string))) fail(socketPath, 'invalid compatible trap types');
+    });
+  }
+  if (record.jumps !== undefined) array(record.jumps, path + '.jumps').forEach((value, i) => {
+    const jumpPath = `${path}.jumps[${i}]`, jump = object(value, jumpPath, ['chargeAtX', 'landingX']);
+    finite(jump.chargeAtX, jumpPath + '.chargeAtX'); finite(jump.landingX, jumpPath + '.landingX');
+    if ((jump.chargeAtX as number) < 0 || (jump.landingX as number) > (record.length as number) ||
+      (jump.chargeAtX as number) >= (jump.landingX as number)) fail(jumpPath, 'invalid jump route');
+  });
   return record;
 }
 function placements(value: unknown, path: string, definitions: Map<string, RecordValue>, instances: Set<string>): void {

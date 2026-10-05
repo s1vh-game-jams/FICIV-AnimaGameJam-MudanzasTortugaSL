@@ -6,7 +6,7 @@
 **Phase scope:** [PRD](PRD.md), sections 1.1, 8 and 19.
 **Task status and verification provenance:** [BACKLOG](BACKLOG.md).
 
-This document describes Prototype 1. The playground uses grass, rock and compact water diagnostics to investigate the physical core. These diagnostic surfaces do not constitute completion of the designed-level or full biome-foundation milestone. Tuning values remain provisional until human playtesting establishes the intended feel.
+This document describes the shared physical foundation used by the playground and the six-module Endless run. The human finalized playground settings on 2026-10-03 and approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) on 2026-10-04. Existing physical tuning, carrier shapes and charged jump remain unchanged; authored runtime content requires its own real-Rapier traversal evidence.
 
 ## 1. Architecture and ownership
 
@@ -14,7 +14,7 @@ Rapier owns physical bodies, colliders, contacts and world stepping. Pixi render
 
 | Source | Responsibility |
 |---|---|
-| `src/main.ts` | Hidden route, laboratory controls, world lifecycle, fixed-loop scheduling and parameter editing. |
+| `src/main.ts` | Secondary title entry/direct route, laboratory controls, world lifecycle, fixed-loop scheduling and parameter editing. |
 | `src/game/core/fixedLoop.ts` | Accumulate render elapsed time and advance fixed simulation ticks; pause and single-step support. |
 | `src/game/core/input.ts` | Keyboard state and input cleanup. |
 | `settings.txt` | Canonical adjustable startup defaults for game and laboratory. |
@@ -31,6 +31,22 @@ Rapier owns physical bodies, colliders, contacts and world stepping. Pixi render
 | `src/rendering/playgroundRenderer.ts` | Snapshot-to-Pixi synchronization, debug overlays and responsive viewport scaling. |
 | `src/rendering/visualDefinitions.ts` | Visual asset paths, sizes, anchors and walk-animation slots. |
 | `src/utils/publicAsset.ts` | Public asset URLs based on Vite's deployment base. |
+| `src/game/physics/worldContent.ts` | Owned terrain/water/trap chunks and physical hazard snapshots. |
+| `src/game/config/hazards.ts` | Shared fixed-time branch, stump and pinecone dimensions/timings. |
+| `src/game/config/endless.ts`, `src/game/modes/endless/` | Seeded module selection, occupancy/progression, streaming, pennants and terminal multiplier scoring. |
+| `src/app/endlessGame.ts`, `src/rendering/endlessRenderer.ts` | Normal run lifecycle, frozen pause/results, HTML HUD and snapshot-only fixed-zoom presentation. |
+
+### Streamed world and traps
+
+`addWorldChunk` installs independent collider ownership, finite lower terrain bounds, support/material metadata and multiple water regions; `removeWorldChunk` removes its colliders, bodies and query metadata together. Water uses the matching local region; dry material follows nearby surface/contact rather than the first overlapping X strip. Finite island solids permit a submerged route beneath them. Module exits align water surface references and actual bed geometry separately. The jam pool uses single exits; AD's surface/submerged paths rejoin before its rocky bank.
+
+Branch covers are separate solids above an authored recess with a forward ramp. Turtle support contact starts a fixed delay and removes the cover. Closed stump hatches are visual ground: their buried cuboids remain disabled until activation and after retraction, avoiding a false side wall in Rapier's character controller. During rise, the position-based turtle receives the swept upward support displacement explicitly. Moving solids use their current transforms in shell clearance. Tree sensors trigger a delayed CCD pinecone; its collision groups affect cargo/terrain, exclude the carrier, and never enter the cargo contact graph. Pinecones retire after three seconds. Hazard phases advance only in simulation ticks.
+
+The shell guard retains exact polygon separation and full-arc clearance. A conservative swept AABB excludes distant solids before the exact tests, preserving geometry checks while reducing streaming cost. Origin rebasing shifts current/next body transforms, free colliders, authored query vertices, water, hazards and camera at a fixed-tick boundary. The mode separately preserves logical distance, height offset and seed/index history. Lost cargo remains available as terminal metadata; in Endless its physical body retires only behind both the carrier and captured visible left edge. Finite laboratory scenarios preserve inspectable body handles until reset. Resident chunks stay until retained/separated cargo and pending hazards no longer need them.
+
+`FixedLoop` rechecks its paused state after every callback so terminal loss cannot run extra physics ticks from a render-frame burst. Endless scoring processes definitive cargo loss before flag crossings, includes separation grace, and freezes on final zero. Pennants have no Rapier body, collider or sensor.
+
+Near a water exit, an unpassed pennant follows the actual carrier's passing height within that region's bounds, then freezes when crossed. This keeps the visual readable for surface and deep retained-load routes. Only presentation height changes; distance crossing, physical geometry and scoring remain authoritative.
 
 ### Fixed simulation and lifecycle
 
@@ -58,7 +74,11 @@ An existing support contact may be skipped only when analytic minima for every m
 
 In the recorded long-floor regression, the shell's actual geometric minimum was 15.48 mm below the floor while the pinned Rapier version's contact-distance query reported a positive 0.725 mm separation for that pose. This fixture-specific discrepancy requires the independent polygon guard; a zero-velocity cast or contact-distance result alone cannot certify clearance. Only immutable authored terrain vertices are cached. Additional static solids use their current collider transforms.
 
-The character controller preserves numerical clearance through the canonical `controllerOffset` and `controllerNudge` settings. Snap-to-ground is deliberately disabled; gravity provides ground following. During implementation, snapping erased clearance at shallow contacts, allowing zero-time-of-impact normals to block horizontal travel even while the requested speed remained positive. Changes to clearance, nudging, terrain geometry or snapping must repeat the actual forward-traversal tests, not only the target-speed unit tests.
+The character controller preserves numerical clearance through the canonical `controllerOffset` and `controllerNudge` settings. Native snap-to-ground remains disabled because it can erase that gap and interrupt forward movement. Descending support instead uses a shallow downward capsule cast, at most the existing 0.32 m step height, after a confirmed grounded departure. Only an actual walkable descending face can establish support; the cast preserves the 0.05 m controller gap and ignores sensors/dynamic bodies. Flat-normal roundoff is rejected. Water, upward launches and stump lifts do not engage this follower, and accepted shell translation rechecks nearby support. Deep ledges retain freefall/departure pitch. Mirrored ramps, jumps, cliffs and actual body/shell clearance are covered in `descendingTerrain.test.ts`. Changes to clearance, nudging, terrain geometry or support queries require real forward-traversal checks.
+
+For an ascent blocked by a ceiling, the shell guard also tests forward movement with the blocked vertical component removed. The locomotion controller and the full shell-path guard must both accept it. This permits buoyant sliding under connected island roof seams without a commanded dive; endpoint SAT and intermediate rotation clearance remain required.
+
+At a convex island lip, the locomotion capsule can project rising forward intent down the solid. In water, an actual front/down collision with this contradictory downward result retries the original ascent without forward intent. The capsule may produce a small backward slide; it is accepted only when rising and when the complete shell path is clear. The rejected-shell fallback preserves the same original intent. This prevents alternating physical ascent and capsule-induced downward sliding; neither guard allows passing through the island.
 
 Movement uses Rapier's next-kinematic-transform APIs at the fixed timestep, allowing the solver to convey support movement to dynamic cargo. Ordinary traversal must not reposition cargo through sprite transforms or instant positional clamps.
 
@@ -81,7 +101,7 @@ rear viewport position = 100p percent
 front viewport position = 100(1 - p) percent
 ```
 
-Each outer dead zone occupies the chosen percentage of the complete normal-level viewport. The central corridor occupies the remaining `100 - 2 × cameraDeadZonePercent` percent. The accepted range is 0–45 percent per side. The default 40 percent reserves 40 percent on either side and leaves 20 percent for movement. The human's recovered defaults place the laboratory movement boundaries at 20 and 80 percent: approximately 3.37 and 13.47 m from camera X, a 10.11 m physical corridor. At 40 percent dead zone, a normal level would capture approximately 50.53 m of visible world; the laboratory keeps its fixed approximately 16.84 m span. Zoom is a derived framing result, not an adjustable setting.
+Each outer dead zone occupies the chosen percentage of the complete normal-level viewport. The central corridor occupies the remaining `100 - 2 × cameraDeadZonePercent` percent. The accepted range is 0–45 percent per side. The human approved a new default of **10 percent per side** on 2026-10-04, leaving 80 percent for movement. The recovered laboratory movement boundaries stay at 20 and 80 percent: approximately 3.37 and 13.47 m from camera X, a 10.11 m physical corridor. At 10 percent dead zone, a normal level captures approximately 12.63 m of visible world, at 101.33 logical pixels/metre and zoom 1.3333 relative to the laboratory; the laboratory keeps its fixed approximately 16.84 m span. Zoom is a derived framing result, not an adjustable setting.
 
 The configured movement margins locate the carrier's centre. At zero dead zone those centres reach the viewport edges, so small dead-zone candidates can clip body/shell artwork. Normal-level authoring must check the complete Don Tortuga/shell silhouette at both horizontal margins with the chosen corridor and dead zone. The factory preserves the requested percentages; it does not silently clamp framing or change zoom during a run to repair readability.
 
@@ -113,7 +133,7 @@ Reconnection during grace clears the separation timer. Grace uses simulation tim
 
 On terminal loss, the simulation changes collision groups so the object can still fall against terrain but cannot interact with the turtle, shell or remaining cargo. It cannot return to the active graph. Its continuing visual motion is diagnostic/comedic presentation, not a gameplay obstacle.
 
-Retained cargo uses zero linear damping during dry airborne motion so world-space damping cannot slow its freefall relative to the undamped kinematic carrier. Canonical linear damping returns while grounded or in water; angular damping remains active throughout. The carrier's dry airborne displacement matches the mean gravity integration of Rapier's solver substeps. Takeoff compensation uses accepted support motion with that integration correction, avoiding a one-tick displacement bias. Water-entry velocity compensation uses realized carrier velocity.
+Retained cargo uses zero linear damping during dry airborne motion so world-space damping cannot slow its freefall relative to the undamped kinematic carrier. Canonical linear damping returns while grounded; water applies the bounded multipliers below. Angular damping remains active throughout. The carrier's dry airborne displacement matches the mean gravity integration of Rapier's solver substeps. Takeoff compensation uses accepted support motion with that integration correction, avoiding a one-tick displacement bias. Water-entry velocity compensation uses realized carrier velocity.
 
 Contact grip assistance is a tunable physical aid on connected cargo. During dry airborne motion, its existing gain also gently reduces relative vertical-speed differences with the carrier; this is a mass-proportional force, not a position clamp. The takeoff frame uses its single bounded impulse instead. Separated or lost cargo receives neither takeoff nor airborne grip assistance. Setting `gripAssistance` to zero removes the assistance. Gravity matching and this bounded aid work together; gravity matching alone does not eliminate all relative velocity introduced by kinematic contacts. Global contact-loss grace remains unchanged, and cargo keeps independent rotation and can still be lost through actual tilt or impacts.
 
@@ -123,9 +143,11 @@ The high-jump regression was independent of visibility: no viewport-based physic
 
 Grass provides the permissive reference surface. Rock uses a different contact/landing response. Compare the same shapes of terrain on both surfaces before attributing a difference to the material alone.
 
-Water is an authored region with horizontal bounds, a surface and a bottom. It switches vertical input from shell tilt to swimming. There is no oxygen, health or drowning system. Entry/exit tolerance helps avoid rapid control switching near the surface.
+Water is an authored region with horizontal bounds, a surface and a bottom. Vertical input retains shell balance; held Space assists ascent immediately, without underwater jump charging. There is no commanded dive, oxygen, health or drowning system. Entry/exit tolerance avoids rapid biome switching near the surface.
 
-The controller derives a weight-dependent preferred depth and upward response from retained cargo mass. Water buoyancy gain starts at 8.4 s⁻². Swimming strength starts at 8 m/s² and its separate mass response at 0.05 kg⁻¹. An empty turtle has stronger natural restoration and resists sustained immersion; heavier retained loads reach deeper positions. Up/down modulates descent and return to the surface. Verify both controllable ascent and bank exit across empty, sofa-only and full loads. Cargo in separation grace still contributes to this calculation. Depth increases the rightward current affecting the carrier; the same camera-window pressure still applies. The resulting advantage should be evaluated over a traversal, including the point where front-window pressure limits further positional gain.
+The controller derives a weight-dependent preferred depth and upward response from retained cargo mass. Water buoyancy gain starts at 8.4 s⁻². The 2026-10-05 revision uses `waterDepthPerKg=0.25` m/kg and `waterSwimAcceleration=14` m/s², with the existing ascent mass response of 0.05 kg⁻¹. The old 0.075/8 pair depended on commanded diving for AD's underpass. These configurable starting values let heavy retained cargo reach the existing underpass naturally while held Space still permits the surface route; they are implementation tuning, not complete-game fixed constants. An empty turtle has stronger natural restoration and resists sustained immersion; heavier retained loads and incoming momentum reach deeper positions. A dry pre-entry jump can add immersion energy. Verify assisted ascent and bank exit across empty, sofa-only and full loads. Cargo in separation grace still contributes; terminal loss removes its weight immediately. Depth increases rightward current affecting the carrier; the same camera-window pressure still applies.
+
+`WATER_CARGO_RESPONSE` in `tuning.ts` centralizes bounded wet assistance: contact grip ×3, collider friction ×1.5, linear damping ×1.5 and angular damping ×2. Dry responses return on exit. Cargo remains independently dynamic; small manual corrections preserve the stack while sustained extreme tilt and strong impulses can exceed contact grace and lose individual objects. Assistance never welds the stack or restores lost cargo. `waterCargoResponse.test.ts` verifies those physical outcomes and dry restoration.
 
 Water does not add a lateral fluid force directly to cargo. Current modifies carrier motion. General shell-contact grip can still transmit the carrier's movement. Water entry uses vertical cushioning of retained cargo. Dry landing assistance applies on an air-to-ground transition, rather than repeatedly injecting vertical energy while grounded. This is deliberate gameplay assistance rather than a complete fluid simulation.
 
@@ -133,14 +155,14 @@ Water entry preserves incoming vertical momentum, then drag and overspeed dampin
 
 ## 2. Access and laboratory controls
 
-Open the playground with `Shift + P` from the title screen, or navigate directly to `?mode=physics`. The ordinary title screen does not advertise the shortcut. Local setup and static-server commands belong in the [README](../README.md); deployment configuration belongs in [DEPLOYMENT](DEPLOYMENT.md).
+Open **⚙ Laboratorio de físicas** from the title's secondary entry, use the existing `Shift + P` shortcut, or navigate directly to `?mode=physics`. Mouse and keyboard use the same navigation action. Local setup and static-server commands belong in the [README](../README.md); deployment configuration belongs in [DEPLOYMENT](DEPLOYMENT.md).
 
 | Control | Action |
 |---|---|
 | `→/D` / `←/A` | Accelerate / reduce forward speed; no reverse input. |
-| `↑/W` / `↓/S` on dry terrain | Progressively tilt the shell front up / down relative to terrain pitch. |
+| `↑/W` / `↓/S` in dry terrain and water | Progressively tilt the shell front up / down relative to terrain pitch. |
 | `Space` on dry ground | Hold to charge; release to jump. |
-| `↑/W` / `↓/S` in water | Modulate upward / downward swimming. |
+| `Space` in water | Hold to assist ascent; release for natural buoyancy, without a jump charge. |
 | `Esc` | Pause / continue the laboratory. |
 | `R` | Reset the current scenario and selected load. |
 | `N` | Advance one fixed tick while paused, using neutral gameplay controls. |
@@ -150,7 +172,7 @@ Open the playground with `Shift + P` from the title screen, or navigate directly
 | Parameter field | Apply a valid value and reset, preserving pause. |
 | Restore settings button | Restore the loaded settings.txt defaults and reset. |
 | Export settings button | Download current settings.txt without resetting or changing pause. |
-| Preview help checkbox | Test shared onboarding in the diagnostic scene; ordinary level integration remains pending. |
+| Preview help checkbox | Test the shared onboarding sequence used by Endless in the diagnostic scene. |
 | Title button | Dispose the playground and return to the title screen. |
 
 Keyboard shortcuts and movement do not intercept editing in the parameter/select fields. Focus the canvas again when returning to keyboard traversal.
@@ -185,9 +207,9 @@ Root settings.txt is authoritative for adjustable gameplay defaults, including s
 
 The versioned settings codec accepts numeric key=value entries, # comments, LF/CRLF and decimal exponents. It validates required/unknown/duplicate keys, finite bounds and cross-field relationships before applying a complete configuration. Errors identify settings.txt and the affected key/line. Spinner increments are conveniences rather than restrictions on valid fine decimal values.
 
-Current exports use `schemaVersion=2`. To migrate a version-1 export, retain its other tuning values, change `schemaVersion` to 2, remove `cameraZoom`, add `cameraDeadZonePercent=40` as a starting framing candidate and add `shellPivotY=0.30`. Review the dead zone separately: the old direct zoom and the new percentage have different meanings and no automatic numerical conversion. The codec rejects unsupported versions rather than guessing a migration. The schema contains 38 adjustable numeric values plus its version entry.
+Current exports use `schemaVersion=2`. To migrate a version-1 export, retain its other tuning values, change `schemaVersion` to 2, remove `cameraZoom`, add `cameraDeadZonePercent=10` as the current default framing candidate and add `shellPivotY=0.30`. Review the dead zone separately: the old direct zoom and the new percentage have different meanings and no automatic numerical conversion. The codec rejects unsupported versions rather than guessing a migration. The schema contains 38 adjustable numeric values plus its version entry.
 
-The human supplied the recovered version-1 tuning as text on 2026-10-03. All shared numeric values were retained, including the 20/80 percent movement margins and 8 m/s maximum jump. Only the obsolete version/zoom entries were migrated; the new dead-zone and shell-height settings retain their approved 40 percent/0.30 m values. Later browser downloads are session candidates and do not replace that source provenance. Keep a backup before replacing a tuned repository file or an earlier downloaded candidate.
+The human supplied the recovered version-1 tuning as text on 2026-10-03. All shared numeric values were retained, including the 20/80 percent movement margins and 8 m/s maximum jump. At that migration the new dead-zone/shell-height values were 40 percent/0.30 m. The later approved visual default changes only the dead zone to 10 percent; shell height and physical tuning remain the same. Later browser downloads are session candidates and do not replace that source provenance. Keep a backup before replacing a tuned repository file or an earlier downloaded candidate.
 
 The human subsequently finalized the playground tuning in `fd12654`, promoted with `3b3d1f0` on main: `gripAssistance=2.0` and `lossGraceSeconds=1.33`. The jam service foundation preserves these values and the physical implementation. Regression observation windows must use the configured separation grace; assistance-force comparisons must account for the configured grip gain instead of silently assuming an older default.
 
@@ -204,7 +226,7 @@ Physical coordinates use metres with positive Y upward; masses use kilograms, el
 | `shellMaxAngle`, `shellAngularSpeed`, `shellAngularDamping`, `shellPivotY` | Angular bound, requested angular speed, rate of approaching that speed, and pivot height above the body origin. |
 | Cargo friction, linear/angular damping, `gripAssistance`, `lossGraceSeconds` | Contact retention, motion damping, gentle carrier-following assistance and temporary-separation duration. |
 | Water depth/rise/weight/drag fields | Preferred depth and natural rise as functions of retained cargo mass. |
-| Water swim/current/entry fields | Vertical input strength, depth-based horizontal assistance and vertical cushioning. |
+| Water swim/current/entry fields | Held-Space ascent strength, depth-based horizontal assistance and vertical cushioning. |
 | Grass/rock landing fields | Material-specific assistance during downward landing. |
 | `worldPixelsPerMetre`, `viewWidth`, `viewHeight` | Visual world scale and logical viewport size. |
 | `PHYSICS_GEOMETRY` | Carrier/shell dimensions, controller clearances and initial preparation settings. |
@@ -261,19 +283,35 @@ Every proposed module requires authored traversal cases for each mandatory route
 
 Use those cases to validate approach/charging space, wall height and width, headroom, landing room, connector joins and recovery at the rear camera margin. A passing case demonstrates that authored route/load/control sequence. A failed sequence blocks certification of that case but does not prove no alternative sequence exists. The module owner must adjust geometry or author and verify a viable sequence before acceptance.
 
-Repeat the full required route/load matrix after changes to launch speed, gravity, charge cap, shell registration, geometry, physical movement corridor or controller behavior. An idealized `v²/(2g)` height estimate is useful for sketching; it omits collision clearance, width, approach and landing constraints and cannot certify reachability. Prototype 1 diagnostics and helper tests do not constitute an implemented module pool or certified designed level.
+Repeat the full required route/load matrix after changes to launch speed, gravity, charge cap, shell registration, geometry, physical movement corridor or controller behavior. An idealized `v²/(2g)` height estimate is useful for sketching; it omits collision clearance, width, approach and landing constraints and cannot certify reachability. The six jam modules have authored full/sofa/empty traces, first-landing jumps, physical socket recovery and all compatible seams in `tests/integration/endlessTraversal.test.ts`.
 
-Inspect the production build in a browser as well as the development server. Check both playground access paths, public SVG textures, Rapier WASM loading, keyboard controls, pause/reset, scenario switching, resize behavior and asset loading below the configured repository subpath. A successful compilation or HTTP response alone does not prove initialization or visible play works.
+The normal suite checks every socket/type locally and representative complete three-trap combinations. The slower release certificate checks all 64 empty/branch/stump/tree socket arrangements for each module and full/sofa/empty starting load (1,152 complete physical routes):
+
+```powershell
+$env:ENDLESS_EXHAUSTIVE = '1'
+npm run test -- tests/integration/endlessTraversal.test.ts
+Remove-Item Env:ENDLESS_EXHAUSTIVE
+```
+
+On POSIX shells, use `ENDLESS_EXHAUSTIVE=1 npm run test -- tests/integration/endlessTraversal.test.ts`. A trap may be avoided by an observed airborne passage; activated traps must finish safely. Diagnostic traversal continues after cargo losses so it can certify carrier escape separately from retained-load playability. Revised traces use digital manual terrain compensation and held Space for ascent, with early braking for the sofa's surface approach. The submerged route requires natural load/entry response; prior downward-swimming traces do not certify these controls. Late underside holds must recover with available shell/Space controls and guard-checked forward sliding. This certifies observed control sequences, not every arbitrary input or loss-free traversal. Human longevity/partial-loss playtesting remains separate.
+
+`endlessPartialLoads.test.ts` observes all 15 nonempty cargo subsets after real loss grace in each water module and records retained cargo separately from carrier escape. `endlessDaCargoRecovery.test.ts` tests continuing-load DA routes with digital keyboard-equivalent terrain compensation: brake from local x=45 m, begin charging on dry support at x≥47 m, keep braking for the three-second charge, then accelerate on release. Space is held or released during immersion; arrows never command diving. Expected retained pieces must be taken from current reports, since fixing physical downhill pitch changes support motion and invalidates prior neutral-shell retention counts. Partial losses are valid; a carrier-only escape is not proof of a continuing scored run.
+
+The revised natural-underpass fixture creates and settles the original full stack on DA's dry ledge at x=47 m, then traverses DA → AD without relocating the carrier or retained objects. It requires all 13.6 kg at AD entry and beneath the island, plus retained cargo beyond the exit. This is a local dry-entry certificate; it does not claim that arbitrary controls retain the complete stack through all earlier DA terrain. The separate full-route DA bank-jump traces retain the sofa with either Space ascent choice. These observations preserve the distinction between route reachability, partial loss and a continuing scored run.
+
+With the 2026-10-05 controls/settings, all 15 requested nonempty subsets are physically observed after grace and their carrier routes escape in AB, BA, AD and DA. The authored partial-load traces retain cargo at the exit in AB 12/15, BA 9/15, AD 10/15 and DA 2/15. These are observed control sequences, not guaranteed retention for every input. The revised Endless partition is `endless-physics-2`; earlier `endless-physics-1` certificates and retention counts remain historical.
+
+Inspect the production build in a browser as well as the development server. Check the secondary laboratory title entry and both shortcut/direct paths, public SVG textures, Rapier WASM loading, keyboard controls, pause/reset, scenario switching, resize behavior and asset loading below the configured repository subpath. A successful compilation or HTTP response alone does not prove initialization or visible play works.
 
 Record actual automated results and human findings in the backlog and handoff. This document defines what to verify; it does not certify the current tuning or replace those results.
 
 ## 6. Current boundaries and follow-ups
 
-The laboratory intentionally has no designed-level scoring, delivery finish logic, hazard framework, complete menu flow, leaderboard, Endless Run, final art or audio. The shared four-message onboarding controller and optional preview are implemented; normal-level/menu integration remains pending. Sand and full authored biome transitions remain later work. These deferrals follow the current PRD phase and do not remove features from the GDD.
+The laboratory remains a diagnostic mode with finite endpoints and its own pause/reset interface. The playable Endless route supplies the three hazards, score, frozen results, complete navigation, confirmed restart/exit and protected onboarding through the same physical core. Sand, designed-level delivery rules, final art and remote rankings remain later work under the PRD. Jam audio is implemented through the native presentation layer described in [SOUNDS.md](SOUNDS.md).
 
-The diagnostic pause/reset behavior is not the final player-facing pause menu with restart/exit confirmations. Early water diagnostics do not satisfy the designed level's onboarding-layout constraint. The finite scenario endpoint must not become a normal no-cargo failure condition.
+`SimulationSnapshot.audioEvents` reports only the last fixed tick's strongest meaningful cargo impact, dry landing, water transition and hazard phase/first physical hit. Impulses are read from existing Rapier contact manifolds without event flags or force changes; normal impulse times combined dynamic inverse mass supplies a delta-v in m/s. Presentation cutoffs live in `src/audio/physicsTuning.ts`, outside settings/replay physics versions. Consumers observe every fixed tick, including silent paused diagnostic steps, and own aggregation/debounce. Snapshots retain their original event array. Historical parity probes compare all physical snapshots/body transforms/velocities/masses exactly across 10,800 ticks; no traversal recertification is required for this read-only telemetry.
 
-The independent polygon pose guard currently covers static convex/cuboid solids; it does not certify moving dynamic hazards. That future integration must validate collision filtering and swept moving-obstacle behavior when HAZ-001 begins, as tracked in the backlog.
+The streamed-world adapter supplies owned solids, multiple water regions, nearby material/support queries, finite island geometry, cleanup and origin rebasing. The independent polygon guard covers static and current-transform kinematic solids, including rising-stump support; dynamic pinecones interact with cargo/terrain through Rapier and remain outside the cargo graph. All six modules currently have a single committed exit; AD's vertical alternatives rejoin inside the module. Different-height exits require new commitment and downstream-visibility evidence before introduction.
 
 Visual assets live under `public/sprites/` and use the shared Vite-base-aware URL helper. Visual dimensions and anchors are presentation data; replacing artwork must not redefine collider behavior. Turtle walking uses two unique prototype keyframes across 60 logical slots per second. Additional artist frames can extend the visual definition later.
 

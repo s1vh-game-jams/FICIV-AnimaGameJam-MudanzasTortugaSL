@@ -1,10 +1,10 @@
 export type Biome = 'grass' | 'rock' | 'water';
 export interface TerrainPoint { x: number; y: number }
-export interface TerrainStrip { biome: Exclude<Biome, 'water'>; points: readonly TerrainPoint[] }
+export interface TerrainStrip { biome: Exclude<Biome, 'water'>; points: readonly TerrainPoint[]; bottom?: number }
 export interface WaterRegion { left: number; right: number; surface: number; bottom: number }
 export interface Scenario {
   id: string; label: string; description: string; startX: number; startY: number;
-  endX: number; terrain: readonly TerrainStrip[]; water?: WaterRegion;
+  endX: number; terrain: readonly TerrainStrip[]; water?: WaterRegion; waters?: readonly WaterRegion[];
 }
 const flat = (biome: 'grass' | 'rock'): TerrainStrip => ({ biome, points: [{ x: -12, y: 0 }, { x: 130, y: 0 }] });
 export const SCENARIOS: readonly Scenario[] = [
@@ -16,7 +16,7 @@ export const SCENARIOS: readonly Scenario[] = [
       { biome: 'grass', points: [{ x: -12, y: 0 }, { x: 12, y: 0 }, { x: 17, y: 1.4 }, { x: 19, y: 1.4 }, { x: 24, y: 0 }, { x: 32, y: 0 }] },
       { biome: 'rock', points: [{ x: 32, y: 0 }, { x: 44, y: 0 }, { x: 49, y: 1.4 }, { x: 51, y: 1.4 }, { x: 56, y: 0 }, { x: 110, y: 0 }] },
     ] },
-  { id: 'water', label: '04 · Agua / peso y corriente', description: '↑ ↓ nadan. Más carga: más profundidad y corriente.', startX: 0, startY: 0, endX: 80,
+  { id: 'water', label: '04 · Agua / peso y corriente', description: '↑/W ↓/S equilibran. Espacio ayuda a subir. Más carga e impulso: más profundidad.', startX: 0, startY: 0, endX: 80,
     terrain: [{ biome: 'grass', points: [{ x: -12, y: 0 }, { x: 13, y: 0 }, { x: 19, y: -3.5 }, { x: 47, y: -3.5 }, { x: 56, y: 0 }, { x: 100, y: 0 }] }],
     water: { left: 14, right: 54, surface: -0.1, bottom: -3.5 } },
   { id: 'water-drop', label: '05 · Agua / caída alta', description: 'Entrada amortiguada desde una plataforma elevada.', startX: 0, startY: 3, endX: 80,

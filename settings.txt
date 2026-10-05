@@ -12,7 +12,7 @@ cameraVerticalSpeed=2
 cameraSpeed=2
 cameraRearPercent=20
 cameraFrontPercent=80
-cameraDeadZonePercent=40
+cameraDeadZonePercent=10
 # Pressure/guard widths: metres; recovery: inverse seconds.
 cameraPressureWidth=1.15
 cameraGuardMargin=0.2
@@ -41,14 +41,14 @@ lossGraceSeconds=1.33
 waterRiseAcceleration=8.4
 waterWeightInfluence=0.2
 waterDrag=1.5
-waterSwimAcceleration=8
+waterSwimAcceleration=14
 waterSwimWeightInfluence=0.05
 # Current/vertical speed m/s; entry damping s^-1; depths/margins metres.
 waterCurrent=0.65
 waterMaxVerticalSpeed=2
 waterEntryDamping=6
 waterBaseDepth=0.12
-waterDepthPerKg=0.075
+waterDepthPerKg=0.25
 waterExitMargin=0.5
 
 # Fraction of downward landing speed compensated, dimensionless.

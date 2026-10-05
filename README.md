@@ -67,13 +67,20 @@ El objetivo mínimo de la jam incluye:
 |---|---|
 | 🐢 | 1 configuración de Don Tortuga y su montaña de objetos |
 | 📦 | 4 tipos de objeto físicamente diferentes |
-| 🗺️ | 1 nivel prediseñado construido mediante módulos reutilizables |
-| 🌊 | Al menos 3 biomas, incluyendo agua |
-| ⚠️ | Al menos 2 tipos de trampa; 3 como objetivo |
-| 🏁 | Meta, puntuación y pantalla de resultados |
-| ♾️ | Carrera Infinita visible como **«Próximamente»** si no llega a implementarse |
+| ♾️ | Carrera Infinita con **6 módulos** reutilizables y seed |
+| 🌊 | Hierba, roca y agua; el diseño completo conserva los 4 biomas |
+| ⚠️ | Rama resquebrajada, trampilla con tocón y árbol con piña |
+| 🎚️ | Fácil, Normal y Difícil; trampas variables por módulo y progresión limitada |
+| 🏁 | Banderines visuales, puntuación acumulada y resultados al perder toda la carga |
+| 🗺️ | Nivel personalizado visible como **«Próximamente»** |
+
+**Prototipo jugable en `dev`:** desde la portada, elige Carrera Infinita y Fácil, Normal o Difícil. La run comienza con un tramo seco seguro sin puntos; después mantiene las medias de **0,5 / 0,75 / 1,5 trampas** durante 5–10 módulos y las eleva gradualmente hasta aproximarse a **1 / 1,25 / 2**. Cada banderín suma su número de módulo por el valor de la carga que conservas. Perder toda la mudanza termina la carrera y abre los resultados. El [plan detallado](docs/ENDLESS_PLAN.md) conserva las decisiones y comprobaciones del prototipo.
+
+`Esc` pausa el recorrido. Desde la pausa puedes continuar, volver a ver los controles o repetir la misma semilla; reiniciar y salir piden confirmación. La isla permite pasar por arriba nadando hacia la superficie o buscar el paso sumergido. Los gráficos son originales y simplificados, preparados para su sustitución por arte final.
 
 El diseño completo vive en [`/docs/GDD.md`](docs/GDD.md).
+
+El audio se activa con la primera pulsación o clic: portada y menús usan **Fixing the Farmer's Car**, Créditos y laboratorio **Patio Party**, y Carrera Infinita **Just Kidding**. Los efectos acompañan impactos, trampas, agua, ayudas, banderines y pérdidas agrupadas. Ajusta el volumen desde el dispositivo o navegador; esta entrega no tiene opciones de audio. Las pistas WAV/MP3 conservan su formato y volumen originales. La pausa detiene los efectos de juego y mantiene la música.
 
 ---
 
@@ -100,9 +107,12 @@ El salto máximo actual despega a **8 m/s**. Si un obstáculo bloquea a Don Tort
 | Tecla | Acción |
 |---|---|
 | `←` / `A` · `→` / `D` | Regular el avance horizontal |
-| `↑` / `W` · `↓` / `S` | Modular el ascenso y la inmersión |
+| `↑` / `W` · `↓` / `S` | Inclinar el caparazón y equilibrar la carga, igual que en seco |
+| `Espacio` | Mantener para acelerar el ascenso hacia la superficie |
 
-Sin carga cuesta más hundirse; conservar objetos permite alcanzar mayor profundidad. La entrada conserva una inmersión suave y después Don Tortuga tiende a volver hacia la superficie.
+Sin carga cuesta más hundirse; conservar objetos permite alcanzar mayor profundidad. No hay botón para hundirse: la inmersión depende del peso y del impulso de entrada, que puede aumentar saltando antes de entrar. Después Don Tortuga tiende a volver hacia la superficie; Espacio ayuda a subir sin cargar un salto bajo el agua.
+
+El agua aumenta el grip y amortigua más los pequeños desequilibrios. La carga sigue siendo independiente y puede desmoronarse ante ángulos muy inestables o choques extremadamente fuertes. La ayuda aparece al entrar en agua por primera vez en cada partida y puede repetirse desde la pausa.
 
 Los valores exactos de velocidad, aceleración, inclinación, grip, impactos, flotación y corrientes son parámetros de *tuning*.
 
@@ -112,7 +122,7 @@ Los valores exactos de velocidad, aceleración, inclinación, grip, impactos, fl
 
 El repositorio incluye un modo interno llamado **`physics-playground`** para afinar las físicas antes de construir el nivel definitivo.
 
-No aparece como opción normal de la interfaz, pero testers y colaboradores pueden abrirlo de dos formas:
+Abre **⚙ Laboratorio de físicas** desde el menú principal: es una opción secundaria visible, seleccionable con ratón o flechas y Enter. También se conservan estos accesos para testers y colaboradores:
 
 ### Desde el menú principal
 
@@ -146,7 +156,7 @@ Su objetivo es probar rápidamente:
 - flotación y corrientes;
 - parámetros de cámara y física.
 
-**El prototipo 1 ya está disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y nueve tramos diagnósticos de hierba, roca y agua, incluidos salto, pendientes máximas y espera de cámara ante una pared. Todavía no contiene niveles reales, trampas, puntuación ni resultados.
+**El laboratorio sigue disponible:** bucle de físicas a 60 Hz, cuatro objetos independientes, pérdida por contactos con margen de recuperación y nueve tramos diagnósticos de hierba, roca y agua, incluidos salto, pendientes máximas y espera de cámara ante una pared. Permite ajustar la física compartida con Carrera Infinita.
 
 | Herramienta | Tecla |
 |---|---|
@@ -155,7 +165,7 @@ Su objetivo es probar rápidamente:
 | Avanzar un tick estando en pausa | `N` |
 | Mostrar/ocultar colliders, contactos y centros de masa | `C` |
 
-Los selectores permiten cambiar de escenario y comparar la mudanza completa, solo el sofá o Don Tortuga sin carga. Cambiar un parámetro reinicia la simulación conservando la pausa. «Previsualizar ayudas» prueba la secuencia velocidad, caparazón, salto y natación, preparada para los futuros niveles normales. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
+Los selectores permiten cambiar de escenario y comparar la mudanza completa, solo el sofá o Don Tortuga sin carga. Cambiar un parámetro reinicia la simulación conservando la pausa. «Previsualizar ayudas» prueba la misma secuencia de velocidad, caparazón, salto y natación que usa Carrera Infinita. La pestaña se pausa al ocultarse. Al final de cada tramo, reinicia para repetir.
 
 ### Ajustes permanentes y exportación
 
@@ -170,11 +180,11 @@ Para conservar un ajuste hecho en el laboratorio:
 
 El build incorpora esos valores: cambiar el archivo del repositorio después de construir requiere reconstruir. Los ajustes de la sesión se conservan al reiniciar el tramo; **«Restaurar settings»** recupera los valores cargados del archivo. Exportar mantiene el tramo y la pausa. Un archivo inválido muestra el parámetro que hay que corregir.
 
-Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija; los valores por defecto son **20 % y 80 %**. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: un 40 % detrás y delante deja el 20 % central para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calcularán el zoom al cargar y lo mantendrán fijo. El escalado conserva la composición apaisada 16:9.
+Los márgenes de movimiento son **posiciones en porcentaje desde la izquierda del laboratorio**, cuya escala de personaje es fija; los valores por defecto son **20 % y 80 %**. La **zona muerta** reserva el porcentaje indicado a cada lado del viewport de un nivel normal: el valor por defecto es **10 % por lado**, dejando el **80 % central** para la ventana física de movimiento. Cambiar la zona muerta no cambia esa ventana ni el tamaño del personaje en el laboratorio; la vista orientativa muestra el encuadre previsto. Los niveles normales calculan el zoom al cargar y lo mantienen fijo. El escalado conserva la composición apaisada 16:9.
 
 **Altura del caparazón:** `shellPivotY`, en metros sobre el origen del cuerpo, ajusta el apoyo real y la altura inicial de la carga. Su valor por defecto vuelve a **0,30 m**; **0,42 m** reproduce la elevación anterior. Las formas y los colliders conservan sus dimensiones.
 
-El formato actual es **`schemaVersion=2`**. Para adaptar una exportación anterior, cambia la versión a 2, sustituye `cameraZoom` por `cameraDeadZonePercent=40` y añade `shellPivotY=0.30`; conserva los demás parámetros. La zona muerta tiene una interpretación nueva y no es una conversión numérica del zoom antiguo. Las exportaciones actuales ya incluyen las claves correctas.
+El formato actual es **`schemaVersion=2`**. Para adaptar una exportación anterior, cambia la versión a 2, sustituye `cameraZoom` por `cameraDeadZonePercent=10` y añade `shellPivotY=0.30`; conserva los demás parámetros. La zona muerta tiene una interpretación nueva y no es una conversión numérica del zoom antiguo. Las exportaciones actuales ya incluyen las claves correctas.
 
 La guía de físicas y pruebas está en [docs/PHYSICS.md](docs/PHYSICS.md).
 
@@ -195,7 +205,7 @@ La versión de jam está concebida para funcionar como una aplicación estática
 
 El backend **no es obligatorio** para jugar. El leaderboard remoto se considera una mejora deseable y su integración queda desacoplada del núcleo del juego.
 
-La base de servicios de la jam ya incluye un **catálogo estático validado**, configuraciones versionadas de Tortuga/carga y un **Top 100 local por nivel y versión de físicas**, guardado en el navegador. Si el almacenamiento falla, los registros siguen disponibles durante la sesión. Se juega de forma anónima; las cuentas con correo/contraseña o Google, el editor y los rankings globales quedan para más adelante. Todavía no hay niveles reales ni interfaz de rankings. Los contratos y la evolución futura se explican en [docs/BACKEND.md](docs/BACKEND.md).
+La base de servicios de la jam incluye un **catálogo estático validado** con los seis módulos y tres trampas, configuraciones versionadas de Tortuga/carga y un **Top 100 local por nivel y versión de físicas** para futuros niveles diseñados. Si el almacenamiento falla, los registros siguen disponibles durante la sesión. Se juega de forma anónima; las cuentas con correo/contraseña o Google, el editor y los rankings globales quedan para más adelante. Los récords persistentes de Carrera Infinita y la interfaz de rankings quedan pendientes. Los contratos y la evolución futura se explican en [docs/BACKEND.md](docs/BACKEND.md).
 
 ---
 
@@ -216,7 +226,8 @@ La base de servicios de la jam ya incluye un **catálogo estático validado**, c
 │   ├── DEPLOYMENT.md     # builds, servidor y futuro despliegue
 │   ├── PHYSICS.md        # arquitectura y guía de tuning
 │   ├── ASSETS.md         # contrato para repintar los placeholders
-│   └── BACKEND.md        # catálogo y servicios locales; evolución futura
+│   ├── BACKEND.md        # catálogo y servicios locales; evolución futura
+│   └── ENDLESS_PLAN.md   # plan aprobado y comprobaciones de carrera infinita
 │
 ├── public/
 │   └── sprites/
@@ -262,15 +273,22 @@ Cada estado del prototipo —caminar y cargar el salto— utiliza **dos keyframe
 
 ---
 
-## 🔁 Flujo previsto para el siguiente prototipo
+## 🔁 Flujo del prototipo jugable
+
+La portada incluye **Créditos** y el acceso secundario **⚙ Laboratorio de físicas**, además de **Empezar mudanza**. Créditos muestra la dedicatoria de Mike Fieldins, el enlace de Argorias Svartha a ArtStation, la firma y el copyright con la redacción exacta definida en la sección 41.5.6 del [GDD](docs/GDD.md). El botón **Volver a la portada** y `Esc` permiten regresar; el enlace también se puede activar con el teclado.
 
 ```mermaid
 flowchart TD
     A[Menú principal] --> B[Selector de modo]
-    B --> C[Niveles prediseñados]
-    B --> D[Carrera Infinita<br/>Próximamente]
-    C --> E[Selector de niveles]
-    E --> F[Nivel 1]
+    A --> H[Créditos]
+    H --> A
+    A --> L[Laboratorio de físicas]
+    L --> A
+    B -.-> C[Nivel personalizado<br/>Próximamente]
+    B --> D[Carrera Infinita]
+    D --> E[Dificultad<br/>Fácil / Normal / Difícil]
+    E --> F[Run infinita]
+    F <--> P[Pausa]
     F --> G[Pantalla de resultados]
     G --> A
 ```
@@ -459,16 +477,18 @@ Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de trabajar con ramas, commi
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — builds, servidor y despliegue.
 - [`docs/PHYSICS.md`](docs/PHYSICS.md) — arquitectura de físicas y tuning.
 - [`docs/ASSETS.md`](docs/ASSETS.md) — guía de repintado para la artista.
+- [`docs/SOUNDS.md`](docs/SOUNDS.md) — pistas seleccionadas, eventos, reproducción y verificación del audio.
 - [`docs/BACKEND.md`](docs/BACKEND.md) — catálogo, ranking local, juego anónimo y futura migración remota.
+- [`docs/ENDLESS_PLAN.md`](docs/ENDLESS_PLAN.md) — plan de implementación de Carrera Infinita para revisar.
 - [`AGENTS.md`](AGENTS.md) — mapa operativo completo para Codex y otros agentes.
 
 ---
 
 ## ⚖️ Licencia
 
-La licencia está **provisionalmente definida** durante el arranque de la jam y se explica en [`LICENSE.md`](LICENSE.md).
+El proyecto tiene licencias distintas para el código, el arte y el audio, descritas en [`LICENSE.md`](LICENSE.md).
 
-El código, los assets propios y el futuro audio pueden acabar sujetos a licencias distintas. No debe añadirse ningún recurso de terceros sin comprobar sus condiciones de uso y atribución.
+Las grabaciones de Audio Hero conservan sus condiciones de uso y no se relicencian como código. No debe añadirse ningún recurso de terceros sin comprobar sus condiciones de uso y atribución.
 
 ---
 

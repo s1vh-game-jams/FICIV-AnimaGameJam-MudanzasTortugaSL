@@ -29,7 +29,7 @@ npm run build
 npm run preview
 ```
 
-Open `http://127.0.0.1:4173/?mode=physics`. Vite preview is a local verification server. The [README local-server guide](../README.md#-servidor-web-local-para-pruebas) provides tester-oriented setup, fixed-port commands, rebuild steps and troubleshooting.
+Open `http://127.0.0.1:4173/` for the title and playable Endless Run, or `http://127.0.0.1:4173/?mode=physics` for the laboratory. Vite preview is a local verification server. The [README local-server guide](../README.md#-servidor-web-local-para-pruebas) provides tester-oriented setup, fixed-port commands, rebuild steps and troubleshooting.
 
 The standard-library Python helper is an alternative:
 
@@ -84,26 +84,43 @@ Open:
 
 Public asset metadata uses relative paths through `src/utils/publicAsset.ts`, based on `import.meta.env.BASE_URL`. Rapier's WASM URL is resolved by Vite. Do not hardcode root sprite paths. Query-based routing needs no server-side route rewrites.
 
+Jam audio uses the same helper for all selected relative paths in `src/audio/manifest.ts`. Vite copies the 21 original WAV/MP3 recordings without transformation; native media elements stream them after the first interaction rather than decoding the full roughly 112 MB set at startup. Root/subpath smoke checks must inspect audio requests and native ready/playback states as well as textures/WASM. Original volume is controlled by browser/device, with no in-game mixer. [SOUNDS.md](SOUNDS.md) owns playback/event rules and the human auditory verification boundary.
+
 The expected Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-MudanzasTortugaSL/`, subject to actual repository Pages configuration. That live site/settings have not been verified or enabled by this milestone.
 
 ## 4. Prototype 1 browser smoke check
 
 After building, use a real browser:
 
-1. Verify hidden Shift+P access, direct `?mode=physics` and refresh.
+1. Verify the secondary gear-labelled title entry with mouse/keyboard, existing Shift+P access, direct `?mode=physics` and refresh.
 2. Verify textures, default 0.30 m shell registration, collider drawing, cargo and Rapier WASM initialization. Change shell height and verify coherent support/load placement with unchanged shapes.
 3. Compare arrows/WASD. D must accelerate; C toggles debug.
 4. Hold Space for partial/full/over-cap charges; release must launch once. Check lowered-head pose, no charge GUI, supported cargo and ordinary landing. At the current 8 m/s maximum, include high flight that carries cargo above the visible frame; visibility must not affect physics or connectivity.
 5. Pause/blur during charge, then return: no deferred jump. Pause freezes time and help; neutral single-step advances physics by one tick without advancing onboarding.
-6. Compare empty/sofa/full water behavior, initial dive momentum, swimming and bank exit.
-7. Compare slopes and manual compensation; verify actual shell contact motion and visible feet.
+6. Compare empty/sofa/full water behavior and natural entry momentum. Arrows/W/S must balance the shell; held Space must assist ascent without charging, with no commanded dive. Check partial tilt, violent-impact losses and bank exit.
+7. Compare ascending/descending slopes and manual compensation; verify actual shell contact motion and visible feet. Check airborne departure pitch and freefalls. Buoyant forward travel beneath the island must not require a downward command to leave a ceiling contact.
 8. Edit fine decimal values, rear/front movement percentages and per-side dead-zone percentage; check validated reset and pause preservation. Lab guides and physical bounds must match its fixed 76 pixels/metre scale. Dead-zone edits change the read-only normal-level framing preview without changing laboratory character size or physical corridor width. Resize the landscape viewport.
 9. Enable help preview: speed/balance/jump sequence, first-water priority and per-run reset.
 10. Export settings while paused: download must preserve time/tick/pause; its text round-trips through the shared codec. Replace source settings and rebuild/reload to verify permanent defaults; restore recovers loaded values.
 11. Repeat root and repository-subpath production access, public/charge textures, refresh and WASM initialization; inspect browser errors.
 12. At a reachable vertical blocker, exhaust the rear-margin space. Camera progression must hold while physics, time and jump charging continue; full-charge clearance must restore camera advance as accepted forward movement resumes.
 
-Automated physics and Python helper coverage complement this smoke check. Human partial-loss/game-feel testing remains necessary. Designed-level completion, results and full navigation cannot be certified by the physics-only milestone.
+Automated physics and Python helper coverage complement this laboratory smoke check. Human partial-loss/game-feel testing remains necessary.
+
+### Endless production smoke check
+
+Repeat on both root and repository-subpath builds:
+
+1. Navigate Title → Mode → Difficulty with arrows/Enter/Esc and mouse. Normal is selected initially; customized levels are visibly disabled. Start each difficulty and check texture/WASM loading and console errors.
+2. Inspect cargo icons, timer, score, deployed pennants and upcoming terrain. The separate dry opening has no scoring flag or traps. Complete the initial timed help before entering water.
+3. Pause and verify frozen physics/time/help/hazards. Continue is selected initially; restart and exit require confirmation with cancel selected. Restart preserves seed/difficulty/settings and resets help. Showing controls again keeps the game paused.
+4. Resize a landscape viewport, including 640×360. The captured world scale remains unchanged and the HUD remains usable. Blur/hide the page and verify automatic pause without a catch-up burst.
+5. Reach definitive zero cargo and inspect frozen results, score/pennants/time/difficulty/last loss. Return to title and start a fresh run. Confirm the secondary laboratory entry and both existing diagnostic access paths work.
+6. Open Credits. Verify the centred exact GDD 41.5.6 dedication, signature, Argorias ArtStation link and copyright footer; return with the button/Enter or Esc. The link must retain native keyboard activation.
+
+The 2026-10-04 implementation has browser evidence for the full flow, all difficulties, a real pennant award, definitive-zero results, pause/restart/help and root/subpath assets/WASM. Current-settings traversal is covered separately by the physical matrix in [PHYSICS.md](PHYSICS.md#validating-new-module-proposals). Final human balance/readability and live release approval remain outstanding; local production serving does not publish the game.
+
+The 2026-10-05 local root/subpath builds also initialize the revised shared physics and visible laboratory without browser errors. Credits show the exact centred dedication, link, signature and footer, with keyboard return. The secondary laboratory entry works with mouse and arrows/Enter and displays the new water controls; the original diagnostic routes remain. A Normal run reaches an actual pennant award and frozen zero-cargo results. These local checks do not publish a live release.
 
 ## 5. Future GitHub Pages release
 
@@ -120,7 +137,7 @@ After final art/licenses and explicit release approval:
 - do not auto-deploy `dev` or delete preserved auxiliary branches;
 - inspect the actual live root and physics route, textures and WASM after deployment.
 
-Before releasing Prototype 2, also verify designed-level completion, pause/results/navigation, onboarding/readability, absence of P0 softlocks, licensing/credits, updated backlog and human playtest approval. Every mandatory authored module route/load case must pass actual full-charge traversal with the release settings, including wall recovery and a first grounded landing at or beyond the authored target; rerun after jump, gravity, geometry, shell height or controller changes. Capture normal-level dead-zone framing once at level load and verify it stays fixed through jumps, camera holds and responsive resizing. Record the actual release commit and URL.
+Before releasing Prototype 2, verify the required six-module Endless run in each difficulty, pause/results/navigation, safe non-scoring onboarding, seeded trap progression, pennants, bounded streaming, readability, absence of P0 softlocks, licensing/credits, updated backlog and human playtest approval. Every accessible authored module route/load and trap combination must pass real traversal with the release settings; mandatory jumps include full charge, wall recovery and the first grounded landing at or beyond the target. Verify swimming/bank exits separately. Rerun after jump, gravity, geometry, shell height or controller changes, including the opt-in exhaustive physical certificate. Capture normal-run dead-zone framing once and verify it stays fixed through jumps, camera holds and resize. Repeat both production root and repository-subpath navigation/texture/WASM checks. Record the actual release commit and URL.
 
 ## 6. Service and migration boundaries
 

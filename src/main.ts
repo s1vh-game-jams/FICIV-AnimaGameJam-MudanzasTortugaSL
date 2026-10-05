@@ -9,25 +9,118 @@ import { SCENARIOS } from './game/content/scenarios';
 import { ContextualHelp } from './game/systems/contextualHelp';
 import { PlaygroundRenderer } from './rendering/playgroundRenderer';
 import type { PhysicsSimulation, LoadPreset } from './game/physics/simulation';
+import { GameNavigation } from './app/navigation';
+import type { NavigationEffect } from './app/navigation';
+import { publicAsset } from './utils/publicAsset';
+import { VISUALS } from './rendering/visualDefinitions';
+import type { Difficulty } from './game/config/endless';
+import { AudioManager } from './audio/audioManager';
+import { GameplayAudio } from './audio/gameplayAudio';
+import { bindMenuFocus } from './audio/menuAudio';
+
+const audio = new AudioManager();
+// Capture the gesture before navigation or an asynchronous renderer mount consumes it.
+window.addEventListener('pointerdown', event => { if (event.isTrusted) audio.unlock(); }, { capture: true });
+window.addEventListener('keydown', event => {
+  if (event.isTrusted && !event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey &&
+    ['Enter', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Escape', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyP'].includes(event.code)) audio.unlock();
+}, { capture: true });
+document.addEventListener('visibilitychange', () => audio.setPageHidden(document.hidden));
+window.addEventListener('pagehide', () => audio.dispose());
 
 const app = document.querySelector<HTMLElement>('#app')!;
 let cleanup: (() => void) | undefined;
 let routeVersion = 0;
+let activeRoute: 'menus' | 'playground' | 'endless' = 'menus';
 function showMenu(): void {
   routeVersion++; cleanup?.(); cleanup = undefined;
+  activeRoute = 'menus';
+  audio.setGameplay(false);
   history.replaceState(null, '', location.pathname);
-  app.innerHTML = `<section class="title-screen">
-    <div class="company-mark" aria-hidden="true">🐢</div>
-    <p class="eyebrow">Servicio de mudanzas del bosque</p>
-    <h1>MUDANZAS<br>TORTUGA, S.L.</h1>
-    <p class="tagline">Con la casa a cuestas.</p>
-    <p class="prototype-note">Estamos preparando nuestra primera ruta.</p>
-    <span class="status-pill">Prototipo de físicas · 0.1</span>
-  </section>`;
+  const navigation = new GameNavigation();
+  function draw(): void {
+    const title = navigation.screen === 'title';
+    const credits = navigation.screen === 'credits';
+    audio.setMusicContext(credits ? 'credits' : 'menu');
+    const heading = title ? 'MUDANZAS<br>TORTUGA, S.L.' : credits ? 'Créditos'
+      : navigation.screen === 'mode' ? 'Elige tu<br>mudanza.' : '¿Cómo viene<br>el camino?';
+    const buttons = navigation.options.map((option, index) => `<button class="menu-option${option.secondary ? ' secondary' : ''}${index === navigation.selected ? ' selected' : ''}"
+      data-menu-index="${index}"${option.disabled ? ' aria-disabled="true"' : ''}><span class="selection-arrow" aria-hidden="true">${index === navigation.selected ? '►' : ''}</span>
+      ${option.id === 'laboratory' ? '<img class="menu-gear" src="' + publicAsset('sprites/ui/laboratory.svg') + '" alt="" aria-hidden="true">' : ''}${option.label}${option.detail ? '<small>' + option.detail + '</small>' : ''}</button>`).join('');
+    app.innerHTML = `<section class="title-screen${title ? '' : ' selection-screen'}" data-screen="${navigation.screen}">
+      <div class="menu-card">
+        <p class="eyebrow">Servicio de mudanzas del bosque</p><h1>${heading}</h1>
+        ${title ? `<div class="title-cargo" aria-hidden="true">
+          <img class="title-turtle" src="${publicAsset(VISUALS.turtle.frames[0])}" alt="">
+          <img class="title-shell" src="${publicAsset(VISUALS.shell.path)}" alt="">
+          <img class="title-sofa" src="${publicAsset(VISUALS.sofa.path)}" alt="">
+          <img class="title-tv" src="${publicAsset(VISUALS.television.path)}" alt="">
+          <img class="title-lamp" src="${publicAsset(VISUALS.floorLamp.path)}" alt="">
+          <img class="title-glass" src="${publicAsset(VISUALS.cocktailGlass.path)}" alt="">
+          </div><p class="tagline">Con la casa a cuestas.</p>` : ''}
+        ${credits ? `<div class="credits-copy"><p>Dedicado a <a href="https://www.artstation.com/argorias" target="_blank" rel="noopener noreferrer">Argorias Svartha</a>, que me ha acompañado en los momentos más oscuros de mi vida. A mi madre, que me ha apoyado incondicionalmente incluso sin entender lo que hacía. Y a todos los agentes de inteligencia artificial que han ejecutado bucles interminables de pruebas y han tenido la paciencia infinita para lidiar con mis cambios de diseño de última hora durante toda la game jam.</p><p class="credits-signature">— Mike Fieldins</p></div>` : ''}
+        <nav class="menu-options" aria-label="${navigation.screen === 'difficulty' ? 'Dificultad' : 'Opciones'}">${buttons}</nav>
+        <p class="menu-key-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> confirmar${title ? '' : ' · <kbd>Esc</kbd> volver'}</p>
+        ${credits ? '<footer class="credits-copyright">Copyright © 2026 Mike Fieldins &amp; Argorias Svartha</footer>' : ''}
+      </div>
+    </section>`;
+    for (const button of app.querySelectorAll<HTMLButtonElement>('[data-menu-index]')) {
+      button.addEventListener('click', () => {
+        const option = navigation.options[Number(button.dataset.menuIndex)];
+        if (option.disabled) { audio.playUI('disabled'); return; }
+        audio.playUI(option.id === 'back' ? 'back' : 'confirm');
+        activate(navigation.select(Number(button.dataset.menuIndex)));
+      });
+    }
+    bindMenuFocus(app, navigation, audio);
+    app.querySelector<HTMLButtonElement>('.selected')?.focus();
+  }
+  function activate(effect?: NavigationEffect): void {
+    if (effect?.type === 'start') void showEndless(effect.difficulty).catch(reportError);
+    else if (effect?.type === 'laboratory') void showPlayground().catch(reportError);
+    else draw();
+  }
+  const keys = (event: KeyboardEvent): void => {
+    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.code === 'Enter' && event.target instanceof HTMLAnchorElement) return;
+    if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.code)) {
+      event.preventDefault(); const selected = navigation.selected;
+      navigation.move(event.code === 'ArrowDown' || event.code === 'ArrowRight' ? 1 : -1);
+      if (selected !== navigation.selected) audio.playUI('move');
+      draw();
+    } else if (event.code === 'Enter') {
+      event.preventDefault();
+      if (event.target instanceof HTMLButtonElement && event.target.getAttribute('aria-disabled') === 'true') {
+        audio.playUI('disabled'); return;
+      }
+      audio.playUI(navigation.options[navigation.selected]?.id === 'back' ? 'back' : 'confirm');
+      activate(navigation.confirm());
+    } else if (event.code === 'Escape') {
+      event.preventDefault(); const screen = navigation.screen; navigation.escape();
+      if (screen !== navigation.screen) audio.playUI('back');
+      draw();
+    }
+  };
+  window.addEventListener('keydown', keys);
+  cleanup = () => window.removeEventListener('keydown', keys);
+  draw();
+}
+async function showEndless(difficulty: Difficulty): Promise<void> {
+  const version = ++routeVersion;
+  cleanup?.(); cleanup = undefined; activeRoute = 'endless';
+  audio.setGameplay(false); audio.setMusicContext('endless'); audio.prepareGameplay();
+  app.innerHTML = '<section class="title-screen"><p class="eyebrow">Su hogar está en buenas patas.</p><h1>Preparando<br>la mudanza…</h1></section>';
+  const { mountEndlessGame } = await import('./app/endlessGame');
+  if (version !== routeVersion) return;
+  const dispose = await mountEndlessGame(app, difficulty, showMenu, audio);
+  if (version !== routeVersion) { dispose(); return; }
+  cleanup = dispose;
 }
 async function showPlayground(): Promise<void> {
   const version = ++routeVersion;
   cleanup?.(); cleanup = undefined;
+  activeRoute = 'playground';
+  audio.setGameplay(false); audio.setMusicContext('physicsLab'); audio.prepareGameplay();
   history.replaceState(null, '', location.pathname + '?mode=physics');
   let tuning = createTuning();
   app.innerHTML = `<div class="playground">
@@ -39,7 +132,7 @@ async function showPlayground(): Promise<void> {
       <div class="stage-column"><div class="status-bar"><output id="metrics" aria-label="Estado de simulación"></output>
         <div id="cargo-status" aria-label="Carga retenida"></div></div>
         <div id="canvas-host" tabindex="0" aria-label="Zona de prueba de físicas"></div>
-        <p class="control-strip"><kbd>←/A</kbd><kbd>→/D</kbd> velocidad · <kbd>↑/W</kbd><kbd>↓/S</kbd> caparazón / nadar · <kbd>Espacio</kbd> mantener y soltar para saltar · <span id="pause-state">En marcha</span></p>
+        <p class="control-strip"><kbd>←/A</kbd><kbd>→/D</kbd> velocidad · <kbd>↑/W</kbd><kbd>↓/S</kbd> equilibrar caparazón, también en agua · <kbd>Espacio</kbd> mantener y soltar para saltar en seco; mantener para subir más rápido en agua · <span id="pause-state">En marcha</span></p>
         <p id="scenario-note" class="scenario-note"></p>
       </div>
       <aside class="tuning-panel"><label for="scenario">Escenario</label>
@@ -58,8 +151,8 @@ async function showPlayground(): Promise<void> {
         <button id="baseline">Restaurar settings</button><button id="export-settings">Exportar settings</button>
         <p class="hint">Para guardar los ajustes, reemplaza settings.txt en el repositorio con el archivo exportado y reconstruye el build.</p></details>
         <details><summary>Qué estamos probando</summary><p>La carga se conecta al caparazón por contactos. Un rebote breve se puede recuperar; una pérdida definitiva queda fuera de la mudanza.</p>
-        <p>Compensa la inclinación del suelo con el caparazón. Carga Espacio en terreno seco y suéltalo para saltar.</p>
-        <p>En agua, más peso permite bajar y aprovechar una corriente más fuerte. Sin carga cuesta hundirse. Ante un obstáculo, la cámara espera en el margen trasero hasta que puedas avanzar saltando.</p></details>
+        <p>↑/W y ↓/S equilibran el caparazón tanto en seco como en agua. Carga Espacio en terreno seco y suéltalo para saltar.</p>
+        <p>La carga conservada y la inercia de entrada determinan la profundidad en el agua. Mantén Espacio para subir más rápido. A mayor profundidad, la corriente ayuda más a avanzar. Ante un obstáculo, la cámara espera en el margen trasero hasta que puedas avanzar saltando.</p></details>
         <p class="hint">Los tramos son diagnósticos, sin puntuación ni niveles reales. Aquí la escala es fija. Cada nivel normal calculará su zoom al cargar y lo mantendrá durante el recorrido.</p>
       </aside>
     </section>
@@ -73,6 +166,7 @@ async function showPlayground(): Promise<void> {
   const input = new KeyboardInput(window, () => simulation?.cancelJump());
   const loop = new FixedLoop(1 / tuning.physicsHz, tuning.maxFrameSeconds, tuning.maxStepsPerFrame);
   const help = new ContextualHelp();
+  const sound = new GameplayAudio(audio);
   const helpPreview = document.querySelector<HTMLInputElement>('#help-preview')!;
   const tuningError = document.querySelector<HTMLElement>('#tuning-error')!;
   let scenario = SCENARIOS[0];
@@ -143,13 +237,16 @@ async function showPlayground(): Promise<void> {
     const next = new PhysicsSimulation(scenario, nextTuning, load);
     simulation?.dispose(); simulation = next; tuning = nextTuning;
     loop.reset(); input.clear(); help.reset(); lastFrame = performance.now(); lastReadout = -1;
+    sound.reset(simulation.snapshot()); sound.setPaused(loop.paused);
     renderer.configure(tuning); renderer.setScenario(scenario); note.textContent = scenario.description;
     render();
   }
   function pause(value = !loop.paused): void {
+    if (value !== loop.paused) audio.playUI(value ? 'pauseOpen' : 'back');
     loop.paused = value; loop.reset(); input.clear(); simulation.cancelJump(); lastFrame = performance.now(); lastReadout = -1;
     pauseButton.innerHTML = value ? 'Continuar <kbd>Esc</kbd>' : 'Pausa <kbd>Esc</kbd>';
     stepButton.disabled = !value; render();
+    sound.setPaused(value);
   }
   function advanceSimulation(useInput: boolean): void {
     const before = simulation.snapshot().tick;
@@ -157,6 +254,8 @@ async function showPlayground(): Promise<void> {
     if (helpPreview.checked && simulation.snapshot().tick !== before) {
       help.update(1 / tuning.physicsHz, { inWater: simulation.snapshot().turtle.biome === 'water', paused: loop.paused });
     }
+    sound.observe(simulation.snapshot(), { helpId: helpPreview.checked ? help.active?.id : undefined,
+      ended: simulation.snapshot().turtle.x >= scenario.endX });
   }
   function singleStep(): void { loop.singleStep(() => advanceSimulation(false)); lastReadout = -1; render(); }
   function toggleDebug(): void {
@@ -171,18 +270,18 @@ async function showPlayground(): Promise<void> {
     if (event.code === 'KeyC') toggleDebug();
   };
   const visibility = () => { if (document.hidden) pause(true); };
-  document.querySelector('#reset')!.addEventListener('click', () => { reset(); host.focus(); });
+  document.querySelector('#reset')!.addEventListener('click', () => { audio.playUI('confirm'); reset(); host.focus(); });
   pauseButton.addEventListener('click', () => { pause(); host.focus(); });
   stepButton.addEventListener('click', () => { singleStep(); host.focus(); });
   document.querySelector('#debug')!.addEventListener('click', () => { toggleDebug(); host.focus(); });
-  document.querySelector('#menu')!.addEventListener('click', showMenu);
+  document.querySelector('#menu')!.addEventListener('click', () => { audio.playUI('back'); showMenu(); });
   document.querySelector<HTMLSelectElement>('#scenario')!.addEventListener('change', event => {
     scenario = SCENARIOS.find(s => s.id === (event.target as HTMLSelectElement).value)!; reset(); host.focus();
   });
   document.querySelector<HTMLSelectElement>('#load')!.addEventListener('change', event => {
     load = (event.target as HTMLSelectElement).value as LoadPreset; reset(); host.focus();
   });
-  helpPreview.addEventListener('change', () => { help.reset(); input.clear(); simulation.cancelJump(); render(); host.focus(); });
+  helpPreview.addEventListener('change', () => { help.reset(); sound.showHelp(undefined); input.clear(); simulation.cancelJump(); render(); host.focus(); });
   for (const field of document.querySelectorAll<HTMLInputElement>('[data-tuning]')) {
     const applyField = () => {
       const definition = TUNING_FIELDS.find(f => f.key === field.dataset.tuning)!;
@@ -215,7 +314,7 @@ async function showPlayground(): Promise<void> {
   cleanup = () => {
     cancelAnimationFrame(raf); window.removeEventListener('keydown', keys);
     document.removeEventListener('visibilitychange', visibility);
-    input.dispose(); simulation?.dispose(); renderer.dispose();
+    sound.dispose(); input.dispose(); simulation?.dispose(); renderer.dispose();
   };
   updateFields(); reset();
   window.addEventListener('keydown', keys);
@@ -236,7 +335,8 @@ function reportError(error: unknown): void {
   app.querySelector('pre')!.textContent = error instanceof Error ? error.message : String(error);
 }
 window.addEventListener('keydown', event => {
-  if (event.shiftKey && event.code === 'KeyP' && !location.search.includes('mode=physics')) {
+  if (event.shiftKey && event.code === 'KeyP' && activeRoute === 'menus' && app.querySelector('[data-screen="title"]')) {
+    audio.playUI('confirm');
     event.preventDefault(); void showPlayground().catch(reportError);
   }
 });

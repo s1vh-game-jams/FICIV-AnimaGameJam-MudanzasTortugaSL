@@ -11,6 +11,8 @@
 **Estado del documento:** versión de diseño para Game Jam  
 **Naturaleza del documento:** documento vivo; los valores numéricos de físicas señalados como parámetros de *tuning* podrán modificarse a partir del prototipo y los *playtests* sin alterar las reglas fundamentales aquí descritas.
 
+**Cambio de alcance aprobado (2026-10-04):** la Carrera Infinita pasa a ser el objetivo jugable de la jam; el nivel diseñado queda para una fase posterior. El diseño completo conserva sus cuatro biomas. El PRD determina el subconjunto de biomas y módulos de esta entrega. Esta revisión recoge las reglas autorizadas y el plan de implementación ya ha recibido aprobación humana.
+
 ---
 
 # 1. HIGH CONCEPT
@@ -75,7 +77,7 @@ El vocabulario de control es pequeño:
 - dejar que la Tortuga avance algo más despacio;
 - inclinar el caparazón;
 - cargar y soltar un salto;
-- en el agua, nadar verticalmente.
+- en el agua, ayudar al ascenso con Espacio y seguir equilibrando el caparazón.
 
 La profundidad aparece al combinar esas pocas acciones con:
 
@@ -948,6 +950,10 @@ En la versión de Game Jam existe una única configuración inicial de Don Tortu
 
 El nivel se construye a partir de una seed.
 
+Antes de crear la seed, el jugador elige **Fácil, Normal o Difícil**. La configuración inicial de mudanza es la misma en las tres dificultades; la dificultad regula la frecuencia de trampas, no altera las físicas de Don Tortuga.
+
+La run empieza con un tramo llano y seguro, sin trampas ni agua alcanzable antes de completar las ayudas de velocidad, equilibrio y salto a la velocidad máxima permitida. Este tramo no pertenece al pool procedural ni concede un banderín puntuable. Después comienza el primer módulo puntuable.
+
 ---
 
 ## 16.3. Fin
@@ -960,11 +966,43 @@ ObjetosActivos = 0
 
 El tiempo se registra, pero no modifica la puntuación.
 
+La separación temporal dentro del margen de recuperación sigue contando como carga retenida. El final se produce tras la pérdida **definitiva** del último objeto, no al desaparecer un contacto durante un tick.
+
+## 16.4. Frecuencia de trampas y progresión
+
+Cada módulo dispone de dos o tres ubicaciones de trampa definidas por su geometría. Una aparición concreta elige cuántas ocupar, cuáles y qué tipo compatible aparece en cada una. La misma pieza puede repetirse con otra combinación. Para el pool inicial de la jam se usarán tres ubicaciones compatibles por módulo, según el PRD.
+
+Medias estadísticas iniciales aprobadas:
+
+| Dificultad | Trampas por módulo | Distribución deseada al inicio |
+|---|---|---|
+| Fácil | 0,5 | Ninguna o una; dos extremadamente raras; tres imposibles. |
+| Normal | 0,75 | Una como caso habitual, también módulos sin trampa; dos en ocasiones y tres muy excepcionales. |
+| Difícil | 1,5 | Una o dos como casos habituales; tres en ocasiones. |
+
+La seed elige una ventana de **5 a 10 módulos puntuables iniciales**, incluidos ambos extremos. Durante esa ventana se mantiene exactamente la distribución base de la dificultad: no se añade progresión. «Media» significa valor esperado estadístico, no una cuota garantizada para cada run o cada bloque corto.
+
+Después, la frecuencia aumenta suavemente mediante una **curva logarítmica saturada**, acercándose a una media de **1 / 1,25 / 2** respectivamente. El incremento tiende a **+0,5**, nunca lo supera ni crece sin límite. Fácil nunca genera tres trampas, incluso en una run larga.
+
+Las probabilidades y la rapidez de progresión son parámetros de *tuning*; su propuesta concreta pertenece al plan técnico del PRD.
+
+## 16.5. Alcance de la seed
+
+La seed determina la ventana inicial, las elecciones compatibles de módulo y la ocupación/tipología de sus trampas. La selección respeta las salidas que realmente toma Don Tortuga. Reproducir las elecciones requiere la misma dificultad, versiones de contenido/generación y secuencia de salidas; reproducir la partida física requiere también los mismos ajustes y controles.
+
+La aleatoriedad de decoración o de presentación no puede cambiar esas elecciones de gameplay.
+
 ---
 
 # 17. PUNTUACIÓN DE CARRERA INFINITA
 
 Cada conector entre módulos contiene un banderín.
+
+El banderín es **exclusivamente visual**, sin collider ni interacción con Don Tortuga o la carga. Se despliega una sola vez cuando Don Tortuga alcanza o supera su distancia horizontal; no hace falta tocarlo y un objeto adelantado no lo activa.
+
+El prototipo alterna dos imágenes simples: un asta rectangular alargada y el mismo asta con una bandera cuadrada desplegada. Su altura supera el conjunto cuerpo + caparazón y queda aproximadamente a mitad de la altura de la pila inicial. Se apoya en una zona visible del conector, cerca de la altura a la que pasa Don Tortuga. En agua debe respetar la cota de paso y la lectura de la salida.
+
+Si existen varias salidas, aparece por la salida realmente escogida. Cada frontera concede **un único** banderín y una única suma de puntos, aunque haya varias salidas posibles. El tramo seguro inicial no concede puntos: el primer banderín puntuable es el que cierra el primer módulo procedural.
 
 Los banderines actúan como multiplicadores crecientes.
 
@@ -1083,9 +1121,9 @@ El agua es el bioma especial del sistema.
 
 ## 20.1. Impactos
 
-El agua amortigua completamente las caídas importantes.
+El agua amortigua las caídas importantes y favorece conservar la mudanza durante una entrada normal.
 
-Don Tortuga puede caer desde cualquier altura al agua sin que el impacto de entrada desestabilice la mudanza de manera significativa.
+La asistencia es más permisiva que en terreno seco, pero no inmoviliza los objetos: los choques extremadamente fuertes y una inclinación demasiado inestable pueden desmoronar la pila también bajo el agua.
 
 ---
 
@@ -1172,6 +1210,8 @@ entra
 
 La ruta profunda funciona como recompensa sistémica a la conservación de la carga.
 
+No existe una orden para hundirse. La profundidad depende del peso retenido y del impulso de entrada; saltar antes de sumergirse puede aportar más energía a la inmersión. Las rutas profundas deben diseñarse y comprobarse con esos recursos físicos.
+
 ---
 
 ## 20.7. Controles en agua
@@ -1179,11 +1219,13 @@ La ruta profunda funciona como recompensa sistémica a la conservación de la ca
 En agua:
 
 - ←/A y →/D siguen regulando el avance horizontal;
-- ↑/W y ↓/S dejan de inclinar manualmente el caparazón;
-- ↑/W ayuda a frenar la inmersión y acelera el ascenso;
-- ↓/S ayuda a descender y retrasa el regreso hacia la superficie.
+- ↑/W y ↓/S mantienen el control de inclinación manual del caparazón, igual que en seco;
+- mantener **Espacio** ayuda a frenar la inmersión y acelera el regreso hacia la superficie;
+- no hay botón para aumentar la profundidad: el peso y el impulso al entrar producen la inmersión.
 
-Los controles modulan la velocidad vertical durante la inmersión inicial y el ascenso posterior. La respuesta depende de la carga: conservar más objetos facilita alcanzar rutas profundas que funcionan como recompensa sistémica.
+El ascenso asistido responde mientras se mantiene Espacio, sin cargar ni disparar un salto bajo el agua. Soltarlo devuelve el movimiento vertical a la flotación natural. La respuesta depende de la carga: conservar más objetos facilita alcanzar rutas profundas que funcionan como recompensa sistémica.
+
+El grip y la amortiguación de la carga aumentan en el agua para tolerar pequeñas correcciones. Cada objeto conserva sus contactos, movimiento e inclinación propios; la asistencia no evita las pérdidas por desequilibrios graves.
 
 El agua no ejerce fuerzas laterales directas sobre los objetos de la carga.
 
@@ -1376,6 +1418,14 @@ La altura absoluta del nivel puede cambiar indefinidamente.
 
 El módulo no necesita construirse pensando en una coordenada global concreta.
 
+## 27.1. Bifurcaciones verticales y varias salidas
+
+El salto y la natación permiten recorridos a distintas alturas dentro de un módulo. Cada salida declara su identidad, bioma, altura y zona horizontal de conexión; la entrada del siguiente módulo se alinea con la salida por la que pasa Don Tortuga.
+
+Solo se admiten varias salidas si la geometría permite resolver con certeza la ruta elegida **antes de que el siguiente terreno deba estar visible o pueda alcanzarse**. La decisión no se adivina a partir de la altura instantánea durante un salto, ni se modifica una unión ya accesible mientras el jugador se aproxima.
+
+Si no puede garantizarse esa decisión con suficiente anticipación, las rutas se reúnen dentro del módulo en una salida única, o se usa directamente una pieza de salida única. Las rutas accesibles y la recuperación tras perder carga deben superar las pruebas de la sección 42.1; ninguna bifurcación puede exigir retroceder ni convertirse en un pozo sin salida.
+
 ---
 
 # 28. ZONA HORIZONTAL DE CONEXIÓN
@@ -1442,6 +1492,8 @@ Para permitir crecimiento futuro sin rediseñar el sistema, cada módulo podrá 
 
 Los metadatos adicionales no son necesarios para que funcione la primera versión del generador.
 
+Las ubicaciones de trampa declaran posición local, tipos compatibles y espacio de activación/recuperación. Las piezas con varias salidas necesitan identificadores y zonas de selección inequívocas para cada una. La geometría base y las ubicaciones pertenecen a la definición; las trampas elegidas pertenecen a cada instancia generada.
+
 Sirven para que el sistema pueda escalar posteriormente.
 
 ---
@@ -1460,6 +1512,8 @@ debe existir al menos B→Y
 ```
 
 para cualquier salida que el generador pueda seleccionar.
+
+La comprobación cubre **cada salida** de los módulos bifurcados, no solo una salida principal. Una ruta accesible no puede terminar en un bioma o una unión sin continuación válida.
 
 Esto evita callejones sin salida en la generación procedural.
 
@@ -1483,6 +1537,16 @@ Las trampas:
 - no pueden matarlo;
 - no pueden bloquearlo permanentemente;
 - están diseñadas para desequilibrar la mudanza.
+
+## 33.1. Tres trampas del prototipo de jam
+
+1. **Rama resquebrajada sobre un hoyo:** soporta el paso y se rompe al pasar Don Tortuga por encima, retirando el apoyo y produciendo una caída. El fondo y la salida del hoyo son transitables con los ajustes vigentes; no hay un pozo sin salida.
+2. **Trampilla con tocón elevador:** el paso por encima activa un tocón que sube y empuja físicamente a Don Tortuga hacia arriba, transmitiendo el movimiento a la carga. El recorrido del tocón y su recuperación no pueden aprisionar al personaje ni convertirlo en un muro.
+3. **Árbol con piña de pino:** Don Tortuga activa el árbol al tocar su zona de contacto; tras un breve intervalo cae una piña desde la copa sobre la pila. El árbol permite continuar y la piña caída no puede bloquear permanentemente el camino.
+
+Cada ubicación permite solo tipos cuya geometría, espacio libre y recuperación estén validados. La rama, la trampilla y el árbol se reconocen antes de activarse. El retraso de la piña, los recorridos y las respuestas físicas son parámetros de *tuning*; no sustituyen el tiempo de anticipación de la sección 34.
+
+La comprobación de seguridad incluye la geometría después de romperse la rama, el movimiento del tocón y los restos de la piña, con las cargas previstas y tras pérdidas parciales. Los elementos de trampa no pasan a formar parte de la mudanza ni aportan puntuación.
 
 ---
 
@@ -1554,7 +1618,7 @@ No puede ser secreta.
 
 La cámara calcula su zoom **al cargar cada nivel normal** a partir de la ventana física de movimiento y de una zona muerta exterior configurable. Ese zoom permanece **fijo durante toda la partida**.
 
-La zona muerta se expresa como porcentaje del ancho total del viewport y se reserva **a cada lado**, detrás del margen trasero y delante del delantero. Por ejemplo, un 40 % por lado deja el 20 % central para la ventana de movimiento. Más zona muerta aumenta el campo visible sin ampliar el rango físico de desplazamiento de Don Tortuga.
+La zona muerta se expresa como porcentaje del ancho total del viewport y se reserva **a cada lado**, detrás del margen trasero y delante del delantero. El valor por defecto aprobado es **10 % por lado**, dejando el **80 % central** para la ventana de movimiento. Más zona muerta aumenta el campo visible sin ampliar el rango físico de desplazamiento de Don Tortuga.
 
 El nivel de testeo mantiene una escala de personaje fija para comparar físicas y márgenes. Su tamaño visual no tiene por qué coincidir con el de un nivel normal. Los niveles normales no ofrecen control de zoom durante el recorrido.
 
@@ -1770,8 +1834,15 @@ flowchart TD
     A[Portada / Menú principal] --> B[Selector de modo]
     A --> CR[Créditos]
     CR --> A
-    B --> C[Niveles diseñados]
-    B -.-> D[Carrera Infinita<br/>Próximamente]
+    B -.-> C[Nivel personalizado<br/>Próximamente en la jam]
+    B --> D[Carrera Infinita]
+    D --> DF[Dificultad<br/>Fácil / Normal / Difícil]
+    DF --> IF[Run infinita]
+    IF <--> IP[Pausa]
+    IP -->|Reiniciar| IF
+    IP -->|Salir| A
+    IF --> IR[Resultados de carrera]
+    IR --> A
     C --> E[Selector de niveles]
     E --> F[Partida]
     F <--> P[Pausa]
@@ -1786,9 +1857,10 @@ Reglas:
 
 - **Esc** vuelve a la pantalla anterior en los menús.
 - **Esc** abre y cierra la pausa durante la partida.
-- La Carrera Infinita aparece visible pero desactivada, con el rótulo **«Próximamente»**, mientras no esté implementada.
-- El selector de niveles existe aunque solo haya un nivel.
-- **Reintentar** lanza de nuevo el mismo nivel directamente, sin pasar por los menús.
+- El objetivo de jam es **Portada → Modo → Dificultad → Carrera Infinita → Resultados → Portada**.
+- **Nivel personalizado — Próximamente** queda visible y desactivado en la jam. Su ruta futura conserva el selector de niveles aunque solo haya un nivel; no habilita un editor en esta entrega.
+- La pausa de Carrera Infinita conserva las reglas comunes. Sus resultados pueden superponerse a la última imagen congelada del juego y permiten volver a la portada.
+- En niveles diseñados futuros, **Reintentar** lanza de nuevo el mismo nivel directamente, sin pasar por los menús.
 
 ---
 
@@ -1816,14 +1888,17 @@ Se presenta como un anuncio de la empresa (ver sección 6.5).
 Opciones:
 
 - **► EMPEZAR MUDANZA** (seleccionada por defecto) → selector de modo;
-- **Créditos** (recomendado para la jam).
+- **Créditos** → pantalla de dedicatoria (incluida en la jam).
+- **⚙ Laboratorio de físicas**, acceso secundario visible, con texto menor que las opciones principales. Permite probar los mismos controles y físicas del juego y volver a la portada.
 
 ---
 
 ### 41.5.2. Selector de modo
 
-- **Niveles diseñados.**
-- **Carrera Infinita — Próximamente** (desactivada hasta su implementación).
+- **Nivel personalizado — Próximamente** (desactivado en la jam).
+- **Carrera Infinita** → selector de dificultad: **Fácil, Normal, Difícil**.
+
+Elegir dificultad inicia una nueva run con una seed nueva. El nivel personalizado/diseñado sigue formando parte del diseño completo para una fase posterior.
 
 ---
 
@@ -1889,7 +1964,19 @@ Opciones:
 - **Reintentar** (seleccionada por defecto);
 - **Menú principal.**
 
-Si se implementa la Carrera Infinita, sus resultados muestran en su lugar: banderines superados, puntuación, tiempo y el último objeto en caer.
+Los resultados de Carrera Infinita muestran en su lugar: banderines superados, puntuación acumulada, tiempo y el último objeto en caer. Pueden superponerse a la escena congelada y ofrecen **Volver a la portada**. No aplican la fórmula de entrega, el bonus perfecto ni el sello de valor entregado.
+
+---
+
+### 41.5.6. Créditos
+
+Desde la portada se abre una página con esta dedicatoria centrada, seguida de la firma:
+
+> Dedicado a [Argorias Svartha](https://www.artstation.com/argorias), que me ha acompañado en los momentos más oscuros de mi vida. A mi madre, que me ha apoyado incondicionalmente incluso sin entender lo que hacía. Y a todos los agentes de inteligencia artificial que han ejecutado bucles interminables de pruebas y han tenido la paciencia infinita para lidiar con mis cambios de diseño de última hora durante toda la game jam.
+>
+> — Mike Fieldins
+
+El nombre **Argorias Svartha** es un hipervínculo a su página de ArtStation. La página ofrece **Volver a la portada**, accesible con ratón y teclado; **Esc** también regresa. El pie muestra: **Copyright © 2026 Mike Fieldins & Argorias Svartha**.
 
 ---
 
@@ -1906,7 +1993,7 @@ El indicador permite saber de un vistazo cuánto de la mudanza sigue en pie.
 
 ### Cronómetro
 
-Mide el tiempo transcurrido desde la salida hasta la meta.
+Mide el tiempo transcurrido desde la salida hasta la meta en niveles diseñados, o hasta la pérdida definitiva del último objeto en Carrera Infinita.
 
 No es una cuenta atrás ni un límite de tiempo.
 
@@ -1941,7 +2028,7 @@ Existen cuatro mensajes de ayuda.
 | 1 | Nada más empezar el recorrido | **←/A →/D** + «velocidad» | 3–5 segundos configurables |
 | 2 | Después del 1, en terreno seco | **↑/W ↓/S** + «equilibrar caparazón» | 3–5 segundos configurables |
 | 3 | Después del 2, en terreno seco | **Espacio** + «mantén y suelta para saltar» | 3–5 segundos configurables |
-| 4 | La primera vez que Don Tortuga entra en agua | **↑/W ↓/S** + «nadar» | 3–5 segundos configurables |
+| 4 | La primera vez que Don Tortuga entra en agua | **Espacio** + «mantén para subir»; **↑/W ↓/S** + «equilibra» | 3–5 segundos configurables |
 
 Reglas:
 
@@ -1952,7 +2039,7 @@ Reglas:
 - solo aparece uno a la vez;
 - el agua tiene prioridad: si contenido futuro provoca un solapamiento, la ayuda de natación sustituye la ayuda inicial en curso; la ayuda incompleta queda pendiente para cuando vuelva a ser pertinente en terreno seco.
 
-El inicio del nivel diseñado es llano y seguro durante velocidad, equilibrio y salto. El agua no debe poder alcanzarse antes de completar las tres ayudas iniciales, incluso a la velocidad máxima permitida. Los niveles comunitarios futuros reciben la regla de prioridad, pero el motor no puede garantizar la calidad de su composición inicial.
+El inicio del nivel diseñado y el tramo inicial separado de Carrera Infinita son llanos y seguros durante velocidad, equilibrio y salto. El agua no debe poder alcanzarse antes de completar las tres ayudas iniciales, incluso a la velocidad máxima permitida. El tramo inicial de Carrera Infinita tampoco contiene trampas ni banderines puntuables. Los niveles comunitarios futuros reciben la regla de prioridad, pero el motor no puede garantizar la calidad de su composición inicial.
 
 ### Estado por recorrido
 
@@ -2043,6 +2130,7 @@ Los objetos perdidos dejan de interferir con el desplazamiento precisamente para
 - Registrar la configuración de físicas, la ruta y la secuencia de control que completaron cada prueba.
 - Repetir las pruebas al cambiar geometría, salto, gravedad, altura del caparazón, márgenes físicos o resolución del movimiento; una validación con parámetros antiguos no certifica los nuevos.
 - Acompañar las pruebas automatizadas de una comprobación manual de lectura y de ejecución razonable para el público del juego.
+- Cubrir las salidas alternativas accesibles y la continuación tras activar cada combinación compatible de trampas, incluyendo hoyos abiertos, tocones en movimiento y piñas caídas. Perder carga en una ruta acuática no puede dejar a Don Tortuga sin una continuación accesible.
 
 La estimación `velocidad² / (2 × gravedad)` orienta sobre la altura disponible, pero no demuestra que una pared sea superable. Hace falta espacio y tiempo para despegar, librar la geometría y aterrizar. Un caso de prueba fallido impide certificar esa ruta hasta corregirla o demostrar un recorrido válido; no demuestra por sí solo que todas las secuencias de control posibles fallen.
 
@@ -2052,29 +2140,32 @@ La estimación `velocidad² / (2 × gravedad)` orienta sobre la altura disponibl
 
 La versión inicial contará con:
 
-- un único nivel diseñado;
+- Carrera Infinita como modo jugable principal;
 - una única configuración inicial de Tortuga y mudanza;
-- sistema de cuatro biomas;
-- suficientes módulos para producir un recorrido variado;
+- el subconjunto de biomas establecido en el PRD, conservando el sistema completo de cuatro biomas de la sección 19;
+- un pool de módulos compatibles, cuyo tamaño inicial fija el PRD;
 - sin obligación de cubrir las dieciséis combinaciones posibles;
-- mínimo dos trampas o accidentes distintos;
-- objetivo deseable de tres tipos de trampas;
-- puntuación por tiempo;
-- puntuación por carga;
-- bonus de mudanza perfecta;
-- leaderboard del nivel.
+- las tres trampas de la sección 33.1, distribuidas por seed y dificultad;
+- selector de dificultad y ventana inicial de frecuencia base;
+- banderines visuales y puntuación acumulada de la sección 17;
+- final al perder toda la carga y pantalla de resultados;
+- nivel personalizado visible como **Próximamente**.
+
+El nivel diseñado, su meta, puntuación por tiempo/carga, bonus perfecto y leaderboard permanecen en el diseño completo, fuera de esta entrega. No se requiere ranking global para Carrera Infinita.
 
 ---
 
 # 44. CARRERA INFINITA EN LA JAM
 
-La Carrera Infinita se considera objetivo de implementación condicionado a que el núcleo principal quede funcionando correctamente.
+La Carrera Infinita es el objetivo principal del prototipo de jam aprobado el 2026-10-04, sobre el núcleo físico ya validado.
 
-Si se implementa:
+Debe cumplir:
 
 - utiliza todos los módulos compatibles disponibles;
 - utiliza la única configuración inicial existente;
 - utiliza seed procedural;
+- ofrece dificultad Fácil, Normal y Difícil con las medias y progresión acotada de la sección 16.4;
+- comienza con el tramo seguro no puntuable;
 - utiliza banderines;
 - termina al perder toda la carga;
 - no utiliza ranking competitivo global.
@@ -2284,6 +2375,9 @@ Los siguientes valores deberán permanecer expuestos y fáciles de modificar dur
 - velocidad de cámara;
 - longitud media de módulos;
 - altura máxima razonable de estructura.
+- probabilidades de ocupación de trampas por dificultad;
+- rapidez de la progresión logarítmica saturada;
+- tiempos y recorridos de las tres trampas, conservando el telegraph mínimo.
 
 ---
 
@@ -2318,6 +2412,8 @@ Las pruebas deben buscar principalmente:
 ---
 
 # 54. PRUEBAS CRÍTICAS DE GAME JAM
+
+La lista conserva las comprobaciones del diseño completo; la entrega de jam certifica el subconjunto de biomas y contenido requerido por el PRD. Los biomas restantes mantienen estas pruebas como objetivo posterior.
 
 El primer prototipo funcional debe comprobar:
 
@@ -2366,6 +2462,8 @@ La pregunta es:
 
 ## Fase 2 — Biomas
 
+La lista siguiente representa el sistema completo de cuatro biomas. El PRD fija cuáles se implementan y certifican en esta entrega, sin eliminar los restantes del diseño.
+
 Implementar:
 
 - hierba;
@@ -2392,26 +2490,26 @@ Implementar:
 
 ## Fase 4 — Trampas
 
-Implementar al menos dos.
-
-Objetivo ideal:
-
-tres.
+Implementar rama resquebrajada, trampilla con tocón y árbol con piña. Validar las tres ubicaciones compatibles de cada módulo y las combinaciones generables.
 
 Priorizar trampas claramente distintas entre sí.
 
 ---
 
-## Fase 5 — Nivel diseñado
+## Fase 5 — Carrera Infinita de jam
 
-Montar el nivel fijo de Game Jam utilizando el sistema modular.
+Montar la Carrera Infinita utilizando todo el pool compatible del PRD.
 
 Añadir:
 
-- inicio;
-- meta;
+- inicio seguro separado;
+- seed y selector de dificultad;
+- concatenación continua y limpieza de módulos;
+- trampas por instancia y progresión limitada;
+- banderines y multiplicador;
 - cronómetro;
-- puntuación;
+- puntuación acumulada;
+- final al perder toda la carga;
 - pantalla de resultados.
 
 ---
@@ -2429,17 +2527,16 @@ Añadir:
 
 ---
 
-## Fase 7 — Carrera Infinita
+## Fase 7 — Nivel diseñado y expansión posterior
 
-Solo cuando el resto se encuentre suficientemente estable.
+Cuando el objetivo de jam esté estable, conservar como trabajo posterior:
 
 Añadir:
 
-- seed;
-- selector procedural;
-- banderines;
-- multiplicador;
-- condición de fin.
+- nivel diseñado, meta y reglas de objetos salvados;
+- fórmula de tiempo/carga/bonus y albarán de entrega;
+- selector de niveles y clasificaciones;
+- biomas y contenido restantes del diseño completo.
 
 ---
 
