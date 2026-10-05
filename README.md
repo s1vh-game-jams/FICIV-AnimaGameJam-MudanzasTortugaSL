@@ -148,6 +148,6 @@ py -3 scripts/localServer.py --directory dist --port 4173
 
 ### 🐢 Mudanzas Tortuga, S.L.
 
-**Lento no significa tarde.**
+**Porque lento no significa tarde.**
 
 </div>
