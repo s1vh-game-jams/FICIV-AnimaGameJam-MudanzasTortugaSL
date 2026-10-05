@@ -10,6 +10,8 @@ This document describes the shared physical foundation used by the playground an
 
 ## 1. Architecture and ownership
 
+**Minor physics revision (2026-10-05):** the first rising-stump underside hit shares the ordinary full-charge launch path (`jumpMaxLaunchSpeed`, gravity, ceiling/swept-shell guards and a bounded impulse only to shell-connected cargo). It cancels an armed manual charge and launches once per stump; the original trap rise/hold/retraction and collision guards remain. Support displacement is not added to the launch speed. Grass uses a 0.25 s exponential support-pitch response to reduce rapid angular vibration, plus independent shell sway between deterministic random targets every 1.5 s, with smoothstep interpolation and a maximum ±2 degrees. Sway returns toward zero outside grounded grass, stays separate from manual compensation and is accounted for only as accepted by the existing clearance guard. Constants live in `GRASS_SHELL_RESPONSE`; its local random state resets with the simulation and never consumes module/trap RNG. The physics revision is `endless-physics-3`. Tests, traversal recertification and browser checks were explicitly waived by the human for this task; previous certificates below apply to earlier revisions.
+
 Rapier owns physical bodies, colliders, contacts and world stepping. Pixi renders a read-only simulation snapshot. HTML/CSS owns the laboratory toolbar, parameter fields and status readouts. Rendering does not write physical transforms.
 
 | Source | Responsibility |

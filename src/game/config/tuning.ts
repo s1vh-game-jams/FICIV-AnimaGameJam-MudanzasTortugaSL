@@ -16,6 +16,14 @@ export const WATER_CARGO_RESPONSE = {
   gripMultiplier: 3, frictionMultiplier: 1.5,
   linearDampingMultiplier: 1.5, angularDampingMultiplier: 2,
 } as const;
+/** Gentle grass motion: radians/seconds; separate from manual shell compensation. */
+export const GRASS_SHELL_RESPONSE = {
+  maxSwayAngle: 2 * Math.PI / 180,
+  swayTargetSeconds: 1.5,
+  swayReturnSeconds: 0.75,
+  terrainPitchResponseSeconds: 0.25,
+  randomSeed: 0x74757274,
+} as const;
 /** Metres, kilograms, seconds and radians; movement margins use the fixed laboratory viewport. */
 export type Tuning = AdjustableSettings & FixedTuning & { cameraBack: number; cameraFront: number };
 

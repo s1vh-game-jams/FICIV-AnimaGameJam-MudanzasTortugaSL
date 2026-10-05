@@ -4,6 +4,8 @@
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
+**Latest local handoff (2026-10-05):** stump full-charge launch and gentle ±2-degree grass shell sway are integrated on `dev` as `58e1b49`, from preserved `codex/stump-grass-physics` at `5592551`. TypeScript, ESLint and production build pass. Tests and browser verification were explicitly waived for this task; no new traversal certificate is claimed for `endless-physics-3`. This handoff is local; no push or release is included.
+
 **Current handoff (2026-10-05):** jam audio is integrated as `d803628`, from preserved `codex/jam-audio` at `a86269a`. The squash tree exactly matches the verified source tree before this documentation-only closure. TypeScript, ESLint, 696 Vitest cases, 11 Python helper cases, root/Pages builds, native browser media states and 42 unchanged-recording HTTP paths pass. Original volume/formats remain intact; human auditory/target-browser verification is pending. No GDD/physical tuning/replay change or `main` publication is included.
 
 **Earlier handoff (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are integrated in `dev` as `6299f64`, from preserved `codex/slopes-water-controls`. GDD/README changes are explicitly authorized. Agent checks pass; human local review remains pending. Earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
@@ -73,6 +75,14 @@ Therefore:
 ---
 
 ## 2. Current critical path
+
+### PHYS-028 — Launch from rising stumps and soften grass shell motion
+- **Priority:** P1
+- **Status:** DONE — `58e1b49`, from preserved `codex/stump-grass-physics` at `5592551`; local integration only
+- **Authorization:** on 2026-10-05 the human requested direct implementation, explicitly no tests, and a final checkout on `dev` without opening a browser.
+- **Scope:** a stump's first rising underside contact launches through the full-charge jump response, cancels pending manual charge and shares clearance-limited takeoff assistance with connected cargo. Grass filters rapid terrain-pitch changes and applies smooth deterministic random ±2-degree shell sway separately from manual balance. Shared game/laboratory core; physics revision `endless-physics-3`.
+- **Verification:** static code review, TypeScript, ESLint and production build pass. No tests, traversal certificate or browser run performed by explicit instruction. Earlier physics-2 certificates are historical and do not certify this revision.
+- **Provenance:** OpenAI Codex, implementation/documentation/local integration; no subagents.
 
 ### AUDIO-001 — Implement the selected jam audio
 - **Priority:** P0
