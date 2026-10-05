@@ -1,6 +1,6 @@
 # Deployment — Mudanzas Tortuga, S.L.
 
-Local Vite production serving and repository-subpath builds are implemented. An inactive GitHub Pages workflow template exists under `/scripts/`; activation/publication remain pending final art/licenses and release approval. This document does not certify a live deployment.
+Local Vite production serving and repository-subpath builds are implemented. The main-only manual Pages workflow is active at `.github/workflows/jekyll-gh-pages.yml` (the historical filename does not imply a Jekyll build). On 2026-10-05 the human requested publication from `main`; Pages now uses GitHub Actions. Live publication is in progress and is not certified until the workflow and live smoke checks succeed.
 
 ## 1. Build and branch contract
 
@@ -86,7 +86,7 @@ Public asset metadata uses relative paths through `src/utils/publicAsset.ts`, ba
 
 Jam audio uses the same helper for all selected relative paths in `src/audio/manifest.ts`. Vite copies the 21 original WAV/MP3 recordings without transformation; native media elements stream them after the first interaction rather than decoding the full roughly 112 MB set at startup. Root/subpath smoke checks must inspect audio requests and native ready/playback states as well as textures/WASM. Original volume is controlled by browser/device, with no in-game mixer. [SOUNDS.md](SOUNDS.md) owns playback/event rules and the human auditory verification boundary.
 
-The expected Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-MudanzasTortugaSL/`, subject to actual repository Pages configuration. That live site/settings have not been verified or enabled by this milestone.
+The Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-MudanzasTortugaSL/`. The repository uses GitHub Actions as its Pages source, HTTPS with no custom domain, and a `github-pages` environment restricted to the `main` branch. These settings were verified on 2026-10-05; successful live publication is tracked separately below.
 
 ## 4. Prototype 1 browser smoke check
 
@@ -122,20 +122,28 @@ The 2026-10-04 implementation has browser evidence for the full flow, all diffic
 
 The 2026-10-05 local root/subpath builds also initialize the revised shared physics and visible laboratory without browser errors. Credits show the exact centred dedication, link, signature and footer, with keyboard return. The secondary laboratory entry works with mouse and arrows/Enter and displays the new water controls; the original diagnostic routes remain. A Normal run reaches an actual pennant award and frozen zero-cargo results. These local checks do not publish a live release.
 
-## 5. Future GitHub Pages release
+## 5. GitHub Pages release from main
 
-The provisional template is [scripts/pages-deploy.provisional.yml](../scripts/pages-deploy.provisional.yml). GitHub does not execute this file in `/scripts/`. No `.github/workflows/` release action is activated by this task, and no Pages settings or live site were changed.
+The active workflow is [.github/workflows/jekyll-gh-pages.yml](../.github/workflows/jekyll-gh-pages.yml), added to `main` by the human in `0e14828`. It builds Vite, not Jekyll. The original [scripts/pages-deploy.provisional.yml](../scripts/pages-deploy.provisional.yml) remains an inactive historical template.
 
-The template uses manual `workflow_dispatch` only, guards both jobs to `refs/heads/main`, explicitly checks out `main`, runs the existing type/lint/game/helper checks and `build:pages`, then uploads/deploys the static artifact. Build and deployment permissions are separate; publication uses the `github-pages` environment. Full action SHAs have readable release comments, verified against the [official Vite Pages guide](https://vite.dev/guide/static-deploy.html#github-pages) and [GitHub custom workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). Recheck those pins before activation. A local review/build cannot certify an Actions runner or successful Pages deployment.
+The workflow uses manual `workflow_dispatch` only, guards both jobs to `refs/heads/main`, explicitly checks out `main`, runs the existing type/lint/game/helper checks and `build:pages`, then uploads/deploys `dist/`. Build and deployment permissions are separate; publication uses the `github-pages` environment. Full action SHAs match the [official Vite Pages guide](https://vite.dev/guide/static-deploy.html#github-pages), rechecked on 2026-10-05, and the [GitHub custom workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). A local review/build cannot certify an Actions runner or successful Pages deployment.
 
-After final art/licenses and explicit release approval:
+For subsequent human-approved releases:
 
 - verify current official GitHub/Vite guidance and pin supported action versions;
-- copy the reviewed template to `.github/workflows/pages.yml` on the approved `main` candidate;
-- select GitHub Actions as the repository Pages source and restrict the `github-pages` environment to `main`, with any required human reviewer;
+- keep the active workflow on the approved `main` candidate;
+- preserve GitHub Actions as the repository Pages source and the `github-pages` environment restriction to `main`;
 - dispatch the workflow manually from `main`; `configure-pages` reads existing setup and does not enable Pages itself;
 - do not auto-deploy `dev` or delete preserved auxiliary branches;
 - inspect the actual live root and physics route, textures and WASM after deployment.
+
+Dispatch using the Actions page or GitHub CLI:
+
+```bash
+gh workflow run jekyll-gh-pages.yml --ref main --repo s1vh-game-jams/FICIV-AnimaGameJam-MudanzasTortugaSL
+```
+
+The first release attempt is [Actions run 37365860940](https://github.com/s1vh-game-jams/FICIV-AnimaGameJam-MudanzasTortugaSL/actions/runs/37365860940), dispatched from `main` at `0e14828`. Local strict TypeScript, ESLint, root/Pages builds and all 11 Python helper tests pass. Vitest reports **645 passed / 51 failed across 29 files** (284.81 seconds), matching the pre-existing failures recorded in UX-013. Thirty-seven assertions still pin historical jump speed/charge values; other failures concern physical response/recovery and cannot all be dismissed as stale numeric expectations. Human settings commit `82380b1` changed the charge cap to 2 seconds and launch speed to 9.81 m/s, alongside grip/damping/balance/water tuning; this task preserves that configuration. Local Pages-subpath title/mode/difficulty/Normal and laboratory initialization succeed without browser errors. Publication requires corrected checks or an explicit human exception; never silently bypass a failing release gate or present a queued workflow as a published site. The full local diagnostic log is ignored `artifacts/pages-tests.log`.
 
 Before releasing Prototype 2, verify the required six-module Endless run in each difficulty, pause/results/navigation, safe non-scoring onboarding, seeded trap progression, pennants, bounded streaming, readability, absence of P0 softlocks, licensing/credits, updated backlog and human playtest approval. Every accessible authored module route/load and trap combination must pass real traversal with the release settings; mandatory jumps include full charge, wall recovery and the first grounded landing at or beyond the target. Verify swimming/bank exits separately. Rerun after jump, gravity, geometry, shell height or controller changes, including the opt-in exhaustive physical certificate. Capture normal-run dead-zone framing once and verify it stays fixed through jumps, camera holds and resize. Repeat both production root and repository-subpath navigation/texture/WASM checks. Record the actual release commit and URL.
 
@@ -147,4 +155,4 @@ A future remote leaderboard/auth/catalog must document provider, versioned score
 
 A hosting migration must update this document and the README, preserve static deployment where practical, and register any additional migration document in AGENTS.
 
-Still unresolved: live Pages settings/workflow, custom domain, release/tag convention, remote leaderboard provider and final project licensing.
+Still unresolved: first successful live publication, custom domain if desired, release/tag convention, remote leaderboard provider and the outstanding release audit items in BACKLOG. LICENSE.md already records the owner's mixed-license terms; this deployment task does not change them.
