@@ -17,6 +17,8 @@ describe('ContextualHelp', () => {
     expect(help.hasSeen('jump')).toBe(true);
     expect(help.hasSeen('swim')).toBe(false);
     expect(help.update(0, { inWater: true })?.id).toBe('swim');
+    expect(help.active?.keys).toBe('Espacio');
+    expect(help.active?.text).toBe('mantén para subir; ↑/W ↓/S equilibran');
     expect(help.update(3, { inWater: true })).toBeUndefined();
     expect(help.hasSeen('swim')).toBe(true);
   });

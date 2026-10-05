@@ -27,6 +27,32 @@ describe('keyboard navigation', () => {
     expect(navigation.screen).toBe('mode');
   });
 
+  it('reaches the secondary laboratory entry with arrows and Enter', () => {
+    const navigation = new GameNavigation();
+    expect(navigation.options).toHaveLength(3);
+    navigation.move(-1);
+    expect(navigation.options[navigation.selected]).toMatchObject({
+      id: 'laboratory', label: 'Laboratorio de físicas', secondary: true,
+    });
+    expect(navigation.confirm()).toEqual({ type: 'laboratory' });
+    navigation.move(1);
+    expect(navigation.options[navigation.selected].id).toBe('start');
+  });
+
+  it('opens the laboratory by mouse and preserves the credits route', () => {
+    const navigation = new GameNavigation();
+    expect(navigation.select(2)).toEqual({ type: 'laboratory' });
+    navigation.select(1);
+    expect(navigation.screen).toBe('credits');
+    expect(navigation.options[navigation.selected].id).toBe('back');
+    navigation.confirm();
+    expect(navigation.screen).toBe('title');
+    navigation.select(1);
+    navigation.escape();
+    expect(navigation.screen).toBe('title');
+    expect(navigation.options[navigation.selected].id).toBe('start');
+  });
+
   it('opens each menu with a selection and returns one menu at a time', () => {
     const navigation = new GameNavigation();
     navigation.confirm(); navigation.confirm();
