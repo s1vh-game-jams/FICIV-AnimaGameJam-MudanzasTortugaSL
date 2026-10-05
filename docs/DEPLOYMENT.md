@@ -130,6 +130,8 @@ The workflow uses manual `workflow_dispatch` only, guards both jobs to `refs/hea
 
 **Explicit human release exception (2026-10-05):** after reviewing the 51 failing tests, the human authorized modifying the workflow on `main` to publish the current jam candidate. `allow_game_test_failure` is a boolean dispatch input, default **false**. Tests always run; only a dispatch explicitly selecting **true** may continue after their failure. That run emits a visible warning and job-summary exception note. Types, lint, Python helper tests and production build remain mandatory. This exception changes no gameplay/settings and does not certify physical traversal; future default dispatches still block on failing game tests.
 
+**Current publication:** workflow/documentation source is preserved in `codex/pages-release` (`112aba4`, `8e80e29`); squash integration and explicitly authorized main promotion are `6e5061e`, synchronized remotely with `dev` and the preserved source branch. [Actions run 37366809747](https://github.com/s1vh-game-jams/FICIV-AnimaGameJam-MudanzasTortugaSL/actions/runs/37366809747) dispatches that exact main commit with `allow_game_test_failure=true`. GitHub accepted the revised workflow; the build job is queued without executing steps or requiring environment approval. [GitHub Status](https://www.githubstatus.com/) reports an active 2026-10-05 Actions incident causing delays assigning hosted runners. Leave this run queued; it can continue when capacity recovers. Live publication/HTTP/browser verification remains pending, and no successful hosted build or deployment is claimed.
+
 For subsequent human-approved releases:
 
 - verify current official GitHub/Vite guidance and pin supported action versions;
