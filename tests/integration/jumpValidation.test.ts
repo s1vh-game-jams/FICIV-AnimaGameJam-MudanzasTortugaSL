@@ -13,7 +13,7 @@ const wall = (height: number): Scenario => ({
 // Landing must be beyond the vertical face plus the rear shell footprint;
 // a later walking checkpoint on the plateau cannot certify the jump itself.
 const route: JumpTraversalCase = { chargeAtX: 3.7, landingX: 6.15, maxSeconds: 12, load: 'empty' };
-const fullJump = () => withTuning(createTuning(), { jumpMaxLaunchSpeed: 8 });
+const fullJump = () => createTuning();
 
 describe('authored jump traversal gates using current real physics', () => {
   it.each(['empty', 'full'] as const)('clears a reachable wall and lands with the %s load', load => {
@@ -40,7 +40,7 @@ describe('authored jump traversal gates using current real physics', () => {
     const result = validateJumpTraversal(wall(2), withTuning(fullJump(), changes), route);
     expect(result.passed).toBe(false);
     expect(result.final.turtle.x).toBeLessThan(route.landingX);
-    expect(result.launchSpeed).toBe(changes.jumpMaxLaunchSpeed ?? 8);
+    expect(result.launchSpeed).toBe(changes.jumpMaxLaunchSpeed ?? fullJump().jumpMaxLaunchSpeed);
     expect(result.gravity).toBe(changes.gravity ?? fullJump().gravity);
   });
 

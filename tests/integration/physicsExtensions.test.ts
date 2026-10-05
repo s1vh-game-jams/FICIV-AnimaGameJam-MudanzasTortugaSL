@@ -38,6 +38,28 @@ const deepWater = (): Scenario => {
   return { ...authored, id: 'deep-mass-fixture', startX: 25,
     startY: authored.water.bottom + 1 - G.turtleHalfHeight - G.controllerOffset };
 };
+const sustainedMaximumRamp = (tuning: Tuning): Scenario => {
+  const pitch = Math.PI / 5;
+  // Leave enough real slope for the configured pitch response and full charge,
+  // rather than sampling the short laboratory ramp before slower tuning settles.
+  const rampEnd = 8 + tuning.maxSpeed * (pitch / tuning.shellAngularSpeed + tuning.jumpMaxChargeSeconds + 2);
+  const height = (rampEnd - 8) * Math.tan(pitch);
+  return { id: 'sustained-maximum-ramp', label: 'Sustained 36-degree ramp', description: '',
+    startX: 0, startY: 0, endX: rampEnd + 20,
+    terrain: [{ biome: 'rock', points: [{ x: -12, y: 0 }, { x: 8, y: 0 },
+      { x: rampEnd, y: height }, { x: rampEnd + 32, y: height }] }] };
+};
+const reachMaximumRampPitch = (simulation: PhysicsSimulation) => {
+  const budget = (8 + G.turtleHalfWidth) / simulation.tuning.baseSpeed +
+    (Math.PI / 5) / simulation.tuning.shellAngularSpeed + 2;
+  for (let tick = 0; tick < Math.ceil(budget * simulation.tuning.physicsHz); tick++) {
+    simulation.step();
+    assertFinite(simulation);
+    const body = simulation.snapshot().turtle;
+    if (body.grounded && body.bodyAngle > Math.PI / 5 - 0.01) return;
+  }
+  throw new Error('Did not reach the maximum ramp support pitch within the configured response budget');
+};
 const assertFinite = (simulation: PhysicsSimulation) => {
   const snapshot = simulation.snapshot();
   const values = [snapshot.turtle.x, snapshot.turtle.y, snapshot.turtle.angle, snapshot.turtle.bodyAngle,
@@ -71,14 +93,18 @@ describe('charged jump and supported cargo', () => {
 
   it('launch speed scales linearly with charge, and gravity determines the resulting arc', () => {
     const short = create('flat', 'empty'), full = create('flat', 'empty');
-    charge(short, 0.75); charge(full, 3);
+    const shortTicks = Math.round(full.tuning.jumpMaxChargeSeconds * full.tuning.physicsHz / 4);
+    charge(short, shortTicks / short.tuning.physicsHz);
+    charge(full, full.tuning.jumpMaxChargeSeconds);
+    const chargeFraction = short.snapshot().turtle.jumpChargeSeconds / full.snapshot().turtle.jumpChargeSeconds;
     const shortStart = short.snapshot().turtle.y, fullStart = full.snapshot().turtle.y;
     const shortLaunch = release(short), fullLaunch = release(full);
     const gravityTick = short.tuning.gravity / short.tuning.physicsHz;
     expect(shortLaunch.turtle.verticalSpeed + gravityTick).toBeCloseTo(
-      (fullLaunch.turtle.verticalSpeed + gravityTick) / 4, 6);
+      (fullLaunch.turtle.verticalSpeed + gravityTick) * chargeFraction, 6);
     let shortHeight = 0, fullHeight = 0;
-    for (let i = 0; i < full.tuning.physicsHz; i++) {
+    const apexTicks = Math.ceil(full.tuning.jumpMaxLaunchSpeed / full.tuning.gravity * full.tuning.physicsHz);
+    for (let i = 0; i < apexTicks; i++) {
       short.step(); full.step();
       shortHeight = Math.max(shortHeight, short.snapshot().turtle.y - shortStart);
       fullHeight = Math.max(fullHeight, full.snapshot().turtle.y - fullStart);
@@ -155,9 +181,10 @@ describe('charged jump and supported cargo', () => {
   });
 
   it('preserves the departure body pitch during dry airborne motion', () => {
-    const simulation = create('slopes-max', 'empty');
-    advance(simulation, 2);
-    charge(simulation, 3);
+    const tuning = createTuning();
+    const simulation = create(sustainedMaximumRamp(tuning), 'empty', tuning);
+    reachMaximumRampPitch(simulation);
+    charge(simulation, tuning.jumpMaxChargeSeconds);
     const before = simulation.snapshot();
     expect(before.turtle.bodyAngle).toBeGreaterThan(0.4);
     release(simulation);
@@ -196,13 +223,16 @@ describe('terrain pose and actual shell support', () => {
   });
 
   it('keeps the terrain-aligned feet near the supporting plane without the proxy height', () => {
-    const simulation = create('slopes-max', 'empty');
+    const tuning = createTuning();
+    const simulation = create(sustainedMaximumRamp(tuning), 'empty', tuning);
+    reachMaximumRampPitch(simulation);
     let checked = false;
     const shaft = G.turtleHalfWidth - G.turtleHalfHeight;
-    for (let tick = 0; tick < simulation.tuning.physicsHz * 8; tick++) {
+    for (let tick = 0; tick < simulation.tuning.physicsHz; tick++) {
       simulation.step();
       const body = simulation.snapshot().turtle;
-      if (body.bodyAngle < 0.6 || body.x < 9 || body.x > 11) continue;
+      expect(body.grounded).toBe(true);
+      expect(body.bodyAngle).toBeGreaterThan(0.6);
       for (const direction of [-1, 1]) {
         const x = body.bodyX + direction * shaft * Math.cos(body.bodyAngle) + G.turtleHalfHeight * Math.sin(body.bodyAngle);
         const y = body.bodyY + direction * shaft * Math.sin(body.bodyAngle) - G.turtleHalfHeight * Math.cos(body.bodyAngle);

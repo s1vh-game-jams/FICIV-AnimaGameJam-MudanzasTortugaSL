@@ -50,6 +50,7 @@ afterEach(() => { for (const simulation of live.splice(0)) simulation.dispose();
 
 describe('independent airborne load regression', () => {
   it.each([
+    { jumpMaxLaunchSpeed: createTuning().jumpMaxLaunchSpeed, gravity: createTuning().gravity },
     { jumpMaxLaunchSpeed: 8, gravity: 9.81 },
     { jumpMaxLaunchSpeed: 8, gravity: 3 },
     { jumpMaxLaunchSpeed: 12, gravity: 9.81 },
@@ -87,7 +88,12 @@ describe('independent airborne load regression', () => {
       }
       assertFinite(simulation);
     }
-    expect(airborneTicks / simulation.tuning.physicsHz).toBeGreaterThan(simulation.tuning.lossGraceSeconds);
+    expect(airborneTicks / simulation.tuning.physicsHz).toBeGreaterThan(flightSeconds * 0.9);
+    // Long flights must outlast grace; the legacy 8 m/s Earth-gravity case
+    // now lands before the human's longer grace period expires.
+    if (flightSeconds * 0.9 > simulation.tuning.lossGraceSeconds) {
+      expect(airborneTicks / simulation.tuning.physicsHz).toBeGreaterThan(simulation.tuning.lossGraceSeconds);
+    }
     expect(simulation.snapshot().turtle.grounded).toBe(true);
     expect(simulation.snapshot().turtle.x).toBeGreaterThan(before.turtle.x);
     // Retention preserves a physical stack, including bounded independent
@@ -124,16 +130,22 @@ describe('independent airborne load regression', () => {
     const initialVelocity = glass.body.linvel().y;
     launch(simulation);
     const lossTicks = Math.ceil(simulation.tuning.lossGraceSeconds * simulation.tuning.physicsHz) + 2;
+    const assertFreefall = (ticks: number) => {
+      const expected = initialVelocity - simulation.tuning.gravity * ticks / simulation.tuning.physicsHz;
+      // Bound accumulated float32 rounding across Rapier's solver substeps;
+      // an exact double-precision trajectory is not its arithmetic model.
+      const roundoff = 2 ** -24 * (Math.abs(initialVelocity) + simulation.tuning.gravity * ticks / simulation.tuning.physicsHz) *
+        (ticks * simulation.world.numSolverIterations + 1);
+      expect(Math.abs(glass.body.linvel().y - expected)).toBeLessThanOrEqual(roundoff);
+    };
     for (let tick = 0; tick < lossTicks; tick++) {
       expect(glass.body.userForce()).toEqual({ x: 0, y: 0 });
-      expect(glass.body.linvel().y).toBeCloseTo(initialVelocity -
-        simulation.tuning.gravity * (tick + 1) / simulation.tuning.physicsHz, 4);
+      assertFreefall(tick + 1);
       simulation.step();
     }
     expect(simulation.tracker.state('cocktailGlass')).toBe('lost');
     expect(glass.body.userForce()).toEqual({ x: 0, y: 0 });
-    expect(glass.body.linvel().y).toBeCloseTo(initialVelocity -
-      simulation.tuning.gravity * (lossTicks + 1) / simulation.tuning.physicsHz, 4);
+    assertFreefall(lossTicks + 1);
   });
 
   it('can disable contact grip without adding hidden forces to compensate', () => {
@@ -152,7 +164,9 @@ describe('independent airborne load regression', () => {
     expect(simulation.snapshot().turtle.jumpChargeSeconds).toBe(simulation.tuning.jumpMaxChargeSeconds);
     launch(simulation);
     let independentRotation = false;
-    for (let tick = 0; tick < simulation.tuning.physicsHz * 4; tick++) {
+    const destabilizationSeconds = 2 * simulation.tuning.shellMaxAngle / simulation.tuning.shellAngularSpeed +
+      2 * simulation.tuning.lossGraceSeconds;
+    for (let tick = 0; tick < Math.ceil(simulation.tuning.physicsHz * destabilizationSeconds); tick++) {
       simulation.step({ horizontal: 0, vertical: 1 });
       const snapshot = simulation.snapshot();
       if (snapshot.cargo.some(item => Math.abs(item.angle - snapshot.shell.angle) > 0.15)) independentRotation = true;
@@ -208,7 +222,7 @@ describe('blocked camera without carrier repositioning', () => {
       simulation.step({ horizontal: 0, vertical: angle < -0.02 ? 1 : angle > 0.02 ? -1 : 0 });
     }
     expect(simulation.snapshot().turtle.x).toBeGreaterThan(before.turtle.x + 0.5);
-    expect(Math.abs(simulation.snapshot().turtle.angle)).toBeLessThan(0.02);
+    expect(Math.abs(simulation.snapshot().turtle.angle), JSON.stringify({ before, after: simulation.snapshot() })).toBeLessThan(0.02);
     expect(simulation.snapshot().cameraBlocked).toBe(false);
   });
   it.each([60, 15])('keeps the full shell arc outside roof corners with %s Hz fixed steps while reversing away from contact', physicsHz => {

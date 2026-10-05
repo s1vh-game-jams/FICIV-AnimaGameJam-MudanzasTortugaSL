@@ -262,7 +262,8 @@ describe('water weight and entry behavior', () => {
     const submerged: Scenario = { ...authored, id: 'water-swim-fixture', startX: 25,
       startY: authored.water.bottom + 1 - PHYSICS_GEOMETRY.turtleHalfHeight - PHYSICS_GEOMETRY.controllerOffset };
     const up = createSimulation(submerged, 'empty'), down = createSimulation(submerged, 'empty');
-    for (let tick = 0; tick < up.tuning.physicsHz; tick += 1) {
+    const correctionSeconds = 0.4 / up.tuning.shellAngularSpeed + 1 / up.tuning.shellAngularDamping;
+    for (let tick = 0; tick < Math.ceil(up.tuning.physicsHz * correctionSeconds); tick += 1) {
       up.step({ horizontal: 0, vertical: 1 });
       down.step({ horizontal: 0, vertical: -1 });
       for (const simulation of [up, down]) {

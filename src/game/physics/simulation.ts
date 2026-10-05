@@ -66,7 +66,7 @@ function clearsContactPlane(origin: RAPIER.Vector, rotation: number, delta: RAPI
   }
   // Existing numerical overlap may be escaped, never made deeper or dragged
   // sideways indefinitely. New obstacles still require the full sweep.
-  return initialDistance >= -POSE_PENETRATION_TOLERANCE || arrivalMinimum > initialDistance + CONTACT_MOVEMENT_TOLERANCE;
+  return arrivalMinimum >= -POSE_PENETRATION_TOLERANCE || arrivalMinimum > initialDistance + CONTACT_MOVEMENT_TOLERANCE;
 }
 
 function polygonVertices(shape: RAPIER.Shape, position: RAPIER.Vector, rotation: number): RAPIER.Vector[] | undefined {
@@ -475,7 +475,9 @@ export class PhysicsSimulation {
 
   private castShellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY):
     { time_of_impact: number; normal1: RAPIER.Vector } | null {
-    const next = this.shellPose(position, bodyAngle, manualAngle, bodyOffsetY);
+    const pose = this.shellPose(position, bodyAngle, manualAngle, bodyOffsetY);
+    // Certify the pose Rapier will actually store, including rotation rounding.
+    const next = { x: Math.fround(pose.x), y: Math.fround(pose.y), angle: Math.fround(pose.angle) };
     const current = this.shell.translation();
     const angleChange = next.angle - this.shell.rotation();
     const delta = { x: next.x - current.x, y: next.y - current.y };
@@ -590,6 +592,28 @@ export class PhysicsSimulation {
         break;
       }
       fraction /= 2;
+    }
+    if (!accepted && desiredMovement.y > 0) {
+      // A wall may block forward travel while leaving ascent clear. Preserve
+      // that physical slide before accepting an in-place shell correction:
+      // even tiny grass sway must not consume a jump's takeoff displacement.
+      const origin = this.turtle.translation();
+      this.controller.computeColliderMovement(this.turtleCollider, { x: 0, y: desiredMovement.y },
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
+      const upward = this.controller.computedMovement();
+      if (upward.y > 0) {
+        const rise = { x: origin.x + upward.x, y: origin.y + upward.y };
+        for (let attempt = 0, fraction = 1; attempt < POSE_CLEARANCE_SEARCH_STEPS; attempt++, fraction /= 2) {
+          const body = this.bodyAngle + (bodyAngle - this.bodyAngle) * fraction;
+          const manual = this.angle + (manualAngle - this.angle) * fraction;
+          const offset = this.supportOffset(rise, body, grounded);
+          if (!this.castShellPose(rise, body, manual, offset)) {
+            this.bodyAngle = body; this.angle = manual; this.bodyOffsetY = offset;
+            position = rise; accepted = true;
+            break;
+          }
+        }
+      }
     }
     if (!accepted && manualAngle !== this.angle) {
       // Forward translation may itself be blocked. A safe bounded correction
@@ -745,8 +769,17 @@ export class PhysicsSimulation {
     }
     const previousAngle = this.angle;
     const previousSway = this.grassSwayAngle;
-    const desiredSway = this.grassSway.advance(!this.water && this.grounded && this.biome === 'grass' && !launching, dt);
     const tilt = nextShellAngle(this.angle - previousSway, this.angularSpeed, vertical, dt, t);
+    const swayTarget = this.grassSway.advance(!this.water && this.grounded && this.biome === 'grass' && !launching, dt);
+    // Smoothstep's maximum derivative is 1.5, over a target span of at most
+    // twice the sway amplitude. Rejected motion must not accumulate into an
+    // instantaneous catch-up that defeats a terrain-clearing manual input.
+    const maximumSwaySpeed = Math.max(3 * B.maxSwayAngle / B.swayTargetSeconds, B.maxSwayAngle / B.swayReturnSeconds);
+    let desiredSway = approach(previousSway, swayTarget, maximumSwaySpeed * dt);
+    const manualChange = tilt.angle - (this.angle - previousSway);
+    if (vertical !== 0 && manualChange * vertical > 0 && (manualChange + desiredSway - previousSway) * vertical <= 0) {
+      desiredSway = previousSway;
+    }
     const desiredManualAngle = clamp(tilt.angle + desiredSway, -t.shellMaxAngle, t.shellMaxAngle);
     this.angularSpeed = tilt.speed;
     // Follow the last supporting contact tangent so the KCC does not reduce

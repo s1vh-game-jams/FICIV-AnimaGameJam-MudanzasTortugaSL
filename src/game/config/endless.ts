@@ -11,7 +11,7 @@ export const ENDLESS_DIFFICULTIES: Readonly<Record<Difficulty, {
 };
 
 export const ENDLESS = {
-  poolVersion: 'jam-six-1', generatorVersion: 'seeded-log-1', physicsVersion: 'endless-physics-3',
+  poolVersion: 'jam-six-1', generatorVersion: 'seeded-log-1', physicsVersion: 'endless-physics-4',
   safeModulesMin: 5, safeModulesMax: 10, progressionScaleModules: 10,
   prologueMetres: 40, prologueBackMetres: 12,
   preloadReachMarginMetres: 14, retirementMarginMetres: 10,

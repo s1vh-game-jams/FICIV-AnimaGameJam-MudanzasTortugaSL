@@ -24,8 +24,8 @@ describe('canonical text settings', () => {
     expect(second.gravity).toBe(settings.gravity);
     expect(BASELINE_TUNING.gravity).toBe(settings.gravity);
     expect(Object.isFrozen(BASELINE_TUNING)).toBe(true);
-    expect(first.shellPivotY).toBe(0.30);
-    expect(first.jumpMaxLaunchSpeed).toBe(8);
+    expect(first.shellPivotY).toBe(settings.shellPivotY);
+    expect(first.jumpMaxLaunchSpeed).toBe(settings.jumpMaxLaunchSpeed);
   });
 
   it('accepts BOM, Windows newlines, spacing, blank lines, comments and decimal exponents', () => {

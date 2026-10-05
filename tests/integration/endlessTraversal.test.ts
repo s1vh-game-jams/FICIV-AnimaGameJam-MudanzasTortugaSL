@@ -159,7 +159,6 @@ function localTrapScenario(definition: EndlessModuleDefinition, choice: SocketCh
 describe.each(ENDLESS_MODULES)('actual current-settings traversal: $id', definition => {
   it.each(loads)('crosses the complete base route with the %s load', load => {
     const tuning = createTuning();
-    expect(tuning.jumpMaxLaunchSpeed).toBe(8);
     const simulation = new PhysicsSimulation(scenarioForModule(definition), tuning, load);
     try {
       const result = traverse(simulation, definition.length + 3, definition.id === 'AD' ? 1 : 0,
@@ -171,12 +170,13 @@ describe.each(ENDLESS_MODULES)('actual current-settings traversal: $id', definit
   }, 30_000);
 
   it.each(loads)('records a full-charge first landing across the authored jump with the %s load', load => {
+    const tuning = createTuning();
     for (const jump of definition.jumps) {
-      const result = definition.id === 'AD' ? islandJump(definition, load) : validateJumpTraversal(scenarioForModule(definition), createTuning(), {
+      const result = definition.id === 'AD' ? islandJump(definition, load) : validateJumpTraversal(scenarioForModule(definition), tuning, {
         ...jump, maxSeconds: 35, load, controls: { horizontal: 0, vertical: 0 },
       });
       expect(result.outcome, `${definition.id}/${load}: ${result.outcome}; landing X ${result.final.turtle.x}`).toBe('passed');
-      expect(result.chargeSeconds).toBe(3);
+      expect(result.chargeSeconds).toBe(tuning.jumpMaxChargeSeconds);
       expect(result.launched).toBe(true);
       expect(result.final.turtle.grounded).toBe(true);
     }

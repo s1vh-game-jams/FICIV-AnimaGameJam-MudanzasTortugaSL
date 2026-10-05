@@ -47,10 +47,18 @@ describe('bounded physical water cargo response', () => {
     const simulation = create(basin);
     const initialMass = simulation.mass;
     let largestShellAngle = 0, independentRotation = 0;
-    for (let tick = 0; tick < simulation.tuning.physicsHz * 4; tick++) {
-      // Short digital presses correct about ten degrees, then return to level.
-      simulation.step({ horizontal: 0, vertical: tick < 18 ? 1 : tick >= 78 && tick < 96 ? -1 : 0 });
+    const correctionAngle = Math.PI / 18;
+    const duration = 2 * correctionAngle / simulation.tuning.shellAngularSpeed +
+      2 * simulation.tuning.shellAngularSpeed / simulation.tuning.shellAngularDamping + 3;
+    let phase: 'raise' | 'settle' | 'lower' | 'recover' = 'raise', settleTicks = 0;
+    for (let tick = 0; tick < Math.ceil(simulation.tuning.physicsHz * duration); tick++) {
+      // Digital input reaches a real ten-degree correction at the configured
+      // angular speed, rests for one second, then returns to level.
+      simulation.step({ horizontal: 0, vertical: phase === 'raise' ? 1 : phase === 'lower' ? -1 : 0 });
       const snapshot = simulation.snapshot();
+      if (phase === 'raise' && snapshot.turtle.angle >= correctionAngle) phase = 'settle';
+      else if (phase === 'settle' && ++settleTicks >= simulation.tuning.physicsHz) phase = 'lower';
+      else if (phase === 'lower' && snapshot.turtle.angle <= 0) phase = 'recover';
       expect(snapshot.turtle.biome).toBe('water');
       expect(snapshot.cargo.every(item => item.state !== 'lost')).toBe(true);
       expect(snapshot.turtle.mass).toBeCloseTo(initialMass, 6);
@@ -59,6 +67,7 @@ describe('bounded physical water cargo response', () => {
         ...snapshot.cargo.map(item => Math.abs(item.angle - snapshot.shell.angle)));
       finite(simulation);
     }
+    expect(phase).toBe('recover');
     expect(largestShellAngle).toBeGreaterThan(0.12);
     expect(largestShellAngle).toBeLessThan(0.3);
     expect(independentRotation).toBeGreaterThan(0.03);
