@@ -3,17 +3,22 @@ import type { Difficulty } from '../game/config/endless';
 export type GameScreen = 'title' | 'mode' | 'difficulty' | 'credits' | 'running' | 'pause' | 'confirm' | 'results';
 export type NavigationEffect =
   | { type: 'start'; difficulty: Difficulty }
-  | { type: 'pause' | 'resume' | 'restart' | 'exit' | 'reset-help' };
+  | { type: 'pause' | 'resume' | 'restart' | 'exit' | 'reset-help' | 'laboratory' };
 
 export interface MenuOption {
   readonly id: string;
   readonly label: string;
   readonly detail?: string;
   readonly disabled?: boolean;
+  readonly secondary?: boolean;
 }
 
 const OPTIONS: Readonly<Partial<Record<GameScreen, readonly MenuOption[]>>> = {
-  title: [{ id: 'start', label: 'EMPEZAR MUDANZA' }, { id: 'credits', label: 'Créditos' }],
+  title: [
+    { id: 'start', label: 'EMPEZAR MUDANZA' },
+    { id: 'credits', label: 'Créditos' },
+    { id: 'laboratory', label: 'Laboratorio de físicas', secondary: true },
+  ],
   mode: [
     { id: 'custom', label: 'Nivel personalizado', detail: 'Próximamente', disabled: true },
     { id: 'endless', label: 'Carrera Infinita', detail: 'Conserva la carga todo lo que puedas.' },
@@ -64,7 +69,10 @@ export class GameNavigation {
     const option = this.options[this.selected];
     if (!option || option.disabled) return;
     switch (this.screen) {
-      case 'title': this.open(option.id === 'start' ? 'mode' : 'credits'); return;
+      case 'title':
+        if (option.id === 'laboratory') return { type: 'laboratory' };
+        this.open(option.id === 'start' ? 'mode' : 'credits');
+        return;
       case 'mode': this.open('difficulty'); return;
       case 'difficulty': {
         const difficulty = option.id as Difficulty;

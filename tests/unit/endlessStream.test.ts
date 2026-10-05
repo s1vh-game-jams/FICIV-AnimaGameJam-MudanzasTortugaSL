@@ -44,7 +44,7 @@ describe('bounded seeded Endless resident geometry', () => {
     expect(stream.prologue).toBeNull();
   });
 
-  it('keeps water flags at a fixed visible full-load passing height independent of later losses', () => {
+  it('places approaching water flags on the actual passing height and freezes deployed flags', () => {
     const tuning = createTuning(), world = new FakeWorld();
     const pool = ENDLESS_MODULES.filter(module => module.id === 'BA' || module.id === 'AB');
     const stream = new EndlessStream(world, new EndlessGenerator(tuning, 'easy', 'water-flag', pool), tuning, 40);
@@ -52,10 +52,22 @@ describe('bounded seeded Endless resident geometry', () => {
     const waterExit = stream.modules[0], flag = stream.pennants[0];
     expect(waterExit.exitBiome).toBe('water');
     expect(flag.y).toBeLessThan(waterExit.endHeight);
-    expect(flag.y + 2).toBeGreaterThan(waterExit.endHeight);
     const originalHeight = flag.y;
     stream.ensureAhead({ ...frame(30), cargo: [] });
     expect(stream.pennants[0].y).toBe(originalHeight);
+    const approaching = frame(waterExit.endX - 2);
+    approaching.turtle.biome = 'water';
+    approaching.turtle.bodyY = waterExit.endHeight - 2.5;
+    stream.ensureAhead(approaching);
+    expect(flag.y).toBeCloseTo(approaching.turtle.bodyY - 0.24, 6);
+    approaching.turtle.bodyY = waterExit.endHeight + 0.1;
+    stream.ensureAhead(approaching);
+    expect(flag.y).toBeCloseTo(waterExit.endHeight - 0.14, 6);
+    flag.crossed = true;
+    const deployedHeight = flag.y;
+    approaching.turtle.bodyY -= 2;
+    stream.ensureAhead({ ...approaching, cargo: [] });
+    expect(flag.y).toBe(deployedHeight);
   });
 
   it('keeps pending interactions until spent, then releases all chunk ownership', () => {

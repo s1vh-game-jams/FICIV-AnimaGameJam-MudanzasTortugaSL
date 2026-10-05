@@ -105,9 +105,12 @@ El salto máximo actual despega a **8 m/s**. Si un obstáculo bloquea a Don Tort
 | Tecla | Acción |
 |---|---|
 | `←` / `A` · `→` / `D` | Regular el avance horizontal |
-| `↑` / `W` · `↓` / `S` | Modular el ascenso y la inmersión |
+| `↑` / `W` · `↓` / `S` | Inclinar el caparazón y equilibrar la carga, igual que en seco |
+| `Espacio` | Mantener para acelerar el ascenso hacia la superficie |
 
-Sin carga cuesta más hundirse; conservar objetos permite alcanzar mayor profundidad. La entrada conserva una inmersión suave y después Don Tortuga tiende a volver hacia la superficie.
+Sin carga cuesta más hundirse; conservar objetos permite alcanzar mayor profundidad. No hay botón para hundirse: la inmersión depende del peso y del impulso de entrada, que puede aumentar saltando antes de entrar. Después Don Tortuga tiende a volver hacia la superficie; Espacio ayuda a subir sin cargar un salto bajo el agua.
+
+El agua aumenta el grip y amortigua más los pequeños desequilibrios. La carga sigue siendo independiente y puede desmoronarse ante ángulos muy inestables o choques extremadamente fuertes. La ayuda aparece al entrar en agua por primera vez en cada partida y puede repetirse desde la pausa.
 
 Los valores exactos de velocidad, aceleración, inclinación, grip, impactos, flotación y corrientes son parámetros de *tuning*.
 
@@ -117,7 +120,7 @@ Los valores exactos de velocidad, aceleración, inclinación, grip, impactos, fl
 
 El repositorio incluye un modo interno llamado **`physics-playground`** para afinar las físicas antes de construir el nivel definitivo.
 
-No aparece como opción normal de la interfaz, pero testers y colaboradores pueden abrirlo de dos formas:
+Abre **⚙ Laboratorio de físicas** desde el menú principal: es una opción secundaria visible, seleccionable con ratón o flechas y Enter. También se conservan estos accesos para testers y colaboradores:
 
 ### Desde el menú principal
 
@@ -270,9 +273,15 @@ Cada estado del prototipo —caminar y cargar el salto— utiliza **dos keyframe
 
 ## 🔁 Flujo del prototipo jugable
 
+La portada incluye **Créditos** y el acceso secundario **⚙ Laboratorio de físicas**, además de **Empezar mudanza**. Créditos muestra la dedicatoria de Mike Fieldins, el enlace de Argorias Svartha a ArtStation, la firma y el copyright con la redacción exacta definida en la sección 41.5.6 del [GDD](docs/GDD.md). El botón **Volver a la portada** y `Esc` permiten regresar; el enlace también se puede activar con el teclado.
+
 ```mermaid
 flowchart TD
     A[Menú principal] --> B[Selector de modo]
+    A --> H[Créditos]
+    H --> A
+    A --> L[Laboratorio de físicas]
+    L --> A
     B -.-> C[Nivel personalizado<br/>Próximamente]
     B --> D[Carrera Infinita]
     D --> E[Dificultad<br/>Fácil / Normal / Difícil]

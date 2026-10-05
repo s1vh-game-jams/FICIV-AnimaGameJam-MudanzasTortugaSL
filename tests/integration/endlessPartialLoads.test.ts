@@ -36,9 +36,11 @@ const finite = (snapshot: SimulationSnapshot): boolean => [snapshot.tick, snapsh
 
 /** Original bodies/tuning throughout; input changes are normal player controls. */
 function authoredControls(snapshot: SimulationSnapshot, definition: EndlessModuleDefinition): Controls {
-  const vertical = snapshot.turtle.biome === 'water' ? (definition.id === 'AD' && snapshot.turtle.x < 18 ? -1 : 1) :
-    snapshot.turtle.angle > 0.025 ? -1 : snapshot.turtle.angle < -0.025 ? 1 : 0;
-  return { horizontal: 0, vertical };
+  const target = snapshot.turtle.biome === 'water' ? 0 : -snapshot.turtle.bodyAngle;
+  const difference = target - snapshot.turtle.angle;
+  const vertical = difference > 0.015 ? 1 : difference < -0.015 ? -1 : 0;
+  return { horizontal: definition.id === 'AD' && snapshot.turtle.biome === 'water' && snapshot.turtle.x < 18 ? -1 : 0,
+    vertical, jumpHeld: snapshot.turtle.biome === 'water' };
 }
 
 describe.each(ENDLESS_MODULES.filter(module => module.water?.length))('actual reachable partial loads: $id', definition => {
@@ -93,17 +95,17 @@ describe.each(ENDLESS_MODULES.filter(module => module.water?.length))('actual re
       }
 
       let heldX = snapshot.turtle.x, heldTicks = 0, charging = false;
-      let forcedSwim: -1 | 1 | undefined, forcedUntilX = 0;
+      let forcedAscent: boolean | undefined, forcedUntilX = 0;
       const targetX = definition.length + 3;
       for (let tick = 0; tick < tuning.physicsHz * 75 && snapshot.turtle.x < targetX; tick++) {
         let controls = authoredControls(snapshot, definition);
-        if (forcedSwim !== undefined && snapshot.turtle.x >= forcedUntilX) forcedSwim = undefined;
+        if (forcedAscent !== undefined && snapshot.turtle.x >= forcedUntilX) forcedAscent = undefined;
         if (snapshot.turtle.biome === 'water') {
           if (heldTicks >= 90) {
-            forcedSwim = controls.vertical > 0 ? -1 : 1;
+            forcedAscent = !(forcedAscent ?? controls.jumpHeld);
             forcedUntilX = snapshot.turtle.x + 2; heldTicks = 0;
           }
-          if (forcedSwim !== undefined) controls = { ...controls, vertical: forcedSwim };
+          if (forcedAscent !== undefined) controls = { ...controls, jumpHeld: forcedAscent };
         }
         if (charging) {
           if (snapshot.turtle.jumpChargeSeconds >= tuning.jumpMaxChargeSeconds) {

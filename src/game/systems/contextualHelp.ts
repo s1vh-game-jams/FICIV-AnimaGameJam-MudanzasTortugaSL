@@ -13,7 +13,7 @@ const HELP_COPY: Readonly<Record<HelpId, { keys: string; text: string }>> = {
   speed: { keys: '← / A   → / D', text: 'velocidad' },
   balance: { keys: '↑ / W   ↓ / S', text: 'equilibrar caparazón' },
   jump: { keys: 'Espacio', text: 'mantén y suelta para saltar' },
-  swim: { keys: '↑ / W   ↓ / S', text: 'nadar' },
+  swim: { keys: 'Espacio', text: 'mantén para subir; ↑/W ↓/S equilibran' },
 };
 
 export interface HelpMessage {

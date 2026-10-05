@@ -255,7 +255,7 @@ describe('mass-dependent water with preserved entry momentum', () => {
     for (const load of ['empty', 'light', 'full'] as const) {
       const neutral = create(deepWater(), load, swimCandidate());
       const swimming = create(deepWater(), load, swimCandidate());
-      neutral.step(); swimming.step({ horizontal: 0, vertical: 1 });
+      neutral.step(); swimming.step({ horizontal: 0, vertical: 0, jumpHeld: true });
       responses.push(swimming.snapshot().turtle.verticalSpeed - neutral.snapshot().turtle.verticalSpeed);
     }
     expect(responses[0]).toBeGreaterThan(responses[1]);
@@ -291,7 +291,7 @@ describe('mass-dependent water with preserved entry momentum', () => {
     let surfaced = false;
     for (let tick = 0; tick < simulation.tuning.physicsHz * 25 && simulation.snapshot().turtle.x < simulation.scenario.endX; tick++) {
       const previous = simulation.snapshot();
-      simulation.step({ horizontal: 0, vertical: previous.turtle.biome === 'water' ? 1 : 0 });
+      simulation.step({ horizontal: 0, vertical: 0, jumpHeld: previous.turtle.biome === 'water' });
       const snapshot = simulation.snapshot();
       if (!surfaced) expect(snapshot.turtle.mass).toBeCloseTo(initialMass, 6);
       if (snapshot.turtle.y >= surface) surfaced = true;
@@ -303,11 +303,11 @@ describe('mass-dependent water with preserved entry momentum', () => {
     expect(simulation.snapshot().turtle.x).toBeGreaterThan(56);
   });
 
-  it('sustained down leaves empty cargo shallower than sofa and the complete load', () => {
+  it('natural immersion leaves empty cargo shallower than sofa and the complete load without a dive command', () => {
     const empty = create(deepWater(), 'empty', swimCandidate());
     const light = create(deepWater(), 'light', swimCandidate());
     const full = create(deepWater(), 'full', swimCandidate());
-    for (const simulation of [empty, light, full]) advance(simulation, 5, { horizontal: 0, vertical: -1 });
+    for (const simulation of [empty, light, full]) advance(simulation, 5);
     expect(empty.mass).toBe(0); expect(light.mass).toBe(8); expect(full.mass).toBeCloseTo(fullMass, 6);
     expect(empty.snapshot().turtle.y).toBeGreaterThan(light.snapshot().turtle.y);
     expect(light.snapshot().turtle.y).toBeGreaterThan(full.snapshot().turtle.y);

@@ -10,6 +10,7 @@ import { ContextualHelp } from './game/systems/contextualHelp';
 import { PlaygroundRenderer } from './rendering/playgroundRenderer';
 import type { PhysicsSimulation, LoadPreset } from './game/physics/simulation';
 import { GameNavigation } from './app/navigation';
+import type { NavigationEffect } from './app/navigation';
 import { publicAsset } from './utils/publicAsset';
 import { VISUALS } from './rendering/visualDefinitions';
 import type { Difficulty } from './game/config/endless';
@@ -26,11 +27,11 @@ function showMenu(): void {
   function draw(): void {
     const title = navigation.screen === 'title';
     const credits = navigation.screen === 'credits';
-    const heading = title ? 'MUDANZAS<br>TORTUGA, S.L.' : credits ? 'En buenas patas.'
+    const heading = title ? 'MUDANZAS<br>TORTUGA, S.L.' : credits ? 'Créditos'
       : navigation.screen === 'mode' ? 'Elige tu<br>mudanza.' : '¿Cómo viene<br>el camino?';
-    const buttons = navigation.options.map((option, index) => `<button class="menu-option${index === navigation.selected ? ' selected' : ''}"
+    const buttons = navigation.options.map((option, index) => `<button class="menu-option${option.secondary ? ' secondary' : ''}${index === navigation.selected ? ' selected' : ''}"
       data-menu-index="${index}"${option.disabled ? ' disabled' : ''}><span class="selection-arrow" aria-hidden="true">${index === navigation.selected ? '►' : ''}</span>
-      ${option.label}${option.detail ? '<small>' + option.detail + '</small>' : ''}</button>`).join('');
+      ${option.id === 'laboratory' ? '<img class="menu-gear" src="' + publicAsset('sprites/ui/laboratory.svg') + '" alt="" aria-hidden="true">' : ''}${option.label}${option.detail ? '<small>' + option.detail + '</small>' : ''}</button>`).join('');
     app.innerHTML = `<section class="title-screen${title ? '' : ' selection-screen'}" data-screen="${navigation.screen}">
       <div class="menu-card">
         <p class="eyebrow">Servicio de mudanzas del bosque</p><h1>${heading}</h1>
@@ -42,28 +43,31 @@ function showMenu(): void {
           <img class="title-lamp" src="${publicAsset(VISUALS.floorLamp.path)}" alt="">
           <img class="title-glass" src="${publicAsset(VISUALS.cocktailGlass.path)}" alt="">
           </div><p class="tagline">Con la casa a cuestas.</p>` : ''}
-        ${credits ? '<p>Un juego para Anima Valencia Game Jam 2026,<br>en FICIV — Festival Internacional de Cine Infantil de Valencia.</p><p>Gracias a quienes ayudan a transportar esta mudanza.</p>' : ''}
+        ${credits ? `<div class="credits-copy"><p>Dedicado a <a href="https://www.artstation.com/argorias" target="_blank" rel="noopener noreferrer">Argorias Svartha</a>, que me ha acompañado en los momentos más oscuros de mi vida. A mi madre, que me ha apoyado incondicionalmente incluso sin entender lo que hacía. Y a todos los agentes de inteligencia artificial que han ejecutado bucles interminables de pruebas y han tenido la paciencia infinita para lidiar con mis cambios de diseño de última hora durante toda la game jam.</p><p class="credits-signature">— Mike Fieldins</p></div>` : ''}
         <nav class="menu-options" aria-label="${navigation.screen === 'difficulty' ? 'Dificultad' : 'Opciones'}">${buttons}</nav>
         <p class="menu-key-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> confirmar${title ? '' : ' · <kbd>Esc</kbd> volver'}</p>
+        ${credits ? '<footer class="credits-copyright">Copyright © 2026 Mike Fieldins &amp; Argorias Svartha</footer>' : ''}
       </div>
     </section>`;
     for (const button of app.querySelectorAll<HTMLButtonElement>('[data-menu-index]')) {
       button.addEventListener('click', () => {
-        const effect = navigation.select(Number(button.dataset.menuIndex));
-        if (effect?.type === 'start') void showEndless(effect.difficulty).catch(reportError);
-        else draw();
+        activate(navigation.select(Number(button.dataset.menuIndex)));
       });
     }
     app.querySelector<HTMLButtonElement>('.selected')?.focus();
   }
+  function activate(effect?: NavigationEffect): void {
+    if (effect?.type === 'start') void showEndless(effect.difficulty).catch(reportError);
+    else if (effect?.type === 'laboratory') void showPlayground().catch(reportError);
+    else draw();
+  }
   const keys = (event: KeyboardEvent): void => {
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.code === 'Enter' && event.target instanceof HTMLAnchorElement) return;
     if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.code)) {
       event.preventDefault(); navigation.move(event.code === 'ArrowDown' || event.code === 'ArrowRight' ? 1 : -1); draw();
     } else if (event.code === 'Enter') {
-      event.preventDefault(); const effect = navigation.confirm();
-      if (effect?.type === 'start') void showEndless(effect.difficulty).catch(reportError);
-      else draw();
+      event.preventDefault(); activate(navigation.confirm());
     } else if (event.code === 'Escape') { event.preventDefault(); navigation.escape(); draw(); }
   };
   window.addEventListener('keydown', keys);
@@ -95,7 +99,7 @@ async function showPlayground(): Promise<void> {
       <div class="stage-column"><div class="status-bar"><output id="metrics" aria-label="Estado de simulación"></output>
         <div id="cargo-status" aria-label="Carga retenida"></div></div>
         <div id="canvas-host" tabindex="0" aria-label="Zona de prueba de físicas"></div>
-        <p class="control-strip"><kbd>←/A</kbd><kbd>→/D</kbd> velocidad · <kbd>↑/W</kbd><kbd>↓/S</kbd> caparazón / nadar · <kbd>Espacio</kbd> mantener y soltar para saltar · <span id="pause-state">En marcha</span></p>
+        <p class="control-strip"><kbd>←/A</kbd><kbd>→/D</kbd> velocidad · <kbd>↑/W</kbd><kbd>↓/S</kbd> equilibrar caparazón, también en agua · <kbd>Espacio</kbd> mantener y soltar para saltar en seco; mantener para subir más rápido en agua · <span id="pause-state">En marcha</span></p>
         <p id="scenario-note" class="scenario-note"></p>
       </div>
       <aside class="tuning-panel"><label for="scenario">Escenario</label>
@@ -114,8 +118,8 @@ async function showPlayground(): Promise<void> {
         <button id="baseline">Restaurar settings</button><button id="export-settings">Exportar settings</button>
         <p class="hint">Para guardar los ajustes, reemplaza settings.txt en el repositorio con el archivo exportado y reconstruye el build.</p></details>
         <details><summary>Qué estamos probando</summary><p>La carga se conecta al caparazón por contactos. Un rebote breve se puede recuperar; una pérdida definitiva queda fuera de la mudanza.</p>
-        <p>Compensa la inclinación del suelo con el caparazón. Carga Espacio en terreno seco y suéltalo para saltar.</p>
-        <p>En agua, más peso permite bajar y aprovechar una corriente más fuerte. Sin carga cuesta hundirse. Ante un obstáculo, la cámara espera en el margen trasero hasta que puedas avanzar saltando.</p></details>
+        <p>↑/W y ↓/S equilibran el caparazón tanto en seco como en agua. Carga Espacio en terreno seco y suéltalo para saltar.</p>
+        <p>La carga conservada y la inercia de entrada determinan la profundidad en el agua. Mantén Espacio para subir más rápido. A mayor profundidad, la corriente ayuda más a avanzar. Ante un obstáculo, la cámara espera en el margen trasero hasta que puedas avanzar saltando.</p></details>
         <p class="hint">Los tramos son diagnósticos, sin puntuación ni niveles reales. Aquí la escala es fija. Cada nivel normal calculará su zoom al cargar y lo mantendrá durante el recorrido.</p>
       </aside>
     </section>

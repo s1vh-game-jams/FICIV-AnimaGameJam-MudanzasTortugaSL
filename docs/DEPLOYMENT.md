@@ -90,13 +90,13 @@ The expected Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-M
 
 After building, use a real browser:
 
-1. Verify hidden Shift+P access, direct `?mode=physics` and refresh.
+1. Verify the secondary gear-labelled title entry with mouse/keyboard, existing Shift+P access, direct `?mode=physics` and refresh.
 2. Verify textures, default 0.30 m shell registration, collider drawing, cargo and Rapier WASM initialization. Change shell height and verify coherent support/load placement with unchanged shapes.
 3. Compare arrows/WASD. D must accelerate; C toggles debug.
 4. Hold Space for partial/full/over-cap charges; release must launch once. Check lowered-head pose, no charge GUI, supported cargo and ordinary landing. At the current 8 m/s maximum, include high flight that carries cargo above the visible frame; visibility must not affect physics or connectivity.
 5. Pause/blur during charge, then return: no deferred jump. Pause freezes time and help; neutral single-step advances physics by one tick without advancing onboarding.
-6. Compare empty/sofa/full water behavior, initial dive momentum, swimming and bank exit.
-7. Compare slopes and manual compensation; verify actual shell contact motion and visible feet.
+6. Compare empty/sofa/full water behavior and natural entry momentum. Arrows/W/S must balance the shell; held Space must assist ascent without charging, with no commanded dive. Check partial tilt, violent-impact losses and bank exit.
+7. Compare ascending/descending slopes and manual compensation; verify actual shell contact motion and visible feet. Check airborne departure pitch and freefalls. Buoyant forward travel beneath the island must not require a downward command to leave a ceiling contact.
 8. Edit fine decimal values, rear/front movement percentages and per-side dead-zone percentage; check validated reset and pause preservation. Lab guides and physical bounds must match its fixed 76 pixels/metre scale. Dead-zone edits change the read-only normal-level framing preview without changing laboratory character size or physical corridor width. Resize the landscape viewport.
 9. Enable help preview: speed/balance/jump sequence, first-water priority and per-run reset.
 10. Export settings while paused: download must preserve time/tick/pause; its text round-trips through the shared codec. Replace source settings and rebuild/reload to verify permanent defaults; restore recovers loaded values.
@@ -113,9 +113,12 @@ Repeat on both root and repository-subpath builds:
 2. Inspect cargo icons, timer, score, deployed pennants and upcoming terrain. The separate dry opening has no scoring flag or traps. Complete the initial timed help before entering water.
 3. Pause and verify frozen physics/time/help/hazards. Continue is selected initially; restart and exit require confirmation with cancel selected. Restart preserves seed/difficulty/settings and resets help. Showing controls again keeps the game paused.
 4. Resize a landscape viewport, including 640×360. The captured world scale remains unchanged and the HUD remains usable. Blur/hide the page and verify automatic pause without a catch-up burst.
-5. Reach definitive zero cargo and inspect frozen results, score/pennants/time/difficulty/last loss. Return to title and start a fresh run. Confirm both hidden laboratory access paths still work.
+5. Reach definitive zero cargo and inspect frozen results, score/pennants/time/difficulty/last loss. Return to title and start a fresh run. Confirm the secondary laboratory entry and both existing diagnostic access paths work.
+6. Open Credits. Verify the centred exact GDD 41.5.6 dedication, signature, Argorias ArtStation link and copyright footer; return with the button/Enter or Esc. The link must retain native keyboard activation.
 
 The 2026-10-04 implementation has browser evidence for the full flow, all difficulties, a real pennant award, definitive-zero results, pause/restart/help and root/subpath assets/WASM. Current-settings traversal is covered separately by the physical matrix in [PHYSICS.md](PHYSICS.md#validating-new-module-proposals). Final human balance/readability and live release approval remain outstanding; local production serving does not publish the game.
+
+The 2026-10-05 local root/subpath builds also initialize the revised shared physics and visible laboratory without browser errors. Credits show the exact centred dedication, link, signature and footer, with keyboard return. The secondary laboratory entry works with mouse and arrows/Enter and displays the new water controls; the original diagnostic routes remain. A Normal run reaches an actual pennant award and frozen zero-cargo results. These local checks do not publish a live release.
 
 ## 5. Future GitHub Pages release
 
