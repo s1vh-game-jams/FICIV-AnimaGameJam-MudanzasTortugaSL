@@ -1,10 +1,12 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Six-module Endless prototype integrated on `dev` in `5605d5c`; source branch `codex/endless-jam` is preserved and synchronized. Human playtesting and release approval follow.
+**Status:** Six-module Endless prototype and selected jam audio integrated on `dev`; audio integration is `d803628`. Source branches remain preserved. Human playtesting and release approval follow.
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
-**Current handoff (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are integrated in `dev` as `6299f64`, from preserved `codex/slopes-water-controls`. GDD/README changes are explicitly authorized. Agent checks pass; human local review remains pending. Earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
+**Current handoff (2026-10-05):** jam audio is integrated as `d803628`, from preserved `codex/jam-audio` at `a86269a`. The squash tree exactly matches the verified source tree before this documentation-only closure. TypeScript, ESLint, 696 Vitest cases, 11 Python helper cases, root/Pages builds, native browser media states and 42 unchanged-recording HTTP paths pass. Original volume/formats remain intact; human auditory/target-browser verification is pending. No GDD/physical tuning/replay change or `main` publication is included.
+
+**Earlier handoff (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are integrated in `dev` as `6299f64`, from preserved `codex/slopes-water-controls`. GDD/README changes are explicitly authorized. Agent checks pass; human local review remains pending. Earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
 
 Preserved source commits: `13f5093` (shared physics/tuning/physical regressions), `aa24e5d` (laboratory/help/Credits), `0c1c228` (revised traversal evidence) and `2bf2a19` (design/implementation documentation). Agent checks pass **640 tests across 26 files**: 515 general cases plus the 125-case opt-in traversal file. The latter certifies all **1,152 complete physical trap compositions** and took 1,681.61 seconds; no source changed during the run.
 
@@ -74,13 +76,13 @@ Therefore:
 
 ### AUDIO-001 — Implement the selected jam audio
 - **Priority:** P0
-- **Status:** IN PROGRESS — implementation and checks complete on preserved `codex/jam-audio`; squash integration pending
+- **Status:** DONE — `d803628`, from preserved `codex/jam-audio` at `a86269a`; human auditory/target-browser verification pending
 - **Authorization:** the human requested SOUNDS implementation on 2026-10-05, at original file levels/formats, without listening to/reselecting tracks, conversion, audio options or a mixer.
 - **Scope:** native lazy streaming music for menus/laboratory/Credits/Endless; semantic aliases and bounded SFX voices; real fixed-tick impacts/landings/water/hazard phases; strongest-impact aggregation, grouped loss/client call/text, help/pennant cues and locomotion based on realized motion. Pause cancels gameplay effects and keeps unity BGM/UI; hidden-page BGM preserves position. Diagnostic single-step consumes events silently.
 - **Evidence:** TypeScript/ESLint, 696 Vitest cases across 29 files (236.93 seconds; 56 audio cases), 11 Python helper cases and root/Pages production builds pass. Native browser states verify interaction unlock, menu/context transitions, original WAV/MP3 playback and pause behavior. All 21 source/build recordings keep their hashes; 42 root/subpath HTTP paths return the unchanged files. Historical parity preserves every physical snapshot/body state over 10,800 ticks. No physical tuning, geometry, assets, dependencies or replay revisions change; no new full trap-composition certificate is claimed.
 - **Follow-up:** human auditory readability/target-browser pass remains pending. Optional forest ambience, fades and gain/rate variation are excluded from this original-level iteration. WAV compression stays FUTURE-010.
 - **Provenance:** root owns manager/presentation/application/docs/integration; `/root/physics_audio_events` owns read-only physics telemetry/calibration/regressions; `/root/audio_tests_review` owns media/policy tests and review.
-- **Source commits:** `e7224ca` (physical telemetry/regressions), `619791d` (native runtime/application/media-policy regressions).
+- **Source commits:** `e7224ca` (physical telemetry/regressions), `619791d` (native runtime/application/media-policy regressions), `a86269a` (contract/verification documentation).
 
 ```text
 Repository bootstrap
