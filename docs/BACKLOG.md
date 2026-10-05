@@ -1,10 +1,12 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Six-module Endless prototype integrated on `dev` in `5605d5c`; source branch `codex/endless-jam` is preserved and synchronized. Human playtesting and release approval follow.
+**Status:** Six-module Endless prototype and selected jam audio integrated on `dev`; audio integration is `d803628`. Source branches remain preserved. Human playtesting and release approval follow.
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
-**Current handoff (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are integrated in `dev` as `6299f64`, from preserved `codex/slopes-water-controls`. GDD/README changes are explicitly authorized. Agent checks pass; human local review remains pending. Earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
+**Current handoff (2026-10-05):** jam audio is integrated as `d803628`, from preserved `codex/jam-audio` at `a86269a`. The squash tree exactly matches the verified source tree before this documentation-only closure. TypeScript, ESLint, 696 Vitest cases, 11 Python helper cases, root/Pages builds, native browser media states and 42 unchanged-recording HTTP paths pass. Original volume/formats remain intact; human auditory/target-browser verification is pending. No GDD/physical tuning/replay change or `main` publication is included.
+
+**Earlier handoff (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are integrated in `dev` as `6299f64`, from preserved `codex/slopes-water-controls`. GDD/README changes are explicitly authorized. Agent checks pass; human local review remains pending. Earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
 
 Preserved source commits: `13f5093` (shared physics/tuning/physical regressions), `aa24e5d` (laboratory/help/Credits), `0c1c228` (revised traversal evidence) and `2bf2a19` (design/implementation documentation). Agent checks pass **640 tests across 26 files**: 515 general cases plus the 125-case opt-in traversal file. The latter certifies all **1,152 complete physical trap compositions** and took 1,681.61 seconds; no source changed during the run.
 
@@ -71,6 +73,16 @@ Therefore:
 ---
 
 ## 2. Current critical path
+
+### AUDIO-001 — Implement the selected jam audio
+- **Priority:** P0
+- **Status:** DONE — `d803628`, from preserved `codex/jam-audio` at `a86269a`; human auditory/target-browser verification pending
+- **Authorization:** the human requested SOUNDS implementation on 2026-10-05, at original file levels/formats, without listening to/reselecting tracks, conversion, audio options or a mixer.
+- **Scope:** native lazy streaming music for menus/laboratory/Credits/Endless; semantic aliases and bounded SFX voices; real fixed-tick impacts/landings/water/hazard phases; strongest-impact aggregation, grouped loss/client call/text, help/pennant cues and locomotion based on realized motion. Pause cancels gameplay effects and keeps unity BGM/UI; hidden-page BGM preserves position. Diagnostic single-step consumes events silently.
+- **Evidence:** TypeScript/ESLint, 696 Vitest cases across 29 files (236.93 seconds; 56 audio cases), 11 Python helper cases and root/Pages production builds pass. Native browser states verify interaction unlock, menu/context transitions, original WAV/MP3 playback and pause behavior. All 21 source/build recordings keep their hashes; 42 root/subpath HTTP paths return the unchanged files. Historical parity preserves every physical snapshot/body state over 10,800 ticks. No physical tuning, geometry, assets, dependencies or replay revisions change; no new full trap-composition certificate is claimed.
+- **Follow-up:** human auditory readability/target-browser pass remains pending. Optional forest ambience, fades and gain/rate variation are excluded from this original-level iteration. WAV compression stays FUTURE-010.
+- **Provenance:** root owns manager/presentation/application/docs/integration; `/root/physics_audio_events` owns read-only physics telemetry/calibration/regressions; `/root/audio_tests_review` owns media/policy tests and review.
+- **Source commits:** `e7224ca` (physical telemetry/regressions), `619791d` (native runtime/application/media-policy regressions), `a86269a` (contract/verification documentation).
 
 ```text
 Repository bootstrap
@@ -1189,13 +1201,29 @@ Jam release on main
 ### FUTURE-008 — Formalize audio pipeline/licensing
 - **Priority:** POST-JAM
 - **Status:** DEFERRED
-- **May move into jam:** if audio is selected before submission.
+- **Jam implementation:** the selected-recording runtime pipeline moved into AUDIO-001. SOUNDS owns aliases/events/provenance; LICENSE already records Audio Hero synchronization boundaries.
+- **Remaining:** post-jam tooling and release receipt/EULA audit under RELEASE-002; this implementation does not change licensing terms.
 
 ### FUTURE-009 — Add accounts and authenticated community ownership
 - **Priority:** POST-JAM
 - **Status:** DEFERRED
 - **Depends on:** FUTURE-001/FUTURE-002 and an approved remote provider
 - **Requirement:** email/password and Google sign-in; stable application user IDs linked to authored levels; server-verified ownership for create/update/publish. Published levels and Endless play remain anonymous. Do not migrate local rankings into verified remote rankings without an explicit reviewed import policy.
+
+### FUTURE-010 — Compress WAV runtime audio to MP3
+- **Priority:** POST-JAM
+- **Status:** DEFERRED
+- **Depends on:** stable jam audio integration / `SOUNDS.md`
+- **Goal:** reduce the deployed audio footprint after the jam by replacing runtime WAV assets with MP3 equivalents while preserving the two existing MP3 assets unchanged where appropriate.
+- **Acceptance:**
+  - convert the current WAV runtime assets under `public/audio/` to suitably compressed MP3 versions using the original WAV files as sources;
+  - preserve canonical semantic filenames and update the audio manifest/routes/extensions consistently;
+  - remove obsolete WAV runtime copies after successful verification;
+  - confirm menu, gameplay, hazards, water, UI, ambient audio and BGM still load correctly in Vite development and production/subpath builds;
+  - compare audible quality and looping/transition behavior before accepting the compressed versions;
+  - record the resulting deployed audio size reduction;
+  - keep licensing/provenance mapping intact despite the format conversion.
+- **Note:** explicitly deferred until after the jam; the current mixed WAV/MP3 set is accepted for the jam release to avoid last-minute asset conversion risk.
 
 ---
 
@@ -1213,7 +1241,7 @@ Jam release on main
 | Contextual-help duration | 3–5 seconds per message, tuned for child-readable content | playtesting/readability tuning |
 | Remote leaderboard provider | none | LB-004 starts |
 | Final software license | unresolved | before public release |
-| Audio license structure | unresolved | first audio asset selected |
+| Audio license structure | Audio Hero bundle/synchronization terms in LICENSE; selected paths/provenance in SOUNDS | RELEASE-002 receipt/EULA audit and final release approval |
 | UI/UX specification | GDD section 41 approved; implementation clarifications recorded in PRD | revise only after new approved UX/design decision |
 
 ---

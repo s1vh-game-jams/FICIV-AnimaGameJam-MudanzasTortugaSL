@@ -5,21 +5,23 @@ import type { CargoKind } from '../game/content/cargo';
 import { FixedLoop } from '../game/core/fixedLoop';
 import { KeyboardInput } from '../game/core/input';
 import { EndlessRun } from '../game/modes/endless/run';
-import type { EndlessSnapshot } from '../game/modes/endless/run';
 import { ContextualHelp } from '../game/systems/contextualHelp';
 import { EndlessRenderer } from '../rendering/endlessRenderer';
 import { VISUALS } from '../rendering/visualDefinitions';
 import { publicAsset } from '../utils/publicAsset';
 import { formatRunTime, GameNavigation } from './navigation';
 import type { NavigationEffect } from './navigation';
+import { AudioManager } from '../audio/audioManager';
+import { GameplayAudio } from '../audio/gameplayAudio';
+import { AUDIO_FILES } from '../audio/manifest';
+import { bindMenuFocus } from '../audio/menuAudio';
 
 const DIFFICULTY_LABELS: Readonly<Record<Difficulty, string>> = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil' };
-const LOSS_GROUP_SECONDS = 0.6;
 const LOSS_NOTICE_SECONDS = 4;
 
 /** Mounts one run. Restart repeats its seed and captured settings without reloading assets. */
 export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
-  onExit: () => void): Promise<() => void> {
+  onExit: () => void, audio: AudioManager): Promise<() => void> {
   const tuning = createTuning();
   const navigation = new GameNavigation();
   navigation.beginRun();
@@ -55,8 +57,6 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
   const loop = new FixedLoop(1 / tuning.physicsHz, tuning.maxFrameSeconds, tuning.maxStepsPerFrame);
   const help = new ContextualHelp();
   const lost = new Set<CargoKind>();
-  const pendingLoss = new Set<CargoKind>();
-  let lossDeadline = 0;
   let noticeUntil = 0;
   let noticeIndex = 0;
   let lastFrame = performance.now();
@@ -64,6 +64,8 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
   let raf = 0;
   let disposed = false;
   let helpReset = false;
+  const sound = new GameplayAudio(audio, showLoss);
+  sound.reset(run.snapshot().physics);
 
   function clearControls(): void {
     input.clear(); run.cancelJump(); loop.reset(); lastFrame = performance.now();
@@ -138,69 +140,79 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
       ${content}<nav class="menu-options" aria-label="Opciones">${buttons()}</nav></section>`;
     for (const button of overlay.querySelectorAll<HTMLButtonElement>('[data-menu-index]')) {
       button.addEventListener('click', () => {
+        const option = navigation.options[Number(button.dataset.menuIndex)];
+        audio.playUI(option.id === 'cancel' || option.id === 'back' ? 'back' : 'confirm');
         apply(navigation.select(Number(button.dataset.menuIndex)));
       });
     }
+    bindMenuFocus(overlay, navigation, audio);
     overlay.querySelector<HTMLButtonElement>('.selected')?.focus();
   }
 
   function apply(effect?: NavigationEffect): void {
+    if (effect?.type === 'pause') audio.playUI('pauseOpen');
     if (effect?.type === 'exit') { onExit(); return; }
-    if (effect?.type === 'reset-help') { help.reset(); helpReset = true; }
+    if (effect?.type === 'reset-help') { help.reset(); sound.showHelp(undefined); helpReset = true; }
     if (effect?.type === 'restart') {
       const next = new EndlessRun(tuning, difficulty, seed);
       run.dispose(); run = next;
-      help.reset(); lost.clear(); pendingLoss.clear();
-      lossDeadline = 0; noticeUntil = 0; notice.hidden = true; helpReset = false;
+      help.reset(); lost.clear(); sound.reset(run.snapshot().physics);
+      noticeUntil = 0; notice.hidden = true; helpReset = false;
     }
     if (effect?.type === 'resume') helpReset = false;
     loop.paused = navigation.paused;
+    sound.setPaused(loop.paused);
     clearControls(); lastHud = -1;
     showOverlay(); render();
   }
 
-  function observeLoss(snapshot: EndlessSnapshot): void {
-    for (const item of snapshot.physics.cargo) {
-      if (item.state === 'lost' && !lost.has(item.id)) {
-        lost.add(item.id); pendingLoss.add(item.id);
-        lastHud = -1;
-        if (!lossDeadline) lossDeadline = snapshot.time + LOSS_GROUP_SECONDS;
-      }
-    }
-    if (pendingLoss.size && (snapshot.time >= lossDeadline || snapshot.ended)) {
-      const labels = [...pendingLoss].map(id => CARGO.find(item => item.id === id)!.label.toLowerCase()).join(', ');
-      const messages = pendingLoss.size > 1
-        ? ['La mudanza está tomando varios caminos.', 'Servicio de reparto… demasiado repartido.']
-        : ['¿Mi ' + labels + ' también se muda por su cuenta?', 'Don Tortuga: parada para ' + labels + '.'];
-      notice.textContent = messages[noticeIndex++ % messages.length];
-      notice.hidden = false; noticeUntil = snapshot.time + LOSS_NOTICE_SECONDS;
-      pendingLoss.clear(); lossDeadline = 0;
-    }
+  function showLoss(ids: readonly CargoKind[], terminal: boolean): void {
+    const labels = ids.map(id => CARGO.find(item => item.id === id)!.label.toLowerCase()).join(', ');
+    const messages = ids.length > 1
+      ? ['La mudanza está tomando varios caminos.', 'Servicio de reparto… demasiado repartido.']
+      : ['¿Mi ' + labels + ' también se muda por su cuenta?', 'Don Tortuga: parada para ' + labels + '.'];
+    const call = noticeIndex % 2 === 0;
+    notice.textContent = (call ? '☎ ' : '✉ ') + messages[noticeIndex++ % messages.length];
+    const event = call ? 'clientCall' : 'notification';
+    if (terminal) audio.playUI(event); else audio.playGameplay(AUDIO_FILES.ui[event]);
+    notice.hidden = false; noticeUntil = run.snapshot().time + LOSS_NOTICE_SECONDS;
   }
 
   function step(): void {
     if (navigation.screen !== 'running') return;
     run.step(input.read());
     const snapshot = run.snapshot();
-    observeLoss(snapshot);
+    for (const item of snapshot.physics.cargo) if (item.state === 'lost' && !lost.has(item.id)) {
+      lost.add(item.id); lastHud = -1;
+    }
+    if (!snapshot.ended) help.update(1 / tuning.physicsHz, { inWater: snapshot.physics.turtle.biome === 'water' });
+    sound.observe(snapshot.physics, { logicalOffset: snapshot.logicalOffset, heightOffset: snapshot.heightOffset,
+      pennants: snapshot.pennantsCrossed, ended: snapshot.ended, helpId: help.active?.id });
     if (snapshot.ended) {
       navigation.finishRun(); loop.paused = true;
       clearControls(); lastHud = -1; showOverlay();
       return;
     }
-    help.update(1 / tuning.physicsHz, { inWater: snapshot.physics.turtle.biome === 'water' });
   }
 
   const keys = (event: KeyboardEvent): void => {
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.code === 'Escape') {
-      event.preventDefault(); apply(navigation.escape()); return;
+      event.preventDefault();
+      if (navigation.screen !== 'running') audio.playUI('back');
+      apply(navigation.escape()); return;
     }
     if (navigation.screen === 'running') return;
     if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.code)) {
-      event.preventDefault(); navigation.move(event.code === 'ArrowDown' || event.code === 'ArrowRight' ? 1 : -1);
+      event.preventDefault(); const selected = navigation.selected;
+      navigation.move(event.code === 'ArrowDown' || event.code === 'ArrowRight' ? 1 : -1);
+      if (selected !== navigation.selected) audio.playUI('move');
       showOverlay();
-    } else if (event.code === 'Enter') { event.preventDefault(); apply(navigation.confirm()); }
+    } else if (event.code === 'Enter') {
+      event.preventDefault();
+      audio.playUI(navigation.options[navigation.selected]?.id === 'cancel' || navigation.screen === 'results' ? 'back' : 'confirm');
+      apply(navigation.confirm());
+    }
   };
   const autoPause = (): void => { if (navigation.screen === 'running') apply(navigation.pause()); };
   const visibility = (): void => { if (document.hidden) autoPause(); };
@@ -215,6 +227,7 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
     render(); raf = requestAnimationFrame(frame);
   }
   help.update(0, { inWater: false });
+  sound.showHelp(help.active?.id);
   pauseButton.disabled = false;
   render(); host.focus();
   raf = requestAnimationFrame(frame);
@@ -225,6 +238,6 @@ export async function mountEndlessGame(app: HTMLElement, difficulty: Difficulty,
     window.removeEventListener('keydown', keys);
     window.removeEventListener('blur', autoPause);
     document.removeEventListener('visibilitychange', visibility);
-    input.dispose(); run.dispose(); renderer.dispose();
+    sound.dispose(); input.dispose(); run.dispose(); renderer.dispose();
   };
 }

@@ -5,7 +5,7 @@ button, select, input { font: inherit; }
 button { background: #f9faf1; border: 1px solid #a8b59d; color: #173e37; padding: .6rem .8rem; border-radius: .45rem; cursor: pointer; }
 button:hover { background: #fff; }
 button[aria-pressed="true"] { border: 2px solid #23745d; background: #d9ead8; }
-button:disabled { opacity: .45; cursor: default; }
+button:disabled, button[aria-disabled="true"] { opacity: .45; cursor: default; }
 :focus-visible { outline: 3px solid #e49b36; outline-offset: 3px; }
 kbd { display: inline-block; border: 1px solid #bbc6ae; background: #fff; color: #173e37; border-radius: 3px; padding: 0 .25rem; font: .8em monospace; }
 .title-screen { min-height: 100vh; text-align: center; display: flex; align-items: center; justify-content: center; flex-direction: column; background: radial-gradient(ellipse at bottom, #c7d8a9, #edf0de 65%); padding: 2rem; }

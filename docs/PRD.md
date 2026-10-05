@@ -95,6 +95,8 @@ Operational rule:
 
 ### 1.2 Approved clarifications
 
+**Approved jam audio iteration (2026-10-05):** implement the closed [SOUNDS.md](SOUNDS.md) selection with native browser streaming audio, the shared publicAsset helper and no new dependency. Preserve all original WAV/MP3 files, unity volume/playback rate, browser/device volume control and no audio settings/mixer. BGM continues at unity through gameplay pause; hidden pages suspend it at the same playback position. Gain variation, ducking, fades and optional forest ambience remain outside this iteration. Shared fixed-tick presentation telemetry reports real impacts/landings/water/hazard transitions without changing physics; the presentation policy groups crashes and definitive loss/client notices, suppresses paused effects and provides once-only help/pennant cues. Technical evidence and current presentation thresholds belong to SOUNDS, not a new gameplay rule.
+
 When this PRD labels a rule as an **approved clarification**, it records a human-resolved ambiguity or refinement that may not yet have been synchronized back into the GDD wording.
 
 Agents should implement the clarification exactly and must not generalize it into unrelated design changes.

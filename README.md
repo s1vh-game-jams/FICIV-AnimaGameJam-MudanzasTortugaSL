@@ -80,6 +80,8 @@ El objetivo mínimo de la jam incluye:
 
 El diseño completo vive en [`/docs/GDD.md`](docs/GDD.md).
 
+El audio se activa con la primera pulsación o clic: portada y menús usan **Fixing the Farmer's Car**, Créditos y laboratorio **Patio Party**, y Carrera Infinita **Just Kidding**. Los efectos acompañan impactos, trampas, agua, ayudas, banderines y pérdidas agrupadas. Ajusta el volumen desde el dispositivo o navegador; esta entrega no tiene opciones de audio. Las pistas WAV/MP3 conservan su formato y volumen originales. La pausa detiene los efectos de juego y mantiene la música.
+
 ---
 
 ## 🕹️ Controles
@@ -475,6 +477,7 @@ Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de trabajar con ramas, commi
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — builds, servidor y despliegue.
 - [`docs/PHYSICS.md`](docs/PHYSICS.md) — arquitectura de físicas y tuning.
 - [`docs/ASSETS.md`](docs/ASSETS.md) — guía de repintado para la artista.
+- [`docs/SOUNDS.md`](docs/SOUNDS.md) — pistas seleccionadas, eventos, reproducción y verificación del audio.
 - [`docs/BACKEND.md`](docs/BACKEND.md) — catálogo, ranking local, juego anónimo y futura migración remota.
 - [`docs/ENDLESS_PLAN.md`](docs/ENDLESS_PLAN.md) — plan de implementación de Carrera Infinita para revisar.
 - [`AGENTS.md`](AGENTS.md) — mapa operativo completo para Codex y otros agentes.
@@ -483,9 +486,9 @@ Consulta [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de trabajar con ramas, commi
 
 ## ⚖️ Licencia
 
-La licencia está **provisionalmente definida** durante el arranque de la jam y se explica en [`LICENSE.md`](LICENSE.md).
+El proyecto tiene licencias distintas para el código, el arte y el audio, descritas en [`LICENSE.md`](LICENSE.md).
 
-El código, los assets propios y el futuro audio pueden acabar sujetos a licencias distintas. No debe añadirse ningún recurso de terceros sin comprobar sus condiciones de uso y atribución.
+Las grabaciones de Audio Hero conservan sus condiciones de uso y no se relicencian como código. No debe añadirse ningún recurso de terceros sin comprobar sus condiciones de uso y atribución.
 
 ---
 
