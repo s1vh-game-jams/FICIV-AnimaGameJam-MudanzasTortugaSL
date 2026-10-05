@@ -4,9 +4,9 @@
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
-**Current work (2026-10-05):** descending support, shared underwater controls/cargo assistance, a visible secondary laboratory entry and the human-authored Credits dedication are being implemented on `codex/slopes-water-controls`, from synchronized `dev` `b12913a`. GDD/README changes are explicitly authorized. Route certification is being repeated for the changed controller; earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
+**Current work (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are implemented and agent-verified on `codex/slopes-water-controls`, from synchronized `dev` `b12913a`. GDD/README changes are explicitly authorized. Squash integration is the remaining handoff step; earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
 
-Preserved source commits: `13f5093` (shared physics/tuning/physical regressions), `aa24e5d` (laboratory/help/Credits) and `0c1c228` (revised traversal evidence). The general suite passes 515 tests across 25 files; the separate 125-case opt-in traversal file is still completing its exhaustive certificate. Integration stays pending until that gate passes.
+Preserved source commits: `13f5093` (shared physics/tuning/physical regressions), `aa24e5d` (laboratory/help/Credits), `0c1c228` (revised traversal evidence) and `2bf2a19` (design/implementation documentation). Agent checks pass **640 tests across 26 files**: 515 general cases plus the 125-case opt-in traversal file. The latter certifies all **1,152 complete physical trap compositions** and took 1,681.61 seconds; no source changed during the run.
 
 ---
 
@@ -453,7 +453,7 @@ Jam release on main
 - **Depends on:** PHYS-026, PHYS-027
 - **Acceptance:** all six module routes/first landings, reachable partial loads and exhaustive compatible traps use current settings and keyboard-equivalent controls. A submerged route must be reached through natural load/entry response, without dive commands or avatar teleports; distinguish carrier escape from retained-load continuation.
 - **Implementation tuning:** the original AD underpass relied on commanded diving. After asking for an optional water-tuning/geometry preference and continuing independent work, Sol retained the geometry and selected configurable `waterDepthPerKg=0.25` and `waterSwimAcceleration=14` as the starting revision. These are not human-selected permanent values. Real traces retain the original 13.6 kg from a dry DA ledge through AD's natural underpass; full/sofa/empty Space routes use the surface alternative. Full DA three-second bank-jump traces separately retain the sofa beyond the module.
-- **Recovery evidence:** the shared ascending-intent fallback clears AD's island lip after actual upper-cargo loss. Across 123 recorded passage states, minimum shell/island separation is 3.142 mm and capsule/island separation is 49.946 mm; no geometry or carrier teleport is used. All 60 partial-load cases pass in the final general suite; exhaustive trap certification remains in progress.
+- **Recovery evidence:** the shared ascending-intent fallback clears AD's island lip after actual upper-cargo loss. Across 123 recorded passage states, minimum shell/island separation is 3.142 mm and capsule/island separation is 49.946 mm; no geometry or carrier teleport is used. All 60 partial-load cases and all 1,152 exhaustive trap compositions pass with the revised controls/settings.
 
 ---
 
@@ -880,7 +880,7 @@ Jam release on main
   - first-water help uses held Space for ascent and reminds the player that `↑/W ↓/S` continue to balance the shell; 3/4/4/3-second default timers, per-run state, priority and paused reset remain unchanged;
   - Credits centre the exact dedication, signature and copyright owned by GDD 41.5.6, with only the dedication's Argorias Svartha name linked to ArtStation;
   - the existing return button and `Esc` preserve navigation, while focused-link `Enter` retains native activation.
-- **Evidence:** all 27 focused navigation/contextual-help tests and focused ESLint pass. Gear XML parses with matching 32 × 32 dimensions/viewBox and no external dependencies. Root browser review confirms centred exact Credits text, link and footer. Final integrated checks and source/dev commit references remain pending.
+- **Evidence:** all 27 focused navigation/contextual-help tests and focused ESLint pass. Gear XML parses with matching 32 × 32 dimensions/viewBox and no external dependencies. Root/subpath browser review confirms the secondary gear entry, updated controls and centred exact Credits text, link, signature, footer and keyboard return. These checks are included in the final 640-case evidence; source implementation is `aa24e5d`.
 - **Provenance:** `/root/ui_game` implements UI, original icon, targeted tests and affected documentation; root Sol owns design synchronization and integration.
 
 ### ART-004 — Register charged-head walking variants
@@ -1342,6 +1342,22 @@ Agent verification:
 Root Sol implemented the shared physical/service adapters and reviewed integration. `/root/endless_content` supplied seeded content/scoring/streaming; `/root/ui_game` supplied navigation/rendering and browser QA; `/root/assets_validation` supplied original assets and physical matrices; `/root/final_review` independently reviewed behavior/documentation. Review found asymmetric pinecone/terrain collision groups and overly early lost-body retirement for wider frames; both were corrected before source commit `be8d6fe`, with physical regressions. No earlier bug-introducing commit is claimed.
 
 Human follow-up remains TEST-005/TEST-006/TEST-012 for balance, partial-loss recovery, readability and sustained retained-load play. Optional Endless records, touch controls, final art/audio and publication remain their tracked scopes. Local serving at `http://127.0.0.1:4173/` is available for review; live Pages/main promotion is a separate human-controlled release.
+
+### Shared slopes, water and Credits handoff — 2026-10-05
+
+The human requested the shared-game downhill fix, underwater balance/Space ascent, bounded wet cargo assistance and visible secondary laboratory access, then supplied the exact Credits dedication/link/signature/footer. Implementation is `13f5093` and `aa24e5d`, with revised route tests `0c1c228` and documentation `2bf2a19`, on preserved branch `codex/slopes-water-controls`. Root Sol owns the approved GDD synchronization; no module geometry, shapes, gravity, dry launch cap or camera corridor changed. Configurable starting depth/ascent are 0.25 m/kg and 14 m/s²; the revised partition is `endless-physics-2`.
+
+Agent verification:
+
+- Strict TypeScript and global ESLint pass. The general suite excluding the separately exhaustive traversal file passes 515 cases across 25 files in 198.66 seconds. The opt-in file passes 125/125 in 1,681.61 seconds. Together: **640 cases across 26 files**, including **1,152 complete compositions**, 18 mandatory full-charge first landings, socket recovery and compatible seams. Checks use the existing package tools through the bundled Node runtime because of the documented Windows npm junction limitation; packages/scripts are unchanged.
+- Eleven mirrored-ramp/load/jump/cliff regressions verify real downward pitch, about 0.05 m foot clearance, shell separation, eligible jump departure and freefall. Five independent physical water-response cases verify ordinary correction, both extreme angles, violent impact, actual contact grace/loss and restoration of dry response. Island-lip recovery preserves rising intent and passes actual capsule plus complete shell-path guards.
+- All 15 nonempty cargo subsets are physically observed after grace in each water module; all 60 carrier routes escape. Revised authored traces retain cargo at the exit in AB 12/15, BA 9/15, AD 10/15 and DA 2/15. Separate whole-route DA three-second jumps retain the sofa with Space ascent either held or released. The original full stack spawned/settled on a dry DA ledge reaches AD's natural underpass with all 13.6 kg, then exits with continuing cargo. This local-entry certificate does not claim perfect retention through all earlier DA terrain or all arbitrary inputs.
+- Root and repository-subpath production builds pass. Browser checks confirm Credits' exact centred wording, hyperlink and footer, mouse/keyboard return, smaller gear entry, Shift+P/direct laboratory access, new control strip and textures/WASM without errors. A Normal production run records an actual pennant award and frozen zero-cargo results. The screenshot is ignored `artifacts/credits-2026-10-05.png`; the exact repeatable contract lives in GDD 41.5.6.
+- All 11 Python server-helper tests pass. The original gear's XML/dimensions/viewBox are valid and its subpath asset resolves correctly. Current geometry and physical clearances, rather than avatar/object relocation, support the recovery evidence.
+
+Root Sol implemented/integrated the shared physics and documentation. `/root/assets_validation` supplied downhill regression and measured island clearance; `/root/endless_content` supplied keyboard-equivalent route, real-entry and partial-load certification; `/root/ui_game` supplied menus, help, exact Credits, original gear and cargo-response tests; `/root/final_review` reviewed current source/contracts without finding actionable issues. The exact introducing commit for the prior downhill symptom remains unproven.
+
+Human review remains necessary for feel, challenge, underwater grip, partial-loss recovery and the configurable depth/ascent starting values. TEST-005/TEST-006/TEST-012 preserve those follow-ups. The root production preview remains available locally; final live deployment belongs to the separately requested release thread.
 
 ## 5. Backlog maintenance reminder
 
