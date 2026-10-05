@@ -10,6 +10,12 @@ const FIXED_TUNING = {
   worldPixelsPerMetre: 76, viewWidth: 1280, viewHeight: 720,
 } as const;
 type FixedTuning = { -readonly [K in keyof typeof FIXED_TUNING]: number };
+
+/** Bounded water assistance; cargo keeps independent motion and contact-based retention. */
+export const WATER_CARGO_RESPONSE = {
+  gripMultiplier: 3, frictionMultiplier: 1.5,
+  linearDampingMultiplier: 1.5, angularDampingMultiplier: 2,
+} as const;
 /** Metres, kilograms, seconds and radians; movement margins use the fixed laboratory viewport. */
 export type Tuning = AdjustableSettings & FixedTuning & { cameraBack: number; cameraFront: number };
 

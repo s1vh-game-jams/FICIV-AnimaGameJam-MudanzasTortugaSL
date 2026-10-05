@@ -60,6 +60,10 @@ summary { cursor: pointer; font-weight: 650; }
 .menu-option.selected { border: 3px solid #173e37; background: #faf9e9; padding: calc(.8rem - 1px) calc(1.4rem - 1px) calc(.8rem - 1px) calc(2.4rem - 1px); box-shadow: 4px 4px 0 #bbcaa3; }
 .menu-option small { display: block; font-size: .78rem; font-weight: 450; margin-top: .25rem; }
 .selection-arrow { position: absolute; left: .7rem; top: .85rem; width: 1rem; }
+.menu-option.secondary { min-height: 44px; padding-block: .55rem; font-size: .82rem; font-weight: 500; }
+.menu-option.secondary.selected { padding-block: calc(.55rem - 1px); }
+.menu-option.secondary .selection-arrow { top: .65rem; }
+.menu-gear { width: 1rem; height: 1rem; margin-right: .45rem; vertical-align: middle; }
 .menu-key-hint { font-size: .8rem; color: #566b54; margin: 1.3rem 0 0; }
 .menu-key-hint kbd { margin-right: .15rem; }
 .title-screen { padding: 1rem; }
@@ -77,6 +81,10 @@ summary { cursor: pointer; font-weight: 650; }
 .selection-screen .menu-card { padding-block: 3rem; }
 .selection-screen h1 { margin-bottom: 2rem; }
 .selection-screen p { line-height: 1.5; }
+.credits-copy { text-align: center; }
+.credits-copy a { color: inherit; text-decoration: underline; text-underline-offset: .15em; }
+.credits-signature { margin-top: 1.5rem; }
+.credits-copyright { margin-top: 2rem; font-size: .75rem; color: #566b54; }
 
 .endless-game { position: relative; width: 100%; height: 100svh; min-height: 320px; overflow: hidden; background: #173e37; }
 #endless-canvas { position: absolute; inset: 0; outline-offset: -4px; }

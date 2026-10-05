@@ -401,7 +401,13 @@ It is an engineering/product requirement, not a normal player mode.
 
 ### 8.2 Access
 
-From the main screen:
+The title has a visible secondary **⚙ Laboratorio de físicas** entry, with smaller text than the main buttons and the same keyboard/mouse selection model. It opens the shared laboratory and permits return to title. It remains outside the normal mode selector.
+
+Its replaceable original gear is `public/sprites/ui/laboratory.svg`, a decorative 32 × 32 SVG displayed at 1 rem through `publicAsset`; [ASSETS.md](ASSETS.md) owns its provenance and repaint contract.
+
+**Approved shared-control revision (2026-10-05):** the human requested descending terrain-pitch recovery, underwater manual shell balance, held-Space ascent, no commanded dive, more permissive but finite underwater cargo assistance, updated per-run help and this visible secondary entry. This applies to the shared game/laboratory core. The GDD/README changes are explicitly authorized; final jam deployment belongs to a separate task.
+
+The existing title shortcut remains:
 
 ```text
 Shift + P
@@ -563,7 +569,10 @@ Required flow:
 
 ```text
 Main Menu
-  ├─ Credits (recommended)
+  ├─ Créditos
+  │    └─ Main Menu
+  │
+  ├─ ⚙ Laboratorio de físicas (secondary)
   │    └─ Main Menu
   │
   └─ Mode Select
@@ -712,8 +721,8 @@ Required:
 - no reverse traversal;
 - no player-commanded full stop; physical blockers may stop realized movement until a jump or other valid forward recovery clears them;
 - player modifies velocity within a bounded range;
-- Arrow keys and WASD both control speed and shell/swimming;
-- player controls shell tilt on dry terrain;
+- Arrow keys and WASD both control speed and shell balance in dry terrain and water;
+- player controls shell tilt in both media;
 - turtle terrain pitch plus relative manual shell tilt produces the authoritative physical shell pose;
 - shell maximum angle initially expected within the GDD's 30°–45° tuning range;
 - camera/turtle safe-window constraints should alter allowed acceleration/deceleration smoothly rather than teleporting the turtle.
@@ -725,7 +734,10 @@ The laboratory maps rear/front percentages through its fixed 1280×720 compositi
 In water:
 
 - horizontal inputs continue regulating forward motion;
-- vertical inputs control swimming rather than shell tilt;
+- vertical inputs retain manual shell balance;
+- held Space assists ascent immediately; release returns to natural buoyancy, without underwater jump charging;
+- there is no commanded dive: retained weight and water-entry momentum determine immersion, including a possible dry jump before entry;
+- stronger contact grip/friction and damping assist ordinary corrections, while independent cargo can still collapse under excessive tilt or strong impacts;
 - Don Tortuga cannot drown.
 
 Charged jump:
@@ -744,7 +756,7 @@ Terrain support may use a stable translation proxy while the real shell follows 
 
 `shellPivotY` moves the shell pivot relative to the body origin along the terrain-relative local up axis. Its default is the original 0.30 m; increasing it raises the cargo support and changes stability, while preserving body, shell and cargo collider shapes. Initial cargo placement shifts by the same height difference before settling.
 
-Water tuning must make an empty turtle resist sustained immersion, retain smoothly damped entry momentum, and permit heavier retained loads to reach deeper routes. Up/down input modulates descent/ascent; all supported loads must be able to return to the surface and leave authored banks. Definitively lost cargo immediately stops contributing weight.
+Water tuning must make an empty turtle resist sustained immersion, retain smoothly damped entry momentum, and permit heavier retained loads to reach deeper routes. Space assists ascent; arrows never command vertical swimming. All supported loads must be able to return to the surface and leave authored banks. Definitively lost cargo immediately stops contributing weight. Optional submerged routes require real entry/load evidence under these controls; prior downward-swimming traces are historical evidence only.
 
 Use Rapier body/control patterns that transfer understandable motion to dynamic cargo without arbitrary sprite teleportation.
 
@@ -845,7 +857,7 @@ There are four gameplay help messages:
 1. `←/A →/D` + **velocidad**
 2. `↑/W ↓/S` + **equilibrar caparazón**
 3. `Espacio` + **mantén y suelta para saltar**
-4. `↑/W ↓/S` + **nadar**
+4. `Espacio` + **mantén para subir; ↑/W ↓/S equilibran**
 
 Rules synchronized with GDD 41.7:
 
@@ -862,7 +874,7 @@ Rules synchronized with GDD 41.7:
 
 Prototype 2 opening constraint: the authored safe opening must allow all three initial messages to complete before reachable water, even at maximum permitted early-run speed. Community-content preemption preserves technical operation but does not certify onboarding layout quality.
 
-Prototype 1 supplies the tested shared help controller and an optional laboratory preview. Actual normal-level/menu integration remains Prototype 2 work.
+The shared help controller is integrated in Endless and the optional laboratory preview. Current default lifetimes are 3/4/4/3 seconds for speed/balance/jump/water. The approved water-copy revision retains these timers, per-run state, priority and pause/reset behavior.
 
 ### 14.5 Results / delivery note
 
@@ -909,9 +921,15 @@ The cargo HUD update itself is core feedback and should not depend on whether th
 
 ### 14.7 Credits
 
-A Credits screen from the main menu is recommended for the jam, especially to preserve human/agent/art/audio attribution.
+**Approved presentation revision (2026-10-05):** the visible **Créditos** screen is required for the jam. GDD section 41.5.6 owns the exact human-authored dedication, signature and copyright; render that wording and punctuation without paraphrasing.
 
-It is not allowed to block Prototype 2 core playability if schedule pressure forces it to be finished during final presentation/polish.
+- Centre the dedication and its separate **— Mike Fieldins** signature.
+- Link only **Argorias Svartha** in the dedication to `https://www.artstation.com/argorias`; the footer remains plain text.
+- Display the exact copyright footer specified by the GDD.
+- Retain **Volver a la portada**, selected by default, and `Esc` return behavior.
+- Preserve native keyboard activation when the hyperlink is focused; menu `Enter` handling must not intercept it.
+
+The original generic Credits screen was delivered with Endless; UX-012 tracks this approved dedication and the accompanying laboratory/help revision. Licensing and imported-asset attribution remain governed by [LICENSE.md](../LICENSE.md) and RELEASE-002.
 
 ---
 
@@ -1174,7 +1192,7 @@ Exit criterion:
 - Mudanzas Tortuga, S.L. brand presentation;
 - local personal-best display/storage where available;
 - cargo-loss feedback (richer client-message presentation may be P1 polish);
-- Credits screen if schedule permits;
+- required Credits screen with the exact approved dedication, link, signature and copyright;
 - replace prototype art as available;
 - feedback/polish.
 
@@ -1219,6 +1237,8 @@ Checked items record implemented behavior and agent verification for the Endless
 - [x] Pennants are visual only, deploy at distance once and use the actual committed exit.
 - [x] Endless multiplier score samples retained cargo after loss updates and ends at definitive zero.
 - [x] Main → Mode → Difficulty → Endless → Results → Main works.
+- [x] Main → Créditos → Main displays the exact GDD dedication/link/signature/copyright and supports keyboard return.
+- [x] The visible secondary laboratory entry supports keyboard/mouse selection and retains `Shift + P` / `?mode=physics` access.
 - [x] `Esc` pause freezes physics and timer and resumes safely.
 - [x] Menus are fully navigable by keyboard and selected state does not depend only on color.
 - [x] Endless HUD shows cargo state, timer, pennants/multiplier and cumulative score.

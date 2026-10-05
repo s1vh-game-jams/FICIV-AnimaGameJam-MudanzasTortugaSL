@@ -86,6 +86,18 @@ export class EndlessStream {
       this.nextHeight = module.endHeight;
       this.nextBiome = module.exitBiome;
     }
+    if (snapshot.turtle.biome === 'water') for (const module of this.resident) {
+      if (module.exitBiome !== 'water' || snapshot.turtle.x < module.startX || snapshot.turtle.x > module.endX ||
+        module.endX - snapshot.turtle.x > this.framing.visibleMetres) continue;
+      const water = module.water?.find(region => region.right === module.endX);
+      const flag = this.flags.find(flag => flag.moduleIndex === module.index);
+      if (water && flag && !flag.crossed) {
+        // Water has a continuous passing-height choice. Keep the nearby visual
+        // at the actual carrier route, then freeze it when the distance scores.
+        flag.y = Math.max(water.bottom + G.waterBottomClearance,
+          Math.min(water.surface, snapshot.turtle.bodyY - G.turtleHalfHeight));
+      }
+    }
   }
 
   retireBehind(snapshot: SimulationSnapshot): void {

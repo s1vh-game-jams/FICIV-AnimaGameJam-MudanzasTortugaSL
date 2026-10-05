@@ -14,7 +14,7 @@ Rapier owns physical bodies, colliders, contacts and world stepping. Pixi render
 
 | Source | Responsibility |
 |---|---|
-| `src/main.ts` | Hidden route, laboratory controls, world lifecycle, fixed-loop scheduling and parameter editing. |
+| `src/main.ts` | Secondary title entry/direct route, laboratory controls, world lifecycle, fixed-loop scheduling and parameter editing. |
 | `src/game/core/fixedLoop.ts` | Accumulate render elapsed time and advance fixed simulation ticks; pause and single-step support. |
 | `src/game/core/input.ts` | Keyboard state and input cleanup. |
 | `settings.txt` | Canonical adjustable startup defaults for game and laboratory. |
@@ -46,6 +46,8 @@ The shell guard retains exact polygon separation and full-arc clearance. A conse
 
 `FixedLoop` rechecks its paused state after every callback so terminal loss cannot run extra physics ticks from a render-frame burst. Endless scoring processes definitive cargo loss before flag crossings, includes separation grace, and freezes on final zero. Pennants have no Rapier body, collider or sensor.
 
+Near a water exit, an unpassed pennant follows the actual carrier's passing height within that region's bounds, then freezes when crossed. This keeps the visual readable for surface and deep retained-load routes. Only presentation height changes; distance crossing, physical geometry and scoring remain authoritative.
+
 ### Fixed simulation and lifecycle
 
 The baseline physics frequency is 60 Hz. Browser frames can produce zero, one or several fixed ticks. Long frames have a bounded catch-up budget; excess wall time is discarded rather than becoming a large simulation timestep. The displayed simulation time derives from the number of completed physics ticks.
@@ -72,7 +74,11 @@ An existing support contact may be skipped only when analytic minima for every m
 
 In the recorded long-floor regression, the shell's actual geometric minimum was 15.48 mm below the floor while the pinned Rapier version's contact-distance query reported a positive 0.725 mm separation for that pose. This fixture-specific discrepancy requires the independent polygon guard; a zero-velocity cast or contact-distance result alone cannot certify clearance. Only immutable authored terrain vertices are cached. Additional static solids use their current collider transforms.
 
-The character controller preserves numerical clearance through the canonical `controllerOffset` and `controllerNudge` settings. Snap-to-ground is deliberately disabled; gravity provides ground following. During implementation, snapping erased clearance at shallow contacts, allowing zero-time-of-impact normals to block horizontal travel even while the requested speed remained positive. Changes to clearance, nudging, terrain geometry or snapping must repeat the actual forward-traversal tests, not only the target-speed unit tests.
+The character controller preserves numerical clearance through the canonical `controllerOffset` and `controllerNudge` settings. Native snap-to-ground remains disabled because it can erase that gap and interrupt forward movement. Descending support instead uses a shallow downward capsule cast, at most the existing 0.32 m step height, after a confirmed grounded departure. Only an actual walkable descending face can establish support; the cast preserves the 0.05 m controller gap and ignores sensors/dynamic bodies. Flat-normal roundoff is rejected. Water, upward launches and stump lifts do not engage this follower, and accepted shell translation rechecks nearby support. Deep ledges retain freefall/departure pitch. Mirrored ramps, jumps, cliffs and actual body/shell clearance are covered in `descendingTerrain.test.ts`. Changes to clearance, nudging, terrain geometry or support queries require real forward-traversal checks.
+
+For an ascent blocked by a ceiling, the shell guard also tests forward movement with the blocked vertical component removed. The locomotion controller and the full shell-path guard must both accept it. This permits buoyant sliding under connected island roof seams without a commanded dive; endpoint SAT and intermediate rotation clearance remain required.
+
+At a convex island lip, the locomotion capsule can project rising forward intent down the solid. In water, an actual front/down collision with this contradictory downward result retries the original ascent without forward intent. The capsule may produce a small backward slide; it is accepted only when rising and when the complete shell path is clear. The rejected-shell fallback preserves the same original intent. This prevents alternating physical ascent and capsule-induced downward sliding; neither guard allows passing through the island.
 
 Movement uses Rapier's next-kinematic-transform APIs at the fixed timestep, allowing the solver to convey support movement to dynamic cargo. Ordinary traversal must not reposition cargo through sprite transforms or instant positional clamps.
 
@@ -127,7 +133,7 @@ Reconnection during grace clears the separation timer. Grace uses simulation tim
 
 On terminal loss, the simulation changes collision groups so the object can still fall against terrain but cannot interact with the turtle, shell or remaining cargo. It cannot return to the active graph. Its continuing visual motion is diagnostic/comedic presentation, not a gameplay obstacle.
 
-Retained cargo uses zero linear damping during dry airborne motion so world-space damping cannot slow its freefall relative to the undamped kinematic carrier. Canonical linear damping returns while grounded or in water; angular damping remains active throughout. The carrier's dry airborne displacement matches the mean gravity integration of Rapier's solver substeps. Takeoff compensation uses accepted support motion with that integration correction, avoiding a one-tick displacement bias. Water-entry velocity compensation uses realized carrier velocity.
+Retained cargo uses zero linear damping during dry airborne motion so world-space damping cannot slow its freefall relative to the undamped kinematic carrier. Canonical linear damping returns while grounded; water applies the bounded multipliers below. Angular damping remains active throughout. The carrier's dry airborne displacement matches the mean gravity integration of Rapier's solver substeps. Takeoff compensation uses accepted support motion with that integration correction, avoiding a one-tick displacement bias. Water-entry velocity compensation uses realized carrier velocity.
 
 Contact grip assistance is a tunable physical aid on connected cargo. During dry airborne motion, its existing gain also gently reduces relative vertical-speed differences with the carrier; this is a mass-proportional force, not a position clamp. The takeoff frame uses its single bounded impulse instead. Separated or lost cargo receives neither takeoff nor airborne grip assistance. Setting `gripAssistance` to zero removes the assistance. Gravity matching and this bounded aid work together; gravity matching alone does not eliminate all relative velocity introduced by kinematic contacts. Global contact-loss grace remains unchanged, and cargo keeps independent rotation and can still be lost through actual tilt or impacts.
 
@@ -137,9 +143,11 @@ The high-jump regression was independent of visibility: no viewport-based physic
 
 Grass provides the permissive reference surface. Rock uses a different contact/landing response. Compare the same shapes of terrain on both surfaces before attributing a difference to the material alone.
 
-Water is an authored region with horizontal bounds, a surface and a bottom. It switches vertical input from shell tilt to swimming. There is no oxygen, health or drowning system. Entry/exit tolerance helps avoid rapid control switching near the surface.
+Water is an authored region with horizontal bounds, a surface and a bottom. Vertical input retains shell balance; held Space assists ascent immediately, without underwater jump charging. There is no commanded dive, oxygen, health or drowning system. Entry/exit tolerance avoids rapid biome switching near the surface.
 
-The controller derives a weight-dependent preferred depth and upward response from retained cargo mass. Water buoyancy gain starts at 8.4 s⁻². Swimming strength starts at 8 m/s² and its separate mass response at 0.05 kg⁻¹. An empty turtle has stronger natural restoration and resists sustained immersion; heavier retained loads reach deeper positions. Up/down modulates descent and return to the surface. Verify both controllable ascent and bank exit across empty, sofa-only and full loads. Cargo in separation grace still contributes to this calculation. Depth increases the rightward current affecting the carrier; the same camera-window pressure still applies. The resulting advantage should be evaluated over a traversal, including the point where front-window pressure limits further positional gain.
+The controller derives a weight-dependent preferred depth and upward response from retained cargo mass. Water buoyancy gain starts at 8.4 s⁻². The 2026-10-05 revision uses `waterDepthPerKg=0.25` m/kg and `waterSwimAcceleration=14` m/s², with the existing ascent mass response of 0.05 kg⁻¹. The old 0.075/8 pair depended on commanded diving for AD's underpass. These configurable starting values let heavy retained cargo reach the existing underpass naturally while held Space still permits the surface route; they are implementation tuning, not complete-game fixed constants. An empty turtle has stronger natural restoration and resists sustained immersion; heavier retained loads and incoming momentum reach deeper positions. A dry pre-entry jump can add immersion energy. Verify assisted ascent and bank exit across empty, sofa-only and full loads. Cargo in separation grace still contributes; terminal loss removes its weight immediately. Depth increases rightward current affecting the carrier; the same camera-window pressure still applies.
+
+`WATER_CARGO_RESPONSE` in `tuning.ts` centralizes bounded wet assistance: contact grip ×3, collider friction ×1.5, linear damping ×1.5 and angular damping ×2. Dry responses return on exit. Cargo remains independently dynamic; small manual corrections preserve the stack while sustained extreme tilt and strong impulses can exceed contact grace and lose individual objects. Assistance never welds the stack or restores lost cargo. `waterCargoResponse.test.ts` verifies those physical outcomes and dry restoration.
 
 Water does not add a lateral fluid force directly to cargo. Current modifies carrier motion. General shell-contact grip can still transmit the carrier's movement. Water entry uses vertical cushioning of retained cargo. Dry landing assistance applies on an air-to-ground transition, rather than repeatedly injecting vertical energy while grounded. This is deliberate gameplay assistance rather than a complete fluid simulation.
 
@@ -147,14 +155,14 @@ Water entry preserves incoming vertical momentum, then drag and overspeed dampin
 
 ## 2. Access and laboratory controls
 
-Open the playground with `Shift + P` from the title screen, or navigate directly to `?mode=physics`. The ordinary title screen does not advertise the shortcut. Local setup and static-server commands belong in the [README](../README.md); deployment configuration belongs in [DEPLOYMENT](DEPLOYMENT.md).
+Open **⚙ Laboratorio de físicas** from the title's secondary entry, use the existing `Shift + P` shortcut, or navigate directly to `?mode=physics`. Mouse and keyboard use the same navigation action. Local setup and static-server commands belong in the [README](../README.md); deployment configuration belongs in [DEPLOYMENT](DEPLOYMENT.md).
 
 | Control | Action |
 |---|---|
 | `→/D` / `←/A` | Accelerate / reduce forward speed; no reverse input. |
-| `↑/W` / `↓/S` on dry terrain | Progressively tilt the shell front up / down relative to terrain pitch. |
+| `↑/W` / `↓/S` in dry terrain and water | Progressively tilt the shell front up / down relative to terrain pitch. |
 | `Space` on dry ground | Hold to charge; release to jump. |
-| `↑/W` / `↓/S` in water | Modulate upward / downward swimming. |
+| `Space` in water | Hold to assist ascent; release for natural buoyancy, without a jump charge. |
 | `Esc` | Pause / continue the laboratory. |
 | `R` | Reset the current scenario and selected load. |
 | `N` | Advance one fixed tick while paused, using neutral gameplay controls. |
@@ -218,7 +226,7 @@ Physical coordinates use metres with positive Y upward; masses use kilograms, el
 | `shellMaxAngle`, `shellAngularSpeed`, `shellAngularDamping`, `shellPivotY` | Angular bound, requested angular speed, rate of approaching that speed, and pivot height above the body origin. |
 | Cargo friction, linear/angular damping, `gripAssistance`, `lossGraceSeconds` | Contact retention, motion damping, gentle carrier-following assistance and temporary-separation duration. |
 | Water depth/rise/weight/drag fields | Preferred depth and natural rise as functions of retained cargo mass. |
-| Water swim/current/entry fields | Vertical input strength, depth-based horizontal assistance and vertical cushioning. |
+| Water swim/current/entry fields | Held-Space ascent strength, depth-based horizontal assistance and vertical cushioning. |
 | Grass/rock landing fields | Material-specific assistance during downward landing. |
 | `worldPixelsPerMetre`, `viewWidth`, `viewHeight` | Visual world scale and logical viewport size. |
 | `PHYSICS_GEOMETRY` | Carrier/shell dimensions, controller clearances and initial preparation settings. |
@@ -285,11 +293,15 @@ npm run test -- tests/integration/endlessTraversal.test.ts
 Remove-Item Env:ENDLESS_EXHAUSTIVE
 ```
 
-On POSIX shells, use `ENDLESS_EXHAUSTIVE=1 npm run test -- tests/integration/endlessTraversal.test.ts`. A trap may be avoided by an observed airborne passage; activated traps must finish safely. Diagnostic traversal continues after cargo losses so it can certify carrier escape separately from retained-load playability. AD's surface path uses upward swimming, with early braking for the sofa; downward swimming gives its submerged path and recovers an upward hold beneath the solid island. This certifies available control sequences, not every arbitrary input or loss-free traversal. Human longevity/partial-loss playtesting remains separate.
+On POSIX shells, use `ENDLESS_EXHAUSTIVE=1 npm run test -- tests/integration/endlessTraversal.test.ts`. A trap may be avoided by an observed airborne passage; activated traps must finish safely. Diagnostic traversal continues after cargo losses so it can certify carrier escape separately from retained-load playability. Revised traces use digital manual terrain compensation and held Space for ascent, with early braking for the sofa's surface approach. The submerged route requires natural load/entry response; prior downward-swimming traces do not certify these controls. Late underside holds must recover with available shell/Space controls and guard-checked forward sliding. This certifies observed control sequences, not every arbitrary input or loss-free traversal. Human longevity/partial-loss playtesting remains separate.
 
-`endlessPartialLoads.test.ts` observes all 15 nonempty cargo subsets after real loss grace in each water module and records retained cargo separately from carrier escape. `endlessDaCargoRecovery.test.ts` demonstrates a cargo-preserving full-stack DA route using digital keyboard-equivalent controls: brake from local x=45 m, begin charging on dry support at x≥47 m, keep braking for the three-second charge, then accelerate on release. Neutral or downward swimming afterward retains sofa, TV and glass beyond the module. Its simple walking/relative-angle trace may lose everything; these alternatives demonstrate that the geometry permits continuation. Tested sofa-only variants still lose the last item, which is a valid run ending and a balance-playtest limitation, not proof that every possible control sequence fails.
+`endlessPartialLoads.test.ts` observes all 15 nonempty cargo subsets after real loss grace in each water module and records retained cargo separately from carrier escape. `endlessDaCargoRecovery.test.ts` tests continuing-load DA routes with digital keyboard-equivalent terrain compensation: brake from local x=45 m, begin charging on dry support at x≥47 m, keep braking for the three-second charge, then accelerate on release. Space is held or released during immersion; arrows never command diving. Expected retained pieces must be taken from current reports, since fixing physical downhill pitch changes support motion and invalidates prior neutral-shell retention counts. Partial losses are valid; a carrier-only escape is not proof of a continuing scored run.
 
-Inspect the production build in a browser as well as the development server. Check both playground access paths, public SVG textures, Rapier WASM loading, keyboard controls, pause/reset, scenario switching, resize behavior and asset loading below the configured repository subpath. A successful compilation or HTTP response alone does not prove initialization or visible play works.
+The revised natural-underpass fixture creates and settles the original full stack on DA's dry ledge at x=47 m, then traverses DA → AD without relocating the carrier or retained objects. It requires all 13.6 kg at AD entry and beneath the island, plus retained cargo beyond the exit. This is a local dry-entry certificate; it does not claim that arbitrary controls retain the complete stack through all earlier DA terrain. The separate full-route DA bank-jump traces retain the sofa with either Space ascent choice. These observations preserve the distinction between route reachability, partial loss and a continuing scored run.
+
+With the 2026-10-05 controls/settings, all 15 requested nonempty subsets are physically observed after grace and their carrier routes escape in AB, BA, AD and DA. The authored partial-load traces retain cargo at the exit in AB 12/15, BA 9/15, AD 10/15 and DA 2/15. These are observed control sequences, not guaranteed retention for every input. The revised Endless partition is `endless-physics-2`; earlier `endless-physics-1` certificates and retention counts remain historical.
+
+Inspect the production build in a browser as well as the development server. Check the secondary laboratory title entry and both shortcut/direct paths, public SVG textures, Rapier WASM loading, keyboard controls, pause/reset, scenario switching, resize behavior and asset loading below the configured repository subpath. A successful compilation or HTTP response alone does not prove initialization or visible play works.
 
 Record actual automated results and human findings in the backlog and handoff. This document defines what to verify; it does not certify the current tuning or replace those results.
 

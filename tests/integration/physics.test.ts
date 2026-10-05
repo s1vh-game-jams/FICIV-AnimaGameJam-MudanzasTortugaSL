@@ -242,7 +242,8 @@ describe('water weight and entry behavior', () => {
     const authored = scenarioById('water');
     if (!authored.water) throw new Error('Missing water region');
     const deepStart: Scenario = { ...authored, id: 'water-rise-fixture', startX: 25,
-      startY: authored.water.bottom + 1 - PHYSICS_GEOMETRY.turtleHalfHeight - PHYSICS_GEOMETRY.controllerOffset };
+      // Start below both preferred depths, with actual capsule clearance.
+      startY: authored.water.bottom + 0.02 };
     const full = createSimulation(deepStart), light = createSimulation(deepStart, 'light');
     const initialY = full.snapshot().turtle.y;
     expect(light.snapshot().turtle.y).toBe(initialY);
@@ -255,27 +256,48 @@ describe('water weight and entry behavior', () => {
     expect(lightSnapshot.turtle.verticalSpeed).toBeGreaterThan(fullSnapshot.turtle.verticalSpeed);
   });
 
-  it('vertical water input swims in opposite directions without manually tilting the shell', () => {
+  it('vertical water input balances the shell in either direction without commanding depth', () => {
     const authored = scenarioById('water');
     if (!authored.water) throw new Error('Missing water region');
     const submerged: Scenario = { ...authored, id: 'water-swim-fixture', startX: 25,
       startY: authored.water.bottom + 1 - PHYSICS_GEOMETRY.turtleHalfHeight - PHYSICS_GEOMETRY.controllerOffset };
-    const up = createSimulation(submerged, 'light'), down = createSimulation(submerged, 'light');
-    const initialY = up.snapshot().turtle.y;
-    const initialAngle = up.snapshot().turtle.angle;
+    const up = createSimulation(submerged, 'empty'), down = createSimulation(submerged, 'empty');
     for (let tick = 0; tick < up.tuning.physicsHz; tick += 1) {
       up.step({ horizontal: 0, vertical: 1 });
       down.step({ horizontal: 0, vertical: -1 });
       for (const simulation of [up, down]) {
         const snapshot = simulation.snapshot();
         expect(snapshot.turtle.biome).toBe('water');
-        expect(snapshot.turtle.angle).toBe(initialAngle);
         assertFinite(simulation, snapshot);
       }
     }
-    expect(up.snapshot().turtle.y).toBeGreaterThan(initialY);
-    expect(down.snapshot().turtle.y).toBeLessThan(initialY);
-    expect(up.snapshot().turtle.verticalSpeed).toBeGreaterThan(down.snapshot().turtle.verticalSpeed);
+    expect(up.snapshot().turtle.angle).toBeGreaterThan(0.3);
+    expect(down.snapshot().turtle.angle).toBeLessThan(-0.3);
+    expect(up.snapshot().shell.angle).toBeCloseTo(up.snapshot().turtle.angle, 6);
+    expect(down.snapshot().shell.angle).toBeCloseTo(down.snapshot().turtle.angle, 6);
+    expect(up.snapshot().turtle.y).toBeCloseTo(down.snapshot().turtle.y, 6);
+    expect(up.snapshot().turtle.verticalSpeed).toBeCloseTo(down.snapshot().turtle.verticalSpeed, 6);
+  });
+
+  it.each(['empty', 'light', 'full'] as const)('held Space accelerates ascent with %s cargo without charging a jump', load => {
+    const authored = scenarioById('water');
+    if (!authored.water) throw new Error('Missing water region');
+    const submerged: Scenario = { ...authored, id: 'water-space-fixture', startX: 25,
+      startY: authored.water.bottom + 1 - PHYSICS_GEOMETRY.turtleHalfHeight - PHYSICS_GEOMETRY.controllerOffset };
+    const neutral = createSimulation(submerged, load), swimming = createSimulation(submerged, load);
+    for (let tick = 0; tick < swimming.tuning.physicsHz; tick++) {
+      neutral.step();
+      swimming.step({ horizontal: 0, vertical: 0, jumpPressed: tick === 0, jumpHeld: true });
+      expect(swimming.snapshot().turtle.jumpCharging).toBe(false);
+      expect(swimming.snapshot().turtle.jumpChargeSeconds).toBe(0);
+      expect(swimming.snapshot().turtle.biome).toBe('water');
+    }
+    expect(swimming.snapshot().turtle.y).toBeGreaterThan(neutral.snapshot().turtle.y);
+    expect(swimming.snapshot().turtle.verticalSpeed).toBeGreaterThanOrEqual(neutral.snapshot().turtle.verticalSpeed);
+    const before = swimming.snapshot();
+    swimming.step({ horizontal: 0, vertical: 0, jumpReleased: true });
+    expect(swimming.snapshot().turtle.jumpCharging).toBe(false);
+    expect(swimming.snapshot().turtle.verticalSpeed).toBeLessThanOrEqual(before.turtle.verticalSpeed);
   });
 
   it('depth current produces forward assistance relative to the same load with current disabled', () => {

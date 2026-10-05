@@ -77,7 +77,7 @@ El vocabulario de control es pequeño:
 - dejar que la Tortuga avance algo más despacio;
 - inclinar el caparazón;
 - cargar y soltar un salto;
-- en el agua, nadar verticalmente.
+- en el agua, ayudar al ascenso con Espacio y seguir equilibrando el caparazón.
 
 La profundidad aparece al combinar esas pocas acciones con:
 
@@ -1121,9 +1121,9 @@ El agua es el bioma especial del sistema.
 
 ## 20.1. Impactos
 
-El agua amortigua completamente las caídas importantes.
+El agua amortigua las caídas importantes y favorece conservar la mudanza durante una entrada normal.
 
-Don Tortuga puede caer desde cualquier altura al agua sin que el impacto de entrada desestabilice la mudanza de manera significativa.
+La asistencia es más permisiva que en terreno seco, pero no inmoviliza los objetos: los choques extremadamente fuertes y una inclinación demasiado inestable pueden desmoronar la pila también bajo el agua.
 
 ---
 
@@ -1210,6 +1210,8 @@ entra
 
 La ruta profunda funciona como recompensa sistémica a la conservación de la carga.
 
+No existe una orden para hundirse. La profundidad depende del peso retenido y del impulso de entrada; saltar antes de sumergirse puede aportar más energía a la inmersión. Las rutas profundas deben diseñarse y comprobarse con esos recursos físicos.
+
 ---
 
 ## 20.7. Controles en agua
@@ -1217,11 +1219,13 @@ La ruta profunda funciona como recompensa sistémica a la conservación de la ca
 En agua:
 
 - ←/A y →/D siguen regulando el avance horizontal;
-- ↑/W y ↓/S dejan de inclinar manualmente el caparazón;
-- ↑/W ayuda a frenar la inmersión y acelera el ascenso;
-- ↓/S ayuda a descender y retrasa el regreso hacia la superficie.
+- ↑/W y ↓/S mantienen el control de inclinación manual del caparazón, igual que en seco;
+- mantener **Espacio** ayuda a frenar la inmersión y acelera el regreso hacia la superficie;
+- no hay botón para aumentar la profundidad: el peso y el impulso al entrar producen la inmersión.
 
-Los controles modulan la velocidad vertical durante la inmersión inicial y el ascenso posterior. La respuesta depende de la carga: conservar más objetos facilita alcanzar rutas profundas que funcionan como recompensa sistémica.
+El ascenso asistido responde mientras se mantiene Espacio, sin cargar ni disparar un salto bajo el agua. Soltarlo devuelve el movimiento vertical a la flotación natural. La respuesta depende de la carga: conservar más objetos facilita alcanzar rutas profundas que funcionan como recompensa sistémica.
+
+El grip y la amortiguación de la carga aumentan en el agua para tolerar pequeñas correcciones. Cada objeto conserva sus contactos, movimiento e inclinación propios; la asistencia no evita las pérdidas por desequilibrios graves.
 
 El agua no ejerce fuerzas laterales directas sobre los objetos de la carga.
 
@@ -1884,7 +1888,8 @@ Se presenta como un anuncio de la empresa (ver sección 6.5).
 Opciones:
 
 - **► EMPEZAR MUDANZA** (seleccionada por defecto) → selector de modo;
-- **Créditos** (recomendado para la jam).
+- **Créditos** → pantalla de dedicatoria (incluida en la jam).
+- **⚙ Laboratorio de físicas**, acceso secundario visible, con texto menor que las opciones principales. Permite probar los mismos controles y físicas del juego y volver a la portada.
 
 ---
 
@@ -1963,6 +1968,18 @@ Los resultados de Carrera Infinita muestran en su lugar: banderines superados, p
 
 ---
 
+### 41.5.6. Créditos
+
+Desde la portada se abre una página con esta dedicatoria centrada, seguida de la firma:
+
+> Dedicado a [Argorias Svartha](https://www.artstation.com/argorias), que me ha acompañado en los momentos más oscuros de mi vida. A mi madre, que me ha apoyado incondicionalmente incluso sin entender lo que hacía. Y a todos los agentes de inteligencia artificial que han ejecutado bucles interminables de pruebas y han tenido la paciencia infinita para lidiar con mis cambios de diseño de última hora durante toda la game jam.
+>
+> — Mike Fieldins
+
+El nombre **Argorias Svartha** es un hipervínculo a su página de ArtStation. La página ofrece **Volver a la portada**, accesible con ratón y teclado; **Esc** también regresa. El pie muestra: **Copyright © 2026 Mike Fieldins & Argorias Svartha**.
+
+---
+
 ## 41.6. HUD (interfaz durante la partida)
 
 ### Indicador de carga
@@ -2011,7 +2028,7 @@ Existen cuatro mensajes de ayuda.
 | 1 | Nada más empezar el recorrido | **←/A →/D** + «velocidad» | 3–5 segundos configurables |
 | 2 | Después del 1, en terreno seco | **↑/W ↓/S** + «equilibrar caparazón» | 3–5 segundos configurables |
 | 3 | Después del 2, en terreno seco | **Espacio** + «mantén y suelta para saltar» | 3–5 segundos configurables |
-| 4 | La primera vez que Don Tortuga entra en agua | **↑/W ↓/S** + «nadar» | 3–5 segundos configurables |
+| 4 | La primera vez que Don Tortuga entra en agua | **Espacio** + «mantén para subir»; **↑/W ↓/S** + «equilibra» | 3–5 segundos configurables |
 
 Reglas:
 
