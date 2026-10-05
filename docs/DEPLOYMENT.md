@@ -84,6 +84,8 @@ Open:
 
 Public asset metadata uses relative paths through `src/utils/publicAsset.ts`, based on `import.meta.env.BASE_URL`. Rapier's WASM URL is resolved by Vite. Do not hardcode root sprite paths. Query-based routing needs no server-side route rewrites.
 
+Jam audio uses the same helper for all selected relative paths in `src/audio/manifest.ts`. Vite copies the 21 original WAV/MP3 recordings without transformation; native media elements stream them after the first interaction rather than decoding the full roughly 112 MB set at startup. Root/subpath smoke checks must inspect audio requests and native ready/playback states as well as textures/WASM. Original volume is controlled by browser/device, with no in-game mixer. [SOUNDS.md](SOUNDS.md) owns playback/event rules and the human auditory verification boundary.
+
 The expected Pages URL is `https://s1vh-game-jams.github.io/FICIV-AnimaGameJam-MudanzasTortugaSL/`, subject to actual repository Pages configuration. That live site/settings have not been verified or enabled by this milestone.
 
 ## 4. Prototype 1 browser smoke check

@@ -1,6 +1,6 @@
 # Mudanzas Tortuga, S.L. — Sound Design & Implementation
 
-**Status:** Game Jam implementation specification  
+**Status:** Jam audio implemented; human auditory/target-browser verification pending
 **Date:** 2026-10-05  
 **Stack:** Vite + TypeScript + PixiJS 8 + Rapier2D  
 **Target:** browser / GitHub Pages  
@@ -8,6 +8,8 @@
 **Jam audio footprint:** ~112 MB  
 **Physical runtime assets:** 21 files total = 3 BGM + 18 SFX/ambient  
 **Current formats:** 19 WAV + 2 MP3
+
+**Approved iteration override (2026-10-05):** the human requires original recordings at unity volume and playback rate, with volume controlled only by the browser/device. No audio options, mixer, normalization, gain/pitch variation, fades or pause ducking ship in this iteration. Do not listen to/reselect or recode the assets. This overrides the earlier mix suggestions below; paths, semantic aliases and event rules remain authoritative.
 
 ---
 
@@ -296,10 +298,10 @@ This is tuning, not a hard gameplay constant.
 When paused:
 
 - preserve BGM playback position;
-- lower music volume to about 60–70% of its normal game value;
+- keep music playing at its original unity volume;
 - stop generation of gameplay SFX/locomotion;
 - keep UI SFX available;
-- restore music smoothly on resume;
+- resume gameplay effects without altering BGM position or level;
 - never queue paused gameplay sounds to play later.
 
 ---
@@ -1030,51 +1032,11 @@ Impact spam protection is more important than supporting a huge number of simult
 
 ---
 
-# 17. Logical buses and mix
+# 17. Original levels for this iteration
 
-Maintain at least conceptual categories:
+Music, SFX and locomotion are semantic categories only. Every native media element uses `volume=1` and `playbackRate=1`; there are no buses, gain controls or persisted audio preferences. Browser/device volume controls the whole production. The previous 0.45/0.80/0.30 mix proposal is superseded by the human's approved override.
 
-```text
-master
-music
-sfx
-ambient
-```
-
-Recommended starting multipliers:
-
-```text
-master  = 1.00
-music   = 0.45
-sfx     = 0.80
-ambient = 0.30
-```
-
-These are starting values, not approved final tuning.
-
-Perceptual priority:
-
-```text
-critical UI / cargo loss
->
-hazards / strong impacts
->
-ordinary impacts
->
-locomotion
->
-ambience
->
-BGM
-```
-
-The music should not hide:
-
-- a breaking branch;
-- the pinecone warning/fall;
-- a definitive cargo loss;
-- a client notification;
-- a checkpoint award.
+Forest ambience remains an optional P1 follow-up: this iteration does not add a quiet-bed gain or layer the original full-volume recording over gameplay. Its selected physical file and provenance remain unchanged in the manifest.
 
 ---
 
@@ -1125,40 +1087,13 @@ Ideally they should not know physical filenames either.
 
 ---
 
-# 19. Suggested centralized tuning
+# 19. Centralized presentation timing and thresholds
 
-Keep audio tuning in one place instead of scattering constants.
+`src/audio/manifest.ts` owns AUDIO_TIMING: 120 ms impact aggregation/cooldown, 300 ms loss/client grouping, 150 ms stable water state and 500 ms splash cooldown, 0.08 m/s minimum realized locomotion, 250 ms stale-effect cancellation, 12 concurrent SFX and two reusable voices per physical file.
 
-Example:
+`src/audio/physicsTuning.ts` owns observed magnitude cutoffs in m/s: cargo light 2.1, medium 3.5, heavy 5; meaningful landing 0.5 and hard landing 4; large water entry 4; first pinecone hit 0.9. These are presentation thresholds, never physics forces or scoring rules. Real 600-tick current-settings traces measured flat support below 1.94, rock slopes around 6.3 and cushioned high water entry below 1.52. This keeps ordinary static stack support silent. No auditory comparison was used to select or retune recordings.
 
-```ts
-export const AUDIO_TUNING = {
-  masterVolume: 1.0,
-  musicVolume: 0.45,
-  sfxVolume: 0.8,
-  ambientVolume: 0.3,
-
-  musicFadeMs: 300,
-  pauseMusicMultiplier: 0.65,
-
-  impactGroupWindowMs: 120,
-  impactCooldownMs: 120,
-  cargoLossGroupWindowMs: 300,
-
-  landingSoftGain: 0.55,
-  landingHardGain: 0.9,
-
-  stumpHitGain: 1.0,
-  pineconeHitGain: 0.75,
-
-  variationPlaybackRateMin: 0.97,
-  variationPlaybackRateMax: 1.03,
-} as const;
-```
-
-Do not treat these numbers as physics constants.
-
-Impact thresholds should be tuned against real observed values from the existing implementation.
+Soft/hard landings and stump/pinecone hits retain their semantic roles and the shared original impact recording at unity. The earlier per-event gain/playback-rate suggestions in sections 10–15 are historical options superseded for this iteration. Impact tiers still use three distinct recordings.
 
 ---
 
@@ -1203,53 +1138,53 @@ Where no mapping exists (`jump-charge`, `jump-release`, `stump-rise`, etc.), shi
 
 ## P0-A — infrastructure
 
-- [ ] Inspect existing asset URL helper and reuse it for `public/audio`.
-- [ ] Add/extend one central audio manifest.
-- [ ] Add/extend one central audio manager.
-- [ ] Implement first-interaction audio unlock.
-- [ ] Ensure WAV and MP3 both load correctly.
-- [ ] Avoid eager loading/decoding of the full ~112 MB audio set.
-- [ ] Ensure pause/run-end cannot accumulate delayed SFX.
+- [x] Inspect existing asset URL helper and reuse it for `public/audio`.
+- [x] Add/extend one central audio manifest.
+- [x] Add/extend one central audio manager.
+- [x] Implement first-interaction audio unlock.
+- [x] Ensure WAV and MP3 both load correctly.
+- [x] Avoid eager loading/decoding of the full ~112 MB audio set.
+- [x] Ensure pause/run-end cannot accumulate delayed SFX.
 
 ## P0-B — BGM and menus
 
-- [ ] menu BGM: `fixing-the-farmers-car.wav`.
-- [ ] laboratory BGM: `patio-party.wav`.
-- [ ] credits BGM: `patio-party.wav`.
-- [ ] Endless BGM: `just-kidding.wav`.
-- [ ] menu move / confirm / back / disabled.
-- [ ] preserve menu BGM between menu screens where possible.
+- [x] menu BGM: `fixing-the-farmers-car.wav`.
+- [x] laboratory BGM: `patio-party.wav`.
+- [x] credits BGM: `patio-party.wav`.
+- [x] Endless BGM: `just-kidding.wav`.
+- [x] menu move / confirm / back / disabled.
+- [x] preserve menu BGM between menu screens where possible.
 
 ## P0-C — gameplay fundamentals
 
-- [ ] cargo impact light / medium / heavy.
-- [ ] impact aggregation and cooldown.
-- [ ] soft / hard landing aliases.
-- [ ] definitive cargo-loss feedback only.
-- [ ] group simultaneous cargo losses.
-- [ ] client call/text SFX.
+- [x] cargo impact light / medium / heavy.
+- [x] impact aggregation and cooldown.
+- [x] soft / hard landing aliases.
+- [x] definitive cargo-loss feedback only.
+- [x] group simultaneous cargo losses.
+- [x] client call/text SFX.
 
 ## P0-D — terrain and water
 
-- [ ] dry movement.
-- [ ] water movement.
-- [ ] small / large water entry.
-- [ ] water exit alias.
-- [ ] suppress water-surface jitter spam.
+- [x] dry movement.
+- [x] water movement.
+- [x] small / large water entry.
+- [x] water exit alias.
+- [x] suppress water-surface jitter spam.
 
 ## P0-E — hazards and scoring
 
-- [ ] cracked branch warning + break.
-- [ ] stump trigger + hit.
-- [ ] pinecone warning + fall + hit.
-- [ ] pennant/checkpoint positive feedback once per award.
+- [x] cracked branch warning + break.
+- [x] stump trigger + hit.
+- [x] pinecone warning + fall + hit.
+- [x] pennant/checkpoint positive feedback once per award.
 
 ## P1 — polish if time remains
 
-- [ ] forest ambience.
-- [ ] subtle playbackRate/gain variation.
-- [ ] refine crossfades.
-- [ ] refine per-event gains by human playtesting.
+- [ ] forest ambience — deferred by the original-level iteration.
+- [ ] playbackRate/gain variation — excluded from this iteration.
+- [ ] crossfades — excluded from this iteration.
+- [ ] human auditory readability/playtesting; no per-event gain changes in this iteration.
 
 ---
 
@@ -1257,31 +1192,33 @@ Where no mapping exists (`jump-charge`, `jump-release`, `stump-rise`, etc.), shi
 
 The jam audio implementation is acceptable when:
 
-1. [ ] production build has no audio 404s;
+1. [x] production build has no audio 404s;
 2. [ ] both WAV and MP3 assets play in the target browsers used for submission testing;
-3. [ ] Pages/subpath asset URLs are resolved through the existing BASE_URL-safe mechanism;
-4. [ ] no physical asset is duplicated merely to provide another semantic name;
-5. [ ] the title/menu does not wait for all ~112 MB before becoming usable;
-6. [ ] browser autoplay restrictions do not break navigation or game start;
-7. [ ] menu music does not restart unnecessarily between menu screens;
-8. [ ] Endless switches to `Just Kidding`;
-9. [ ] laboratory/credits use `Patio Party`;
-10. [ ] one physical crash does not become a machine-gun burst of Rapier contact sounds;
+3. [x] Pages/subpath asset URLs are resolved through the existing BASE_URL-safe mechanism;
+4. [x] no physical asset is duplicated merely to provide another semantic name;
+5. [x] the title/menu does not wait for all ~112 MB before becoming usable;
+6. [x] browser autoplay restrictions do not break navigation or game start;
+7. [x] menu music does not restart unnecessarily between menu screens;
+8. [x] Endless switches to `Just Kidding`;
+9. [x] laboratory/credits use `Patio Party`;
+10. [x] one physical crash does not become a machine-gun burst of Rapier contact sounds;
 11. [ ] small cargo wobble is usually silent;
 12. [ ] light/medium/heavy impacts are perceptibly differentiated;
-13. [ ] temporary cargo separation does not play loss feedback;
-14. [ ] definitive cargo loss does;
-15. [ ] grouped simultaneous losses create one readable audio event;
-16. [ ] entering/exiting water cannot spam splash sounds around the surface boundary;
-17. [ ] dry locomotion stops when airborne/blocked/in water;
-18. [ ] water movement stops after leaving water;
-19. [ ] each hazard phase fires once at its meaningful transition;
-20. [ ] a checkpoint/pennant awards one positive sound, not duplicate alias playback;
-21. [ ] pause prevents new gameplay SFX but keeps UI feedback;
-22. [ ] resume does not replay events that happened while paused;
-23. [ ] run end does not layer duplicate `lost` and `lastObjectLost` samples;
+13. [x] temporary cargo separation does not play loss feedback;
+14. [x] definitive cargo loss does;
+15. [x] grouped simultaneous losses create one readable audio event;
+16. [x] entering/exiting water cannot spam splash sounds around the surface boundary;
+17. [x] dry locomotion stops when airborne/blocked/in water;
+18. [x] water movement stops after leaving water;
+19. [x] each hazard phase fires once at its meaningful transition;
+20. [x] a checkpoint/pennant awards one positive sound, not duplicate alias playback;
+21. [x] pause prevents new gameplay SFX but keeps UI feedback;
+22. [x] resume does not replay events that happened while paused;
+23. [x] run end does not layer duplicate `lost` and `lastObjectLost` samples;
 24. [ ] BGM/ambience do not mask hazard warnings or cargo-loss feedback;
-25. [ ] no code references obsolete planned filenames from the previous `SOUNDS.md`.
+25. [x] no code references obsolete planned filenames from the previous `SOUNDS.md`.
+
+Checked items describe verified loading/state/event behavior, including bounded crash cadence and one notification per loss group. They do not certify perceived balance or readability: items 2, 11, 12 and 24 still require human listening and submission-browser testing.
 
 ---
 
@@ -1331,3 +1268,18 @@ Until that task is completed, **the `.wav` and `.mp3` extensions in this documen
 And:
 
 > **The player should hear decisions, accidents and state changes — not Rapier doing mathematics.**
+
+
+# 26. Implemented runtime and verification boundary — 2026-10-05
+
+`src/audio/audioManager.ts` streams music/locomotion through hidden native HTMLAudioElements and reuses bounded SFX voices by physical path. No audio element/request is created before a trusted interaction. Menus retain their same track; credits/lab alias one Patio Party element. Relevant effects prefetch on gameplay entry after unlock; music/long ambience are never decoded into Web Audio buffers. Rejected play promises never block navigation. SFX still waiting for playback after 250 ms are canceled; generation guards prevent an old promise from stopping a reused voice.
+
+`src/audio/gameplayAudio.ts` observes each fixed tick in Endless/laboratory. Crashes aggregate to the strongest tier. Lost-state transitions share the client notice's 300 ms group; call/text formats alternate with their respective cue. Final loss flushes once and survives the immediate results freeze. One pennant sound accompanies an actual award; scorePop is not doubled. Water transitions must remain stable before splashing. Locomotion follows realized displacement/support, including logical rebase offsets, and stops in air/at blockers/in pause/at endpoints. Paused single-step observations consume state silently; reset/exit dispose gameplay effects and pending groups. Help reset clears its previous appearance marker.
+
+Pause keeps BGM at unity and UI feedback enabled, stopping gameplay voices/locomotion without an effect queue. Page hiding also pauses BGM at its current position. The laboratory's single-step is silent. Missing or slow audio cannot prevent a run.
+
+Agent verification uses mocked media promises/lifecycle plus real Rapier transitions and production browser media states, without listening to the recordings. Human auditory readability and target-browser testing remain separate; acceptance items involving perceptual balance are intentionally not claimed from automated checks. All 21 source recordings retain their original SHA-256 hashes.
+
+Root and Pages production copies also match the original hashes. All 42 corresponding local HTTP paths return the unchanged recordings. Native browser inspection confirms no audio elements before interaction, playable WAV/MP3 media, correct context changes and gameplay silence during pause; the Pages build resolves the same media under the repository prefix.
+
+Final checks pass: TypeScript, ESLint, 696 Vitest cases across 29 files (including 56 audio regressions), 11 Python server-helper cases, root build and repository-subpath build. Full Vitest took 236.93 seconds. The 10,800-tick physical parity probe preserves the earlier traversal certificate; no new full trap-composition certification is claimed for this read-only change.

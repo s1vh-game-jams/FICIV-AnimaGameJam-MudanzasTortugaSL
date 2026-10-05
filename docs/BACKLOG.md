@@ -72,6 +72,16 @@ Therefore:
 
 ## 2. Current critical path
 
+### AUDIO-001 — Implement the selected jam audio
+- **Priority:** P0
+- **Status:** IN PROGRESS — implementation and checks complete on preserved `codex/jam-audio`; squash integration pending
+- **Authorization:** the human requested SOUNDS implementation on 2026-10-05, at original file levels/formats, without listening to/reselecting tracks, conversion, audio options or a mixer.
+- **Scope:** native lazy streaming music for menus/laboratory/Credits/Endless; semantic aliases and bounded SFX voices; real fixed-tick impacts/landings/water/hazard phases; strongest-impact aggregation, grouped loss/client call/text, help/pennant cues and locomotion based on realized motion. Pause cancels gameplay effects and keeps unity BGM/UI; hidden-page BGM preserves position. Diagnostic single-step consumes events silently.
+- **Evidence:** TypeScript/ESLint, 696 Vitest cases across 29 files (236.93 seconds; 56 audio cases), 11 Python helper cases and root/Pages production builds pass. Native browser states verify interaction unlock, menu/context transitions, original WAV/MP3 playback and pause behavior. All 21 source/build recordings keep their hashes; 42 root/subpath HTTP paths return the unchanged files. Historical parity preserves every physical snapshot/body state over 10,800 ticks. No physical tuning, geometry, assets, dependencies or replay revisions change; no new full trap-composition certificate is claimed.
+- **Follow-up:** human auditory readability/target-browser pass remains pending. Optional forest ambience, fades and gain/rate variation are excluded from this original-level iteration. WAV compression stays FUTURE-010.
+- **Provenance:** root owns manager/presentation/application/docs/integration; `/root/physics_audio_events` owns read-only physics telemetry/calibration/regressions; `/root/audio_tests_review` owns media/policy tests and review.
+- **Source commits:** `e7224ca` (physical telemetry/regressions), `619791d` (native runtime/application/media-policy regressions).
+
 ```text
 Repository bootstrap
         ↓
@@ -1189,7 +1199,8 @@ Jam release on main
 ### FUTURE-008 — Formalize audio pipeline/licensing
 - **Priority:** POST-JAM
 - **Status:** DEFERRED
-- **May move into jam:** if audio is selected before submission.
+- **Jam implementation:** the selected-recording runtime pipeline moved into AUDIO-001. SOUNDS owns aliases/events/provenance; LICENSE already records Audio Hero synchronization boundaries.
+- **Remaining:** post-jam tooling and release receipt/EULA audit under RELEASE-002; this implementation does not change licensing terms.
 
 ### FUTURE-009 — Add accounts and authenticated community ownership
 - **Priority:** POST-JAM
@@ -1228,7 +1239,7 @@ Jam release on main
 | Contextual-help duration | 3–5 seconds per message, tuned for child-readable content | playtesting/readability tuning |
 | Remote leaderboard provider | none | LB-004 starts |
 | Final software license | unresolved | before public release |
-| Audio license structure | unresolved | first audio asset selected |
+| Audio license structure | Audio Hero bundle/synchronization terms in LICENSE; selected paths/provenance in SOUNDS | RELEASE-002 receipt/EULA audit and final release approval |
 | UI/UX specification | GDD section 41 approved; implementation clarifications recorded in PRD | revise only after new approved UX/design decision |
 
 ---
