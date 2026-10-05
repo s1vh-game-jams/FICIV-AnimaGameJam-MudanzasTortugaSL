@@ -15,7 +15,7 @@ const finite = (snapshot: SimulationSnapshot) => [snapshot.time, snapshot.turtle
   ...snapshot.cargo.flatMap(cargo => [cargo.x, cargo.y, cargo.angle])].every(Number.isFinite);
 
 interface RecoveryReport {
-  waterControl: -1 | 0;
+  ascentHeld: boolean;
   escaped: boolean;
   retainedAtExit: readonly CargoKind[];
   jump?: { x: number; chargeSeconds: number; verticalSpeedAfterRelease: number };
@@ -31,11 +31,11 @@ describe('DA retained-cargo continuation with keyboard controls', () => {
     await writeFile(join(directory, 'endless-da-cargo-regressions.json'), JSON.stringify(report, null, 2));
   });
 
-  it.each([0, -1] as const)('preserves a continuing load after the bank jump with water input %s', waterControl => {
+  it.each([false, true])('preserves a continuing load after the bank jump with Space ascent held %s', ascentHeld => {
     const tuning = createTuning();
     const simulation = new PhysicsSimulation(scenarioForModule(definition), tuning, 'full');
     const losses: RecoveryReport['losses'][number][] = [];
-    const result: RecoveryReport = { waterControl, escaped: false, retainedAtExit: [], losses };
+    const result: RecoveryReport = { ascentHeld, escaped: false, retainedAtExit: [], losses };
     report.push(result);
     try {
       let snapshot = simulation.snapshot();
@@ -43,9 +43,14 @@ describe('DA retained-cargo continuation with keyboard controls', () => {
       for (let tick = 0; tick < tuning.physicsHz * 75 && snapshot.turtle.x < definition.length + 3; tick++) {
         // Ordinary keyboard sequence: brake approaching the bank at x=45,
         // hold Space on the flat shelf from x=47 until fully charged, then
-        // accelerate while airborne. Shell input is neutral on dry terrain;
-        // after entering water, release movement keys or hold Down/S.
-        let controls: Controls = { horizontal: 0, vertical: snapshot.turtle.biome === 'water' ? waterControl : 0 };
+        // accelerate while airborne. Ordinary balance keys counter the dry
+        // body's terrain-relative pitch; after water entry, manual angle is
+        // centered while Space chooses ascent independently.
+        const target = snapshot.turtle.biome === 'water' ? 0 : -snapshot.turtle.bodyAngle;
+        const difference = target - snapshot.turtle.angle;
+        const vertical = difference > 0.015 ? 1 : difference < -0.015 ? -1 : 0;
+        let controls: Controls = { horizontal: 0, vertical,
+          jumpHeld: snapshot.turtle.biome === 'water' && ascentHeld };
         let releasing = false;
         if (phase === 'approach' && snapshot.turtle.x >= 45) controls.horizontal = -1;
         if (phase === 'approach' && snapshot.turtle.x >= 47 && snapshot.turtle.grounded && snapshot.turtle.biome !== 'water') {

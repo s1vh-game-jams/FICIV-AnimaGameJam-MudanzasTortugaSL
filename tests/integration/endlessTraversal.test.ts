@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createTuning, PHYSICS_GEOMETRY } from '../../src/game/config/tuning';
 import { HAZARD_TUNING } from '../../src/game/config/hazards';
 import { validateJumpTraversal } from '../../src/game/content/jumpValidation';
@@ -20,24 +22,32 @@ const finite = (snapshot: SimulationSnapshot) => [snapshot.cameraX, snapshot.cam
   snapshot.turtle.speed, snapshot.turtle.verticalSpeed, snapshot.shell.x, snapshot.shell.y,
   snapshot.shell.angle, ...snapshot.cargo.flatMap(cargo => [cargo.x, cargo.y, cargo.angle])].every(Number.isFinite);
 
+/** Digital balance keys counter terrain-relative pitch; Space owns ascent. */
+const balanceInput = (snapshot: SimulationSnapshot): -1 | 0 | 1 => {
+  const target = snapshot.turtle.biome === 'water' ? 0 : -snapshot.turtle.bodyAngle;
+  const difference = target - snapshot.turtle.angle;
+  return difference > 0.015 ? 1 : difference < -0.015 ? -1 : 0;
+};
+
 /** Authored controls, actual Rapier passage; losses remain diagnostic rather than stopping this runner. */
-function traverse(simulation: PhysicsSimulation, targetX: number, swim: -1 | 0 | 1 = 0, watchedTrapX?: number,
-  waterApproachSpeed: -1 | 0 = 0, recoverWaterHolds = false) {
+function traverse(simulation: PhysicsSimulation, targetX: number, ascent: 0 | 1 = 0, watchedTrapX?: number,
+  waterApproachSpeed: -1 | 0 = 0, recoverWaterHolds = false, waterApproachEndX = 18) {
   let snapshot = simulation.snapshot(), maximumY = snapshot.turtle.bodyY;
   let minimumWaterY = Infinity, sawWater = false, charging = false, launchCount = 0, islandCrossingY: number | undefined;
+  let islandCrossingMass: number | undefined;
   let heldX = snapshot.turtle.x, heldTicks = 0;
   let minimumTrapY = Infinity;
-  let swimIntent = swim, waterRecoveries = 0;
+  let ascentHeld = ascent === 1, waterRecoveries = 0;
   const bypassedHazards = new Set<string>();
   for (let tick = 0; tick < simulation.tuning.physicsHz * 70 && snapshot.turtle.x < targetX; tick++) {
-    const vertical = snapshot.turtle.biome === 'water' ? swimIntent :
-      snapshot.turtle.angle > 0.025 ? -1 : snapshot.turtle.angle < -0.025 ? 1 : 0;
-    let controls: Controls = { horizontal: snapshot.turtle.biome === 'water' && snapshot.turtle.x < 18 ? waterApproachSpeed : 0, vertical };
+    const vertical = balanceInput(snapshot);
+    let controls: Controls = { horizontal: snapshot.turtle.biome === 'water' && snapshot.turtle.x < waterApproachEndX ? waterApproachSpeed : 0,
+      vertical, jumpHeld: snapshot.turtle.biome === 'water' && ascentHeld };
     if (recoverWaterHolds && heldTicks >= 90 && snapshot.turtle.biome === 'water') {
-      // A solid ceiling rejects swimming upward. The authored recovery changes
-      // direction and passes underneath; it never phases through the island.
-      swimIntent = swimIntent > 0 ? -1 : 1;
-      controls = { ...controls, vertical: swimIntent }; heldTicks = 0; waterRecoveries++;
+      // Release ascent to permit only the load's natural immersion/momentum,
+      // or press Space to rise. No input commands downward translation.
+      ascentHeld = !ascentHeld;
+      controls = { ...controls, jumpHeld: ascentHeld }; heldTicks = 0; waterRecoveries++;
     }
     // A short recoverable physical hold may require the game's charged jump.
     // The runner never teleports the carrier or skips the obstruction.
@@ -56,7 +66,9 @@ function traverse(simulation: PhysicsSimulation, targetX: number, swim: -1 | 0 |
         bypassedHazards.add(hazard.id);
       }
     }
-    if (islandCrossingY === undefined && snapshot.turtle.x >= 13) islandCrossingY = snapshot.turtle.bodyY;
+    if (islandCrossingY === undefined && snapshot.turtle.x >= 13) {
+      islandCrossingY = snapshot.turtle.bodyY; islandCrossingMass = snapshot.turtle.mass;
+    }
     maximumY = Math.max(maximumY, snapshot.turtle.bodyY);
     if (watchedTrapX !== undefined && Math.abs(snapshot.turtle.x - watchedTrapX) < 0.75) minimumTrapY = Math.min(minimumTrapY, snapshot.turtle.bodyY);
     if (snapshot.turtle.biome === 'water') {
@@ -65,7 +77,7 @@ function traverse(simulation: PhysicsSimulation, targetX: number, swim: -1 | 0 |
     if (snapshot.turtle.x > heldX + 0.15) { heldX = snapshot.turtle.x; heldTicks = 0; } else heldTicks++;
     if (!finite(snapshot)) throw new Error(`Non-finite ${snapshot.scenarioId} at tick ${snapshot.tick}`);
   }
-  return { snapshot, maximumY, minimumWaterY, sawWater, launchCount, islandCrossingY, minimumTrapY, waterRecoveries, bypassedHazards };
+  return { snapshot, maximumY, minimumWaterY, sawWater, launchCount, islandCrossingY, islandCrossingMass, minimumTrapY, waterRecoveries, bypassedHazards };
 }
 
 /** Water controls precede the dry charged jump without resetting its load/world. */
@@ -76,7 +88,8 @@ function islandJump(definition: EndlessModuleDefinition, load: LoadPreset) {
   let chargeSeconds = 0, launched = false;
   try {
     for (let tick = 0; tick < tuning.physicsHz * 35; tick++) {
-      let controls: Controls = { horizontal: 0, vertical: final.turtle.biome === 'water' ? (final.turtle.x < 17 ? -1 : 1) : 0 };
+      let controls: Controls = { horizontal: final.turtle.biome === 'water' && final.turtle.x < 18 && load === 'light' ? -1 : 0,
+        vertical: balanceInput(final), jumpHeld: final.turtle.biome === 'water' };
       let releasing = false;
       if (phase === 'approach' && final.turtle.x >= jump.chargeAtX) {
         if (!final.turtle.grounded || final.turtle.biome === 'water') return { outcome: 'ineligible-charge', final, chargeSeconds, launched };
@@ -149,7 +162,8 @@ describe.each(ENDLESS_MODULES)('actual current-settings traversal: $id', definit
     expect(tuning.jumpMaxLaunchSpeed).toBe(8);
     const simulation = new PhysicsSimulation(scenarioForModule(definition), tuning, load);
     try {
-      const result = traverse(simulation, definition.length + 3, definition.id === 'AD' ? -1 : 0);
+      const result = traverse(simulation, definition.length + 3, definition.id === 'AD' ? 1 : 0,
+        undefined, definition.id === 'AD' && load === 'light' ? -1 : 0);
       expect(result.snapshot.turtle.x, `${definition.id}/${load} stalled at ${result.snapshot.turtle.x}`).toBeGreaterThanOrEqual(definition.length + 3);
       expect(result.snapshot.turtle.biome).toBe(definition.end.biome);
       expect(result.sawWater).toBe(!!definition.water?.length);
@@ -193,7 +207,8 @@ describe.each(ENDLESS_MODULES)('actual current-settings traversal: $id', definit
       const placed = placeModule(definition, 1, 0, definition.start.height, choices);
       simulation.addWorldChunk({ id: 'diagnostic-traps', terrain: [], traps: placed.traps });
       try {
-        const result = traverse(simulation, definition.length + 3, definition.id === 'AD' ? -1 : 0);
+        const result = traverse(simulation, definition.length + 3, definition.id === 'AD' ? 1 : 0,
+          undefined, definition.id === 'AD' && load === 'light' ? -1 : 0);
         expect(result.snapshot.turtle.x, `${definition.id}/${load}/${JSON.stringify(choices)}: stalled ${result.snapshot.turtle.x}`).toBeGreaterThanOrEqual(definition.length + 3);
         expect(result.snapshot.hazards.every(hazard => hazard.phase === 'spent' ||
           hazard.phase === 'idle' && result.bypassedHazards.has(hazard.id))).toBe(true);
@@ -235,34 +250,85 @@ describe.each(ENDLESS_MODULES)('actual current-settings traversal: $id', definit
 
 describe('water alternatives and reachable partial loads', () => {
   const island = ENDLESS_MODULES.find(module => module.id === 'AD')!;
-  it.each(loads)('can take surface and submerged island paths with the %s load', load => {
-    const crossingHeights: number[] = [];
-    for (const swim of [-1, 1] as const) {
-      const simulation = new PhysicsSimulation(scenarioForModule(island), createTuning(), load);
-      try {
-        const result = traverse(simulation, island.length + 3, swim, undefined, swim === 1 && load === 'light' ? -1 : 0);
-        expect(result.snapshot.turtle.x, `${load}, swimming ${swim}, ${JSON.stringify(result.snapshot.turtle)}`).toBeGreaterThanOrEqual(island.length + 3);
-        expect(result.sawWater).toBe(true);
-        expect(result.islandCrossingY).toBeDefined();
-        crossingHeights.push(result.islandCrossingY!);
-        if (swim === -1) expect(result.islandCrossingY).toBeLessThan(-0.5);
-        else expect(result.islandCrossingY).toBeGreaterThan(0.25);
-      } finally { simulation.dispose(); }
-    }
-    expect(crossingHeights[1] - crossingHeights[0]).toBeGreaterThan(0.75);
+  const chainReports: unknown[] = [];
+  afterAll(async () => {
+    const directory = join(process.cwd(), 'artifacts');
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, 'endless-da-ad-entry.json'), JSON.stringify(chainReports, null, 2));
+  });
+  it('takes the natural submerged choice from an original full-load dry DA ledge', () => {
+    const approach = ENDLESS_MODULES.find(module => module.id === 'DA')!;
+    const first = placeModule(approach, 1, 0, approach.start.height);
+    const second = placeModule(island, 2, first.endX, first.endHeight);
+    const scenario: Scenario = {
+      id: 'DA-AD-natural-immersion', label: 'Real entry and retained-mass island route', description: '',
+      // The dry ledge fixture creates its original full load here; no carrier
+      // or retained object is moved after physical registration/settling.
+      startX: 47, startY: 0, endX: second.endX + 8,
+      terrain: [scenarioForModule(approach).terrain[0], ...first.terrain, ...second.terrain,
+        { biome: 'rock', bottom: -9, points: [{ x: second.endX, y: second.endHeight }, { x: second.endX + 16, y: second.endHeight }] }],
+      waters: [...first.water ?? [], ...second.water ?? []],
+    };
+    const tuning = createTuning(), simulation = new PhysicsSimulation(scenario, tuning, 'full');
+    let snapshot = simulation.snapshot();
+    const initialMass = snapshot.turtle.mass;
+    let crossingY: number | undefined, crossingMass = 0, adEntryMass: number | undefined;
+    let waterEntry: unknown;
+    const losses: unknown[] = [];
+    try {
+      for (let tick = 0; tick < tuning.physicsHz * 100 && snapshot.turtle.x < second.endX + 3; tick++) {
+        const controls: Controls = { horizontal: 0, vertical: balanceInput(snapshot), jumpHeld: false };
+        const previous = snapshot, previouslyWater = snapshot.turtle.biome === 'water';
+        simulation.step(controls); snapshot = simulation.snapshot();
+        if (waterEntry === undefined && !previouslyWater && snapshot.turtle.biome === 'water') {
+          waterEntry = { turtle: snapshot.turtle, shell: snapshot.shell, cargo: snapshot.cargo };
+        }
+        for (const cargo of snapshot.cargo) if (cargo.state === 'lost' && previous.cargo.find(item => item.id === cargo.id)?.state !== 'lost') {
+          losses.push({ id: cargo.id, x: snapshot.turtle.x, time: snapshot.time, biome: snapshot.turtle.biome });
+        }
+        if (adEntryMass === undefined && snapshot.turtle.x >= second.startX) adEntryMass = snapshot.turtle.mass;
+        if (crossingY === undefined && snapshot.turtle.x >= second.startX + 13) {
+          crossingY = snapshot.turtle.bodyY - second.startHeight;
+          crossingMass = snapshot.turtle.mass;
+        }
+        expect(finite(snapshot)).toBe(true);
+      }
+      chainReports.push({ startX: scenario.startX, initialMass, waterEntry, adEntryMass, crossingY, crossingMass, losses,
+        final: snapshot.turtle, retainedAtExit: snapshot.cargo.filter(cargo => cargo.state !== 'lost').map(cargo => cargo.id) });
+      expect(waterEntry).toBeDefined();
+      // The naturally submerged alternative must be reachable from the
+      // complete original load, rather than an artificial deep-water spawn.
+      expect(adEntryMass).toBe(initialMass);
+      expect(crossingMass).toBe(initialMass);
+      expect(crossingY, `final X ${snapshot.turtle.x}, crossing mass ${crossingMass}`).toBeLessThan(-0.5);
+      expect(snapshot.turtle.x).toBeGreaterThanOrEqual(second.endX + 3);
+      expect(crossingMass).toBeGreaterThan(0);
+      expect(snapshot.turtle.mass).toBeGreaterThan(0);
+    } finally { simulation.dispose(); }
   }, 30_000);
 
-  it.each(loads)('escapes neutral-water holds by swimming down or recovering from an upward ceiling hold with the %s load', load => {
-    for (const swim of [-1, 1] as const) {
+  it.each(loads)('takes the surface continuation using Space ascent with the %s load', load => {
+      const simulation = new PhysicsSimulation(scenarioForModule(island), createTuning(), load);
+      try {
+        const result = traverse(simulation, island.length + 3, 1, undefined, load === 'light' ? -1 : 0, true);
+        expect(result.snapshot.turtle.x, `${load}, Space ascent, ${JSON.stringify(result.snapshot.turtle)}`).toBeGreaterThanOrEqual(island.length + 3);
+        expect(result.sawWater).toBe(true);
+        expect(result.islandCrossingY).toBeDefined();
+        expect(result.islandCrossingY).toBeGreaterThan(0.25);
+        if (load !== 'empty') expect(result.islandCrossingMass).toBeGreaterThan(0);
+      } finally { simulation.dispose(); }
+  }, 30_000);
+
+  it.each(loads)('escapes neutral-water holds with Space ascent or natural release using the %s load', load => {
+    for (const ascent of [0, 1] as const) {
       const simulation = new PhysicsSimulation(scenarioForModule(island), createTuning(), load);
       try {
         let snapshot = simulation.snapshot();
         for (let tick = 0; tick < 12 * 60; tick++) { simulation.step(); snapshot = simulation.snapshot(); }
         const heldX = snapshot.turtle.x;
-        const result = traverse(simulation, island.length + 3, swim, undefined, 0, true);
-        expect(result.snapshot.turtle.x, `${load}, late swimming ${swim}, held X ${heldX}`).toBeGreaterThanOrEqual(island.length + 3);
+        const result = traverse(simulation, island.length + 3, ascent, undefined, 0, true);
+        expect(result.snapshot.turtle.x, `${load}, late ascent ${ascent}, held X ${heldX}`).toBeGreaterThanOrEqual(island.length + 3);
         expect(result.snapshot.turtle.x).toBeGreaterThan(heldX + 20);
-        if (swim === 1 && load !== 'empty') expect(result.waterRecoveries).toBeGreaterThan(0);
       } finally { simulation.dispose(); }
     }
   }, 30_000);
@@ -298,7 +364,8 @@ describe('every selectable aligned module seam', () => {
       };
       const simulation = new PhysicsSimulation(scenario, createTuning(), load);
       try {
-        const result = traverse(simulation, first.endX + 12, after.id === 'AD' ? -1 : 0);
+        const result = traverse(simulation, first.endX + 12, after.id === 'AD' ? 1 : 0,
+          undefined, after.id === 'AD' && load === 'light' ? -1 : 0, true, first.endX + 18);
         expect(result.snapshot.turtle.x, `${before.id}/${after.id}/${load}: ${result.snapshot.turtle.x}`).toBeGreaterThanOrEqual(first.endX + 12);
         expect(result.snapshot.tick).toBeGreaterThan(0);
         expect(second.startHeight).toBe(first.endHeight);
