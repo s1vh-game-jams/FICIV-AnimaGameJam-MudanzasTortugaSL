@@ -48,16 +48,17 @@ function showMenu(): void {
       data-menu-index="${index}"${option.disabled ? ' aria-disabled="true"' : ''}><span class="selection-arrow" aria-hidden="true">${index === navigation.selected ? '►' : ''}</span>
       ${option.id === 'laboratory' ? '<img class="menu-gear" src="' + publicAsset('sprites/ui/laboratory.svg') + '" alt="" aria-hidden="true">' : ''}${option.label}${option.detail ? '<small>' + option.detail + '</small>' : ''}</button>`).join('');
     app.innerHTML = `<section class="title-screen${title ? '' : ' selection-screen'}" data-screen="${navigation.screen}">
-      <div class="menu-card">
-        <p class="eyebrow">Servicio de mudanzas del bosque</p><h1>${heading}</h1>
-        ${title ? `<div class="title-cargo" aria-hidden="true">
+      <div class="menu-card${title ? ' poster' : ''}">
+        <header class="card-head"><p class="eyebrow">Servicio de mudanzas del bosque</p><h1>${heading}</h1>
+        ${title ? '<p class="tagline">Con la casa a cuestas.</p>' : ''}</header>
+        ${title ? `<div class="title-art"><div class="title-cargo" aria-hidden="true">
           <img class="title-turtle" src="${publicAsset(VISUALS.turtle.frames[0])}" alt="">
           <img class="title-shell" src="${publicAsset(VISUALS.shell.path)}" alt="">
           <img class="title-sofa" src="${publicAsset(VISUALS.sofa.path)}" alt="">
           <img class="title-tv" src="${publicAsset(VISUALS.television.path)}" alt="">
           <img class="title-lamp" src="${publicAsset(VISUALS.floorLamp.path)}" alt="">
           <img class="title-glass" src="${publicAsset(VISUALS.cocktailGlass.path)}" alt="">
-          </div><p class="tagline">Con la casa a cuestas.</p>` : ''}
+          </div></div>` : ''}
         ${credits ? `<div class="credits-copy"><p>Dedicado a <a href="https://www.artstation.com/argorias" target="_blank" rel="noopener noreferrer">Argorias Svartha</a>, que me ha acompañado en los momentos más oscuros de mi vida. A mi madre, que me ha apoyado incondicionalmente incluso sin entender lo que hacía. Y a todos los agentes de inteligencia artificial que han ejecutado bucles interminables de pruebas y han tenido la paciencia infinita para lidiar con mis cambios de diseño de última hora durante toda la game jam.</p><p class="credits-signature">— Mike Fieldins</p></div>` : ''}
         <nav class="menu-options" aria-label="${navigation.screen === 'difficulty' ? 'Dificultad' : 'Opciones'}">${buttons}</nav>
         <p class="menu-key-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> confirmar${title ? '' : ' · <kbd>Esc</kbd> volver'}</p>
@@ -124,7 +125,7 @@ async function showPlayground(): Promise<void> {
   history.replaceState(null, '', location.pathname + '?mode=physics');
   let tuning = createTuning();
   app.innerHTML = `<div class="playground">
-    <header class="toolbar"><div><strong>🐢 MUDANZAS TORTUGA, S.L.</strong><span>Physics playground · 60 Hz</span></div>
+    <header class="toolbar"><div><strong>MUDANZAS TORTUGA, S.L.</strong><span>Physics playground · 60 Hz</span></div>
       <nav aria-label="Herramientas"><button id="reset">Reiniciar <kbd>R</kbd></button>
       <button id="pause">Pausa <kbd>Esc</kbd></button><button id="step" disabled>Un paso <kbd>N</kbd></button>
       <button id="debug" aria-pressed="true">Colliders <kbd>C</kbd></button><button id="menu">Portada</button></nav></header>

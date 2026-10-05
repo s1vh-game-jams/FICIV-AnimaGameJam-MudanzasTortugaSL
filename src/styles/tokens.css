@@ -1,0 +1,55 @@
+/* Interface tokens from /docs/DESIGN.md. Mirrored in src/ui/designTokens.ts. */
+:root {
+  --ink: #172228;
+  --ink-muted: #6B4A2A;
+  --kraft: #C8955C;
+  --kraft-shade: #B07E48;
+  --kraft-light: #DDB07A;
+  --kraft-edge: #8A5A2B;
+  --paper: #F6EBD3;
+  --paper-line: #D8CFB8;
+  --tape: #F2C230;
+  --tape-stripe: #E5B220;
+  --stamp-red: #C8402E;
+  --stamp-green: #2F7D3A;
+  --stamp-blue: #3D5A80;
+  --carbon-blue: #2F4F8F;
+  --brand-green: #1F4D3A;
+
+  --font-display: "Fredoka", "Nunito", system-ui, sans-serif;
+  --font-ui: "Nunito", system-ui, sans-serif;
+  --font-marker: "Permanent Marker", "Fredoka", cursive;
+
+  --text-gameplay-min: 28px;
+  --text-menu-body: 24px;
+  --text-menu-button: 32px;
+  --text-screen-title: 64px;
+  --key-cap: 64px;
+
+  --stroke-ui: 3px;
+  --stroke-sticker: 4px;
+  --stroke-focus: 5px;
+
+  --radius-button: 12px;
+  --radius-panel: 18px;
+  --radius-card: 12px;
+  --radius-key-cap: 12px;
+
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 40px;
+  --safe-margin: 24px;
+
+  --motion-tap: 100ms;
+  --motion-ui-in: 200ms;
+  --motion-ui-out: 150ms;
+  --motion-stamp: 350ms;
+  --motion-notification-hold: 3500ms;
+
+  /* Hard drop shadow: tinted ink, never a blur. */
+  --shadow-hard: color-mix(in srgb, var(--ink) 38%, transparent);
+  /* One reference pixel of the 1280×720 stage, used by in-run UI so it scales with the game. */
+  --u: min(calc(100vw / 1280), calc(100svh / 720));
+}

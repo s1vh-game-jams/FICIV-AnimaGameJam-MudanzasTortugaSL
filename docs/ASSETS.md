@@ -14,6 +14,8 @@ The original nine turtle/cargo SVGs are repository-specific placeholders authore
 
 The original laboratory gear icon was authored by OpenAI Codex subagent `/root/ui_game` on 2026-10-05 using eight rectangular teeth and a ring path. It contains no imported artwork, fonts, external references or scripts.
 
+Interface fonts (Fredoka, Nunito, Permanent Marker; DESIGN.md §5) are imported third-party files: self-hosted Latin subsets downloaded from Google Fonts on 2026-10-05 into `src/assets/fonts/`, bundled by Vite through `src/styles/fonts.css`. Fredoka and Nunito are under the SIL Open Font License 1.1 and Permanent Marker under the Apache License 2.0; the license texts and a provenance table sit next to the files. They style the HTML UI and in-run help text only; sprite SVGs still reference their own system font.
+
 Original creative assets remain governed by the project's provisional licensing notice. This document does not change that notice or select a final license. Future imported assets must record their source, creator, license and required attribution before inclusion.
 
 ## 2. Dimensions and anchors

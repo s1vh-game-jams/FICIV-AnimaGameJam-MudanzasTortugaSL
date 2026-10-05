@@ -1,0 +1,4 @@
+/* DESIGN.md §5 typography, self-hosted (see src/assets/fonts/README.md). */
+@font-face { font-family: "Fredoka"; font-style: normal; font-weight: 300 700; font-display: swap; src: url("../assets/fonts/fredoka-latin.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-style: normal; font-weight: 200 1000; font-display: swap; src: url("../assets/fonts/nunito-latin.woff2") format("woff2"); }
+@font-face { font-family: "Permanent Marker"; font-style: normal; font-weight: 400; font-display: swap; src: url("../assets/fonts/permanent-marker-latin.woff2") format("woff2"); }
