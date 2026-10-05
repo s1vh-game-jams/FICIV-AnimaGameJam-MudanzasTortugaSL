@@ -52,6 +52,8 @@ La meta es **llegar con todo lo que todavía sea posible salvar**.
 
 Este proyecto es nuestro juego para la [Anima Valencia Game Jam 2026](https://raccreativegames.com/es/jams/anima-valencia-26), celebrada dentro del **Festival Internacional de Cine Infantil de Valencia (FICIV)**, con el tema **«tortuga»**.
 
+Consulta [`HOWTOPLAY.md`](docs/HOWTOPLAY.md) para aprender a jugar, conocer los controles y entender las reglas básicas de la Carrera Infinita.
+
 **Autores:**
 
 - **Mike Fieldins** — <https://github.com/s1vh>
@@ -120,6 +122,7 @@ py -3 scripts/localServer.py --directory dist --port 4173
 ## 📚 Documentación
 
 ### Diseño y planificación
+- [`HOWTOPLAY.md`](docs/HOWTOPLAY.md) — guía rápida de juego, controles y reglas básicas.
 - [`docs/GDD.md`](docs/GDD.md) — documento de diseño del juego y fuente de verdad.
 - [`docs/PRD.md`](docs/PRD.md) — requisitos técnicos, arquitectura y alcance.
 - [`docs/BACKLOG.md`](docs/BACKLOG.md) — prioridades, tareas y seguimiento.
