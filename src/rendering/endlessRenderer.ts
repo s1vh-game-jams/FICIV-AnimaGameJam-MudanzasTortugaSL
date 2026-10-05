@@ -8,12 +8,15 @@ import type { CargoKind } from '../game/content/cargo';
 import type { EndlessSnapshot } from '../game/modes/endless/run';
 import { publicAsset } from '../utils/publicAsset';
 import { VISUALS } from './visualDefinitions';
+import { designTokens } from '../ui/designTokens';
 
 const TERRAIN_PATHS = ['sprites/terrain/grass.svg', 'sprites/terrain/rock.svg', 'sprites/terrain/water.svg'];
 const HAZARD_PATHS = ['branch-intact', 'branch-broken', 'hatch', 'stump', 'tree', 'pinecone']
   .map(name => 'sprites/hazards/' + name + '.svg');
 const FLAG_PATHS = ['sprites/ui/pennant-folded.svg', 'sprites/ui/pennant-deployed.svg'];
 const GROUND_SCREEN_Y = 490;
+/** DESIGN.md gameplay_min_text at the 1280×720 reference stage. */
+const HELP_FONT_SIZE = designTokens.sizePxAtReference.gameplayMinText;
 const BODY_VISUAL_OFFSET_Y = 0.21;
 const SHELL_VISUAL_OFFSET_Y = 0.12;
 
@@ -33,8 +36,8 @@ export class EndlessRenderer {
   private readonly hazardSprites = new Map<string, Sprite>();
   private readonly pennantSprites = new Map<string, Sprite>();
   private readonly help = new Text({ text: '', style: {
-    fontFamily: 'Arial, sans-serif', fontSize: 22, fontWeight: 'bold', fill: 0x173e37,
-    stroke: { color: 0xf8faee, width: 5 }, wordWrap: true, wordWrapWidth: 700,
+    fontFamily: ['Nunito', 'Arial', 'sans-serif'], fontSize: HELP_FONT_SIZE, fontWeight: '800', fill: designTokens.color.ink,
+    stroke: { color: designTokens.color.paper, width: 8, join: 'round' }, wordWrap: true, wordWrapWidth: 700,
   } });
   private readonly resizeObserver: ResizeObserver;
   private terrainSignature = '';
@@ -274,7 +277,7 @@ export class EndlessRenderer {
     const scale = Math.min(width / this.tuning.viewWidth, height / this.tuning.viewHeight);
     this.viewport.scale.set(scale);
     this.viewport.position.set((width - this.tuning.viewWidth * scale) / 2, (height - this.tuning.viewHeight * scale) / 2);
-    this.help.style.fontSize = 22 / Math.min(1, scale);
+    this.help.style.fontSize = HELP_FONT_SIZE / Math.min(1, scale);
     this.help.style.wordWrapWidth = Math.min(900, this.tuning.viewWidth - 48);
     this.app.render();
   }
