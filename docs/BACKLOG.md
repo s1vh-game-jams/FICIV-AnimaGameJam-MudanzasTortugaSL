@@ -74,6 +74,14 @@ Therefore:
 
 ## 2. Current critical path
 
+### PHYS-028 — Launch from rising stumps and soften grass shell motion
+- **Priority:** P1
+- **Status:** IN PROGRESS — implementation complete on `codex/stump-grass-physics`; local squash integration pending
+- **Authorization:** on 2026-10-05 the human requested direct implementation, explicitly no tests, and a final checkout on `dev` without opening a browser.
+- **Scope:** a stump's first rising underside contact launches through the full-charge jump response, cancels pending manual charge and shares clearance-limited takeoff assistance with connected cargo. Grass filters rapid terrain-pitch changes and applies smooth deterministic random ±2-degree shell sway separately from manual balance. Shared game/laboratory core; physics revision `endless-physics-3`.
+- **Verification:** static code review, TypeScript, ESLint and production build pass. No tests, traversal certificate or browser run performed by explicit instruction. Earlier physics-2 certificates are historical and do not certify this revision.
+- **Provenance:** OpenAI Codex, implementation/documentation/local integration; no subagents.
+
 ### AUDIO-001 — Implement the selected jam audio
 - **Priority:** P0
 - **Status:** DONE — `d803628`, from preserved `codex/jam-audio` at `a86269a`; human auditory/target-browser verification pending

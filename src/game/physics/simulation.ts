@@ -1,5 +1,5 @@
 import RAPIER from '@dimforge/rapier2d';
-import { PHYSICS_GEOMETRY as G, WATER_CARGO_RESPONSE as W, validateTuning } from '../config/tuning';
+import { PHYSICS_GEOMETRY as G, WATER_CARGO_RESPONSE as W, GRASS_SHELL_RESPONSE as B, validateTuning } from '../config/tuning';
 import type { Tuning } from '../config/tuning';
 import { CARGO } from '../content/cargo';
 import type { CargoDefinition, CargoKind } from '../content/cargo';
@@ -10,6 +10,7 @@ import { CargoTracker } from '../systems/cargoGraph';
 import type { CargoState, ContactEdge } from '../systems/cargoGraph';
 import { approach, nextShellAngle, targetSpeed } from '../systems/controller';
 import { JumpCharge } from '../systems/jumpCharge';
+import { GrassSway } from '../systems/grassSway';
 import { HAZARD_TUNING as H } from '../config/hazards';
 import { createLevelCameraFraming } from '../config/cameraFraming';
 import type { HazardSnapshot, TrapPlacement, WorldChunk } from './worldContent';
@@ -135,7 +136,7 @@ interface CargoBody { definition: CargoDefinition; body: RAPIER.RigidBody; colli
 interface LiveTrap {
   placement: TrapPlacement; phase: HazardSnapshot['phase']; seconds: number; lift: number;
   solid?: RAPIER.Collider; body?: RAPIER.RigidBody; cone?: RAPIER.RigidBody;
-  hitSounded?: boolean; liftingTurtle?: boolean;
+  hitSounded?: boolean; liftingTurtle?: boolean; launchedTurtle?: boolean;
 }
 interface LiveChunk { content: WorldChunk; colliders: RAPIER.Collider[]; traps: LiveTrap[] }
 export type SimulationAudioEvent =
@@ -177,6 +178,8 @@ export class PhysicsSimulation {
   private bodyAngle = 0;
   private bodyOffsetY = 0;
   private angularSpeed = 0;
+  private grassSway = new GrassSway();
+  private grassSwayAngle = 0;
   private jump = new JumpCharge();
   private speed = 0;
   private verticalSpeed = 0;
@@ -360,8 +363,9 @@ export class PhysicsSimulation {
     this.world.propagateModifiedBodyPositionsToColliders();
   }
 
-  private updateHazards(dt: number, position: RAPIER.Vector): number {
+  private updateHazards(dt: number, position: RAPIER.Vector): { lift: number; launch: boolean } {
     let liftDelta = 0;
+    let launch = false;
     for (const chunk of this.chunks.values()) for (const trap of chunk.traps) {
       const p = trap.placement;
       trap.liftingTurtle = false;
@@ -399,6 +403,10 @@ export class PhysicsSimulation {
         if (above && trap.lift > previous) {
           liftDelta = Math.max(liftDelta, trap.lift - previous);
           trap.liftingTurtle = true;
+          if (!trap.launchedTurtle) {
+            launch = true;
+            trap.launchedTurtle = true;
+          }
         }
         trap.body?.setNextKinematicTranslation({ x: p.x, y: p.y - H.stumpHeight / 2 + trap.lift });
         if (elapsed >= H.stumpRiseSeconds + H.stumpHoldSeconds + H.stumpRetractSeconds) {
@@ -418,7 +426,8 @@ export class PhysicsSimulation {
         }
       }
     }
-    return liftDelta;
+    // Takeoff already clears the moving support; do not add lift to jump speed.
+    return { lift: launch ? 0 : liftDelta, launch };
   }
 
   private shellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY) {
@@ -692,7 +701,8 @@ export class PhysicsSimulation {
       surfaces.sort((a, b) => b.height - a.height);
       this.biome = surfaces[0]?.biome ?? this.biome;
     }
-    const hazardLift = this.updateHazards(dt, position);
+    const hazard = this.updateHazards(dt, position);
+    const hazardLift = hazard.lift;
     const depth = region && this.water ? Math.max(0, region.surface - bodyY) : 0;
     const current = region && this.water ? t.waterCurrent * clamp(depth / (region.surface - region.bottom), 0, 1) : 0;
     const screenX = position.x - this.cameraX;
@@ -704,15 +714,16 @@ export class PhysicsSimulation {
     this.speed = approach(this.speed, desired, (desired > this.speed ? t.acceleration : t.braking) * dt);
     const previousVerticalSpeed = this.shell.linvel().y;
     const previousShellY = this.shell.translation().y;
-    const jumpFraction = this.jump.update(input, !this.water && this.grounded, dt, t.jumpMaxChargeSeconds);
+    const jumpFraction = hazard.launch ? 1 : this.jump.update(input, !this.water && this.grounded, dt, t.jumpMaxChargeSeconds);
+    if (hazard.launch) this.jump.cancel();
     const launching = jumpFraction !== undefined && jumpFraction > 0;
     // Rapier's solver integrates gravity over its solver substeps. Match the
     // mean displacement of those semi-implicit substeps rather than taking
     // one full-tick Euler step, which makes the support outrun falling cargo.
-    const gravityDisplacementCorrection = this.water ? 0 :
+    const gravityDisplacementCorrection = this.water && !hazard.launch ? 0 :
       t.gravity * dt * (this.world.numSolverIterations - 1) / (2 * this.world.numSolverIterations);
     let launchVelocityChange = 0;
-    if (this.water && region) {
+    if (this.water && region && !hazard.launch) {
       // Keep the incoming physical velocity. Drag and over-speed cushioning
       // amortize entry instead of discarding momentum with an instant clamp.
       if (!previousWater) this.verticalSpeed = previousVerticalSpeed;
@@ -732,8 +743,12 @@ export class PhysicsSimulation {
       }
       this.verticalSpeed -= t.gravity * dt;
     }
-    const tilt = nextShellAngle(this.angle, this.angularSpeed, vertical, dt, t);
-    const desiredManualAngle = tilt.angle; this.angularSpeed = tilt.speed;
+    const previousAngle = this.angle;
+    const previousSway = this.grassSwayAngle;
+    const desiredSway = this.grassSway.advance(!this.water && this.grounded && this.biome === 'grass' && !launching, dt);
+    const tilt = nextShellAngle(this.angle - previousSway, this.angularSpeed, vertical, dt, t);
+    const desiredManualAngle = clamp(tilt.angle + desiredSway, -t.shellMaxAngle, t.shellMaxAngle);
+    this.angularSpeed = tilt.speed;
     // Follow the last supporting contact tangent so the KCC does not reduce
     // horizontal intent by projecting it a second time along an uphill slope.
     const supportSlope = this.grounded && this.verticalSpeed <= 0 ? this.groundSlope : 0;
@@ -759,7 +774,7 @@ export class PhysicsSimulation {
           RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
       }
     }
-    let grounded = this.controller.computedGrounded() && (this.water || this.verticalSpeed <= 0);
+    let grounded = this.controller.computedGrounded() && ((this.water && !launching) || this.verticalSpeed <= 0);
     if (!grounded) this.groundSlope = 0;
     let support: { angle: number; slope: number } | undefined;
     if (grounded) for (let i = 0; i < this.controller.numComputedCollisions(); i++) {
@@ -797,9 +812,15 @@ export class PhysicsSimulation {
     // confirmed support instead of alternating its pitch with zero each tick.
     if (support) { this.groundAngle = support.angle; this.groundSlope = support.slope; }
     const desiredBodyAngle = this.water ? 0 : grounded ? this.groundAngle : this.bodyAngle;
-    const next = this.alignShell(requested, approach(this.bodyAngle, desiredBodyAngle, t.shellAngularSpeed * dt), desiredManualAngle, grounded, desiredMovement);
+    const bodyTarget = !this.water && grounded && this.biome === 'grass' ?
+      this.bodyAngle + (desiredBodyAngle - this.bodyAngle) * (1 - Math.exp(-dt / B.terrainPitchResponseSeconds)) : desiredBodyAngle;
+    const next = this.alignShell(requested, approach(this.bodyAngle, bodyTarget, t.shellAngularSpeed * dt), desiredManualAngle, grounded, desiredMovement);
+    // Only account for sway actually accepted by the physical clearance guard.
+    const acceptedAngleFraction = desiredManualAngle === previousAngle ? 1 :
+      clamp((this.angle - previousAngle) / (desiredManualAngle - previousAngle), 0, 1);
+    this.grassSwayAngle = previousSway + (desiredSway - previousSway) * acceptedAngleFraction;
     movement.x = next.x - position.x; movement.y = next.y - position.y;
-    grounded = this.controller.computedGrounded() && (this.water || this.verticalSpeed <= 0);
+    grounded = this.controller.computedGrounded() && ((this.water && !launching) || this.verticalSpeed <= 0);
     if (followedGround) {
       const hit = this.nearbyGround(next, G.controllerNudge);
       grounded ||= !!hit && !!this.supportFromNormal(hit.collider, hit.normal1);
@@ -846,7 +867,7 @@ export class PhysicsSimulation {
           c.body.applyImpulse({ x: 0, y: c.definition.mass * launchVelocityChange }, true);
         }
       }
-      if (this.water) {
+      if (this.water && !launching) {
         // Vertical cushioning preserves the load on water entry. Water never
         // applies a lateral force to cargo: current acts on the carrier only.
         const velocity = c.body.linvel();
