@@ -14,7 +14,7 @@ function frame(x: number, retainedCargoX = x): SimulationSnapshot {
       biome: 'grass', mass: 8, grounded: true, jumpCharging: false, jumpChargeSeconds: 0 },
     shell: { x, y: 0.3, angle: 0 },
     cargo: [{ id: 'sofa', label: 'Sofá', x: retainedCargoX, y: 1, angle: 0, state: 'separated', separatedSeconds: 1 }],
-    contacts: [], hazards: [],
+    contacts: [], hazards: [], audioEvents: [],
   };
 }
 
