@@ -1197,6 +1197,21 @@ Jam release on main
 - **Depends on:** FUTURE-001/FUTURE-002 and an approved remote provider
 - **Requirement:** email/password and Google sign-in; stable application user IDs linked to authored levels; server-verified ownership for create/update/publish. Published levels and Endless play remain anonymous. Do not migrate local rankings into verified remote rankings without an explicit reviewed import policy.
 
+### FUTURE-010 — Compress WAV runtime audio to MP3
+- **Priority:** POST-JAM
+- **Status:** DEFERRED
+- **Depends on:** stable jam audio integration / `SOUNDS.md`
+- **Goal:** reduce the deployed audio footprint after the jam by replacing runtime WAV assets with MP3 equivalents while preserving the two existing MP3 assets unchanged where appropriate.
+- **Acceptance:**
+  - convert the current WAV runtime assets under `public/audio/` to suitably compressed MP3 versions using the original WAV files as sources;
+  - preserve canonical semantic filenames and update the audio manifest/routes/extensions consistently;
+  - remove obsolete WAV runtime copies after successful verification;
+  - confirm menu, gameplay, hazards, water, UI, ambient audio and BGM still load correctly in Vite development and production/subpath builds;
+  - compare audible quality and looping/transition behavior before accepting the compressed versions;
+  - record the resulting deployed audio size reduction;
+  - keep licensing/provenance mapping intact despite the format conversion.
+- **Note:** explicitly deferred until after the jam; the current mixed WAV/MP3 set is accepted for the jam release to avoid last-minute asset conversion risk.
+
 ---
 
 ## 3. Known decisions awaiting later confirmation

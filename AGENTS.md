@@ -46,13 +46,15 @@ Before implementing, reviewing, refactoring, testing, merging, or documenting a 
 2. Read `/docs/GDD.md` for every task that can affect gameplay, mechanics, scoring, controls, camera, level design, biomes, traps, onboarding, tone, UX, or player-facing rules.
 3. Read `/docs/PRD.md` for the current technical architecture, jam scope, acceptance criteria, build stages, and `physics-playground`.
 4. Read `/docs/BACKLOG.md` for priorities, dependencies, completed work, deferred work, and known follow-ups.
-5. Read `/CONTRIBUTING.md` before branch creation, commits, squash integration, pushes, attribution, or any operation involving `dev`/`main`.
-6. Read `/docs/DEPLOYMENT.md` before changing Vite `base`, asset URL handling, build output, GitHub Actions, Pages settings, hosting, or release behavior.
-7. Read any additional document registered in section 5 when its responsibility overlaps the task.
-8. Inspect the current branch, working tree, package scripts, dependency versions, and existing code before assuming this bootstrap still describes implementation details exactly.
-9. Prefer the smallest coherent change that satisfies the relevant sources of truth.
-10. Run all applicable automated checks that actually exist.
-11. Update documentation and `/docs/BACKLOG.md` before declaring the task ready for human local verification.
+5. Read `/docs/SOUNDS.md` before selecting, renaming, loading, mapping, mixing, triggering, or otherwise changing audio assets or audio behavior.
+6. Read `/docs/DESIGN.md` before changing the visual identity of the HTML/CSS web-app layer or HUD. If it is still only a placeholder, it supplies no new visual rules; fall back to the GDD/PRD and existing implementation instead of inventing a design system.
+7. Read `/CONTRIBUTING.md` before branch creation, commits, squash integration, pushes, attribution, or any operation involving `dev`/`main`.
+8. Read `/docs/DEPLOYMENT.md` before changing Vite `base`, asset URL handling, build output, GitHub Actions, Pages settings, hosting, or release behavior.
+9. Read any additional document registered in section 5 when its responsibility overlaps the task.
+10. Inspect the current branch, working tree, package scripts, dependency versions, and existing code before assuming this bootstrap still describes implementation details exactly.
+11. Prefer the smallest coherent change that satisfies the relevant sources of truth.
+12. Run all applicable automated checks that actually exist.
+13. Update documentation and `/docs/BACKLOG.md` before declaring the task ready for human local verification.
 
 Do not skip documentation because a task looks small. The repository intentionally stores gameplay intent, technical constraints, production scope, and workflow rules in writing so humans and agents can collaborate without silently diverging.
 
@@ -108,6 +110,16 @@ Do not silently reinterpret the GDD. If code constraints appear to require a gen
 
 Never rewrite the GDD merely to make current code easier to justify.
 
+### 3.3 Focused design/audio authority
+
+Focused documents may own a narrower implementation/design concern without replacing the GDD or PRD globally.
+
+- **`/docs/SOUNDS.md`** is the canonical jam-audio implementation contract for the selected physical audio files, exact project paths/extensions, semantic aliases, loading strategy, mixing defaults, trigger/debounce/cooldown rules, and the explicit list of sounds that do or do not exist. The GDD still owns the gameplay meaning, tone, and player-facing intent of those events; the PRD still owns phase scope and architecture. If code and `SOUNDS.md` disagree about an audio filename/path/alias for the current jam assets, treat `SOUNDS.md` as authoritative unless the human explicitly changes the selection.
+- **`/docs/DESIGN.md`** is reserved for the visual identity of the **web-app UI layer**, especially HUD, HTML/CSS menus, overlays, panels, typography, spacing, responsive presentation, and related interface styling. When populated, consult it **before the GDD for visual styling of that web-app layer**. It does **not** redefine gameplay rules, control behavior, level art, character/cargo/hazard/terrain sprites, or collider/art contracts; those remain governed by the GDD/PRD and `/docs/ASSETS.md` as applicable.
+- **Current placeholder rule:** while `/docs/DESIGN.md` contains only its placeholder line, it has no actionable design requirements. Agents must not infer a design system from the filename or create speculative styling rules; use the existing GDD/PRD/current implementation until the human populates it.
+
+This is a domain-specific precedence rule, not permission for focused documents to contradict unrelated canonical sources.
+
 **Scoped design authorization (2026-10-03):** the human authorized the root agent Sol to amend the GDD for configurable camera margins/fixed run zoom, settings-backed tuning, charged jump, strengthened water buoyancy, terrain-relative turtle/shell inclination, WASD and their directly affected onboarding/documentation. The later shell-height adjustment preserves body/shell shapes. This is task-specific permission for Sol, not a standing authorization for builder agents or subagents. They must treat the GDD as read-only and report design discrepancies; future GDD edits require specific human authorization.
 
 **Further scoped authorization (2026-10-03):** Sol may synchronize the newly approved adjustable original shell height, viewport-independent cargo flight, per-side camera dead zones/fixed level-load zoom, camera waiting at a physically blocked rear margin and mandatory current-settings jump traversal validation for proposed modules. Builder agents/subagents still cannot edit the GDD.
@@ -143,13 +155,15 @@ This table is mandatory project metadata.
 |---|---|---|---|
 | `/README.md` | Spanish | Public repository cover; concise game overview; local setup/testing; simplified deployment; tester access to `physics-playground`. | Keep attractive and concise. Update when public setup, controls, modes, or top-level structure materially changes. |
 | `/CONTRIBUTING.md` | English | Development methodology; branch hierarchy; preserved auxiliary-branch history; squash workflow; testing; documentation; attribution. | Read before Git operations. Never delete auxiliary branches as routine cleanup. Never promote `dev` to `main` without explicit human authorization. |
-| `/LICENSE.md` | English | Provisional licensing notice and licensing boundaries. | Do not alter licensing intent without explicit approval. Check all third-party asset/audio licenses before inclusion. |
+| `/LICENSE.md` | English | Final licensing notice and licensing boundaries. | Do not alter licensing intent without explicit approval. Check all third-party asset/audio licenses before inclusion. |
 | `/docs/GDD.md` | Spanish | **Complete Game Design Document; source of truth for game design and UI/UX.** | Read before gameplay/player-facing changes, especially section 41 for UI/UX. Do not edit unless explicitly requested or an approved design change must be incorporated. |
 | `/docs/PRD.md` | English | Product/technical requirements: architecture, phase-specific scope, build stages, `physics-playground`, approved implementation clarifications, assets, service boundaries, acceptance criteria. | Read before implementation. Use it to determine what the current phase must build while preserving compatibility with the complete GDD. |
 | `/docs/BACKLOG.md` | English | Living task pool, priorities, dependencies, status, commit references, regression provenance, post-jam deferrals. | Updating it is part of development. Close tasks with commit hashes when known. Record suspected bug-introducing commits when useful and evidenced. |
 | `/docs/DEPLOYMENT.md` | English | Local production serving, root/subpath builds, and pending GitHub Pages release procedure. | Read before build/base/hosting changes. Distinguish verified local serving from pending live publication. |
 | `/docs/PHYSICS.md` | English | Current physical architecture, diagnostic controls, canonical configuration and tuning workflow. | Read for physics/playground changes. Keep implementation facts current; human feel validation remains separate. |
 | `/docs/ASSETS.md` | English | Original placeholder provenance, dimensions, anchors, animation and artist repaint contract. | Read before visual replacements or registration changes. Preserve physics/art separation and record imported licenses. |
+| `/docs/SOUNDS.md` | English | **Canonical jam-audio implementation contract:** selected Audio Hero source names, exact physical paths/formats, semantic reuse/aliases, loading/mixing/trigger rules, and implementation/acceptance checklist. | Read before any audio change. Reuse one physical file for multiple semantic roles where documented; do not invent missing assets, duplicate recordings, or obsolete paths. Preserve GDD tone/gameplay intent and BASE_URL-safe asset handling. |
+| `/docs/DESIGN.md` | English | **Web-app visual identity document** for HUD and HTML/CSS interface presentation. Currently a placeholder; future revisions will define the executive visual system for the app-like UI layer. | When populated, read first for HUD/web-app styling. While it remains a placeholder, infer no new rules and fall back to GDD/PRD/current UI. Do not use it to redefine gameplay or sprite/world-art contracts. |
 | `/docs/BACKEND.md` | English | Static jam service contracts; published level/catalog data, local Top 100 persistence, anonymous sessions and future remote/auth migration. | Read before content/service/persistence changes. Do not treat local rankings as global or author IDs as authentication. |
 | `/docs/ENDLESS_PLAN.md` | English | Approved Endless jam implementation sequence, six-module scope, probability/point-value tuning and verification gates. | Read for Endless gameplay work. Preserve verification evidence and distinguish automated traversal from human feel validation. |
 
@@ -159,7 +173,6 @@ Add focused documents when complexity justifies them. Examples:
 
 - `/docs/API.md`
 - `/docs/ASSETS.md`
-- `/docs/AUDIO.md`
 - `/docs/DEVELOPMENT.md`
 - `/docs/LEVEL_FORMAT.md`
 - `/docs/MIGRATION.md`
@@ -201,6 +214,8 @@ Directories should be created incrementally as responsibilities appear. Do not g
 │   ├── PRD.md
 │   ├── BACKLOG.md
 │   ├── DEPLOYMENT.md
+│   ├── SOUNDS.md
+│   ├── DESIGN.md
 │   └── ... future registered documentation
 │
 ├── public/
@@ -212,7 +227,7 @@ Directories should be created incrementally as responsibilities appear. Do not g
 │   │   ├── ui/
 │   │   └── ... entity/category directories as needed
 │   └── audio/
-│       └── ... only after licensing is documented
+│       └── ... runtime audio registered by `/docs/SOUNDS.md` and licensing/provenance documentation
 │
 ├── src/
 │   ├── main.ts
@@ -530,7 +545,9 @@ The jam does not require examples of all sixteen abstract biome transition combi
 
 Do not introduce React/Vue/Svelte or another UI framework merely for menus. HTML/CSS is the default UI layer.
 
-The complete UI/UX design is defined in **GDD section 41**. For the Game Jam prototype, implement the PRD-scoped subset while keeping behavior compatible with that section.
+The complete UI/UX behavior is defined in **GDD section 41**. For the Game Jam prototype, implement the PRD-scoped subset while keeping behavior compatible with that section.
+
+For **visual styling of the HTML/CSS web-app layer and HUD**, consult `/docs/DESIGN.md` first once it contains actionable guidance. While it remains the one-line placeholder, it adds no requirements and agents must continue using the GDD/PRD/current UI as the effective baseline. Sprite/world-art identity remains outside DESIGN and follows the GDD plus `/docs/ASSETS.md`.
 
 ### 11.1 Player-facing flow
 
@@ -631,7 +648,25 @@ Where implemented in the jam build:
 
 ---
 
-## 12. Leaderboard service boundary
+## 12. Audio implementation contract
+
+`/docs/SOUNDS.md` owns the concrete jam-audio implementation. Read it before touching audio assets or code.
+
+Key guardrails:
+
+- physical audio files under `/public/audio/` must match the exact filenames/extensions currently documented in `SOUNDS.md`;
+- several gameplay events intentionally alias the same physical recording — **do not duplicate the file just to give each event a different filename**;
+- gameplay code should use semantic audio events/keys rather than Audio Hero source names;
+- respect documented grouping/debounce/cooldown rules so Rapier contact chatter does not become sound spam;
+- preserve BASE_URL-safe public asset resolution for GitHub Pages;
+- the current jam mix intentionally contains WAV and MP3 assets; do not perform a last-minute format migration unless explicitly requested;
+- preserve third-party provenance/licensing records when renaming or later transcoding assets.
+
+The GDD still owns why an event matters and what tone it should communicate. `SOUNDS.md` owns which selected recording/path implements it in the current jam build.
+
+---
+
+## 13. Leaderboard service boundary
 
 The complete GDD includes level leaderboards. The **Game Jam prototype PRD may defer the remote/global implementation**; this is an operational scope decision, not removal of the feature from the complete game.
 
@@ -674,7 +709,7 @@ Do not add secrets to the browser bundle.
 
 ---
 
-## 13. Testing expectations
+## 14. Testing expectations
 
 Run every applicable check that exists before integration into `dev`.
 
@@ -744,7 +779,7 @@ Use `physics-playground` plus human playtesting for subjective game feel.
 
 ---
 
-## 14. BACKLOG is part of development
+## 15. BACKLOG is part of development
 
 Updating `/docs/BACKLOG.md` is not optional housekeeping.
 
@@ -760,7 +795,7 @@ Do not erase useful historical information just because work is complete.
 
 ---
 
-## 15. Git workflow summary
+## 16. Git workflow summary
 
 `/CONTRIBUTING.md` is authoritative.
 
@@ -780,7 +815,7 @@ If remote access is unavailable, leave the local repository coherent and report 
 
 ---
 
-## 16. Agent and subagent attribution
+## 17. Agent and subagent attribution
 
 Agent contributions are intentionally traceable.
 
@@ -819,7 +854,7 @@ This traceability supports:
 
 ---
 
-## 17. Subagent guidance
+## 18. Subagent guidance
 
 Use subagents where work has a clear isolated contract, especially for:
 
@@ -844,7 +879,7 @@ Do not create subagents merely to maximize parallelism when coordination cost ex
 
 ---
 
-## 18. Scripts policy
+## 19. Scripts policy
 
 Reusable helper scripts created by humans or agents belong in:
 
@@ -875,7 +910,7 @@ Do not commit:
 
 ---
 
-## 19. Dependency discipline
+## 20. Dependency discipline
 
 Before adding a runtime dependency, ask:
 
@@ -892,7 +927,7 @@ Do not replace PixiJS/Rapier or introduce another game engine without explicit a
 
 ---
 
-## 20. Security and external services
+## 21. Security and external services
 
 The jam build should function without secrets.
 
@@ -904,7 +939,7 @@ The jam build should function without secrets.
 
 ---
 
-## 21. Definition of ready for human verification
+## 22. Definition of ready for human verification
 
 A feature is ready for the human to test when:
 
@@ -923,7 +958,7 @@ Automated success does not replace playtesting game feel.
 
 ---
 
-## 22. Final production rule
+## 23. Final production rule
 
 When choosing between adding complexity and making the existing core more readable, tunable, stable, and fun, prefer the latter.
 

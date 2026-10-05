@@ -1,1674 +1,1333 @@
-# MUDANZAS TORTUGA, S.L. — SOUNDS
+# Mudanzas Tortuga, S.L. — Sound Design & Implementation
 
-**Documento:** diseño de sonido + guía de implementación  
-**Versión:** Game Jam 2026  
-**Stack:** Vite + PixiJS + Rapier2D  
-**Plataforma:** navegador  
-**Fuente principal:** Audio Hero — *Ultimate Game Audio Bundle*  
-**Formato preferido de entrega:** MP3, salvo que una necesidad concreta de edición/loop aconseje conservar WAV como máster.
-
----
-
-## 1. Objetivo
-
-El sonido debe reforzar la fantasía de **comedia física amable** de *Mudanzas Tortuga, S.L.*:
-
-- Don Tortuga es pesado, lento, constante e imperturbable.
-- La carga es vulnerable y produce pequeños desastres legibles.
-- Los golpes deben resultar claros y graciosos, no violentos.
-- El jugador debe oír que algo importante ha ocurrido sin que cada contacto de Rapier produzca ruido.
-- El audio complementa el feedback visual y nunca sustituye el *telegraphing* de las trampas.
-- No existen sonidos de daño, dolor, muerte, ahogamiento o sufrimiento.
-
-El objetivo de jam es **pocos sonidos muy reutilizables**, bien escogidos y con reglas claras de disparo.
+**Status:** Game Jam implementation specification  
+**Date:** 2026-10-05  
+**Stack:** Vite + TypeScript + PixiJS 8 + Rapier2D  
+**Target:** browser / GitHub Pages  
+**Source library:** Audio Hero — Ultimate Game Audio Bundle  
+**Jam audio footprint:** ~112 MB  
+**Physical runtime assets:** 21 files total = 3 BGM + 18 SFX/ambient  
+**Current formats:** 19 WAV + 2 MP3
 
 ---
 
-# 2. Estructura de directorios
+## 1. Purpose and authority
 
-Los ficheros viven en:
+This document replaces the earlier audio-search/triage version of `SOUNDS.md`.
+
+The audio selection is now closed for the jam. Codex should implement the assets listed here rather than search for new sounds or invent placeholder paths.
+
+The main implementation principle is:
+
+> **Do not sonify the simulation. Sonify the physical story the player perceives.**
+
+Rapier may produce many contacts in a single physical event. The player should hear the meaningful accident, impact, transition or notification — not every solver callback.
+
+### Jam constraints
+
+- Do **not** convert WAV files before the jam.
+- Do **not** introduce Git LFS for the runtime audio used by GitHub Pages.
+- Do **not** duplicate one physical audio file just because it has several gameplay roles.
+- Do **not** add a new audio dependency unless the existing code genuinely requires it.
+- Do **not** hardcode root-absolute `/audio/...` URLs throughout the codebase.
+- Reuse the project's existing public-asset URL helper / `import.meta.env.BASE_URL` strategy so audio also works under the GitHub Pages repository subpath.
+- No additional asset is required to ship the jam build unless human playtesting identifies a blocking problem.
+
+---
+
+# 2. Physical directory layout
 
 ```text
 public/
 └── audio/
     ├── bgm/
+    │   ├── fixing-the-farmers-car.wav
+    │   ├── patio-party.wav
+    │   └── just-kidding.wav
+    │
     ├── sfx/
+    │   ├── ui-move.wav
+    │   ├── feedback-positive.wav
+    │   ├── feedback-toggle.wav
+    │   ├── feedback-negative.wav
+    │   ├── ui-notification.wav
+    │   ├── client-call.wav
+    │   ├── impact-dull-low.wav
+    │   ├── water-splash-small.wav
+    │   ├── water-splash-large.wav
+    │   ├── cargo-impact-light.wav
+    │   ├── impact-debris-medium.wav
+    │   ├── cargo-impact-heavy.wav
+    │   ├── trap-branch-creak.wav
+    │   ├── trap-pinecone-rustle.mp3
+    │   └── trap-pinecone-fall.wav
+    │
     └── ambient/
+        ├── turtle-dry-movement.mp3
+        ├── turtle-water-movement.wav
+        └── forest-ambience.wav
 ```
 
-Vite sirve `public/` desde la raíz, por lo que:
+Only these two runtime files are MP3 in the jam build:
 
 ```text
-public/audio/sfx/cargo-impact-medium.mp3
+public/audio/ambient/turtle-dry-movement.mp3
+public/audio/sfx/trap-pinecone-rustle.mp3
 ```
 
-se carga en runtime como:
-
-```text
-/audio/sfx/cargo-impact-medium.mp3
-```
-
-**Nunca usar `/public/` en la URL de runtime.**
+All other files listed above are WAV.
 
 ---
 
-# 3. Convenciones de nombres
+# 3. Canonical physical asset inventory
 
-- minúsculas;
-- ASCII;
-- `kebab-case`;
-- extensión `.mp3`;
-- variantes terminadas en `-01`, `-02`, etc.;
-- el nombre describe el **evento de juego**, no el nombre comercial del clip de Audio Hero.
+A physical Audio Hero recording is stored **once**, even when several semantic events reuse it.
 
-Ejemplo:
+## 3.1 BGM
 
-```text
-Audio Hero original:
-"WOOD CRACK ..."
+| Original title | Physical project path | Use |
+|---|---|---|
+| `Fixing the Farmer's Car` | `public/audio/bgm/fixing-the-farmers-car.wav` | title + menu flow |
+| `Patio Party` | `public/audio/bgm/patio-party.wav` | physics laboratory + credits |
+| `Just Kidding` | `public/audio/bgm/just-kidding.wav` | Endless Run |
 
-Repositorio:
-public/audio/sfx/trap-branch-crack-01.mp3
-```
+These three tracks are final for the jam. Do not search for replacements.
 
-Esto desacopla el código de los nombres internos de la librería.
+## 3.2 SFX and ambient
 
----
-
-# 4. Prioridades de jam
-
-| Nivel | Significado |
-|---|---|
-| **P0** | Imprescindible para que la build tenga una capa sonora completa. |
-| **P1** | Mucho valor por poco trabajo; añadir si P0 está estable. |
-| **P2** | Pulido/post-jam. No retrasar la entrega. |
-| **NO** | No merece la pena revisar ese pack para esta jam. |
-
----
-
-# 5. Triage de los packs del Humble Bundle
-
-## 5.1. P0 — revisar primero
-
-Estos packs deberían cubrir prácticamente toda la versión de jam.
-
-| Pack del bundle | Prioridad | Qué buscamos |
-|---|---:|---|
-| **Crash, Smash, Break!** | **P0** | golpes de muebles, madera, objetos domésticos, roturas, caídas, impactos duros |
-| **Water** | **P0** | entrada/salida del agua, salpicaduras, nado, slosh, corriente/agua ambiental |
-| **Celebrations & Cartoons** | **P0** | pops, boings, golpes cartoon, pequeños stings, feedback cómico |
-| **Household** | **P0** | cristal, platos, cajas, muebles y objetos domésticos con timbres específicos |
-| **Dynamic Swishes** | **P0** | objetos cayendo, piña descendiendo, desplazamientos rápidos, pequeños whooshes |
-| **Button Masters** | **P0** | mover selección, confirmar, cancelar, notificaciones |
-| **UI Shaping** | **P0** | alternativa/segunda familia para UI, alertas y feedback corto |
-| **Children & Play** | **P0** | sonidos suaves, juguetones y apropiados para público infantil |
-
-### Orden recomendado de escucha
-
-```text
-1. Crash, Smash, Break!
-2. Water
-3. Celebrations & Cartoons
-4. Household
-5. Button Masters
-6. UI Shaping
-7. Dynamic Swishes
-8. Children & Play
-```
-
-Con una buena selección de estos ocho packs debería ser posible cerrar **todo el P0** sin explorar nada más.
-
----
-
-## 5.2. P1 — segunda pasada
-
-| Pack del bundle | Prioridad | Uso potencial |
-|---|---:|---|
-| **Wacky World** | P1 | acentos cartoon más exagerados, resultado de run, objeto perdido |
-| **Essential Creator Toolkit** | P1 | transiciones, stings y elementos generales que falten |
-| **Sonic Crafting** | P1 | capas abstractas o *sweeteners* para diseñar sonidos compuestos |
-| **Celebration & Festivity** | P1 | banderines, récord o feedback positivo si `Celebrations & Cartoons` no basta |
-| **Animals: Flock of Birds** | P1 | ambiente ligero de bosque |
-| **Weather Wounds** | P1 | viento/ambiente exterior muy sutil |
-| **Africa & Jungles** | P1 | fondo natural; usar solo elementos que suenen compatibles con nuestro bosque |
-| **Mechanical** | P1 | solo si encontramos una capa útil para la trampilla/tocón |
-| **Industrial & Mechanical** | P1 | alternativa para mecanismos; probablemente demasiado industrial |
-| **Underground & Caves** | P1/P2 | futura gruta o ruta profunda; poco importante para la jam |
-| **Animals: Small Mammals** | P1/P2 | pequeños detalles de fauna; no necesarios para gameplay |
-
----
-
-## 5.3. P2 — curiosidad / post-jam
-
-| Pack | Motivo |
-|---|---|
-| **Animals: Reptiles** | Puede ser divertido inspeccionarlo, pero contiene principalmente ranas, serpientes, cocodrilos, etc. Don Tortuga no necesita vocalizaciones. |
-| **Cozy & Safe** | Puede aportar textura ambiental, pero la BGM ya cubre gran parte del tono. |
-| **Musical Elements** | Útil para stings si faltan, pero no prioritario. |
-| **On The Road** | El juego es una mudanza, pero no queremos que Don Tortuga suene como un vehículo. |
-| **Transportation & Motion** | Igual: solo buscar aquí si necesitamos una textura concreta de movimiento. |
-| **The Director's Audiences** | Aplausos/reacciones podrían servir para resultados futuros; no necesarios. |
-| **Classic Console** | El juego no tiene una dirección retro/8-bit. Evitar mezclar estilos salvo decisión artística consciente. |
-
----
-
-## 5.4. NO — ignorar durante la jam
-
-No invertir tiempo en estos packs salvo que aparezca una necesidad nueva muy concreta:
-
-```text
-Explosions Zone
-Fight Club
-Conflict & Battle
-Cyber Warfare
-Natural Disasters
-Vulcanoes
-Dolby Atmos Vol 1
-Dolby Atmos Vol 2
-Glitch Dominion
-Space Oddyssey
-Sci-fi / espacio / horror / guerra
-Voice Packs: Adult Female
-Voice Packs: Adult Male
-Voice Packs: Children
-Voice Packs: Teenagers
-```
-
-Las voces grabadas tampoco encajan bien con un juego en castellano si no existe un diseño explícito de doblaje.
-
----
-
-# 6. BGM seleccionada
-
-## 6.1. Rutas definitivas
-
-| Pantalla / modo | Pista | Archivo | Ruta runtime |
+| Original Audio Hero title | Pack | Canonical physical path | Logical uses |
 |---|---|---|---|
-| Portada y menús | **Fixing the Farmer's Car** | `fixing-the-farmers-car.mp3` | `/audio/bgm/fixing-the-farmers-car.mp3` |
-| Laboratorio de físicas | **Patio Party** | `patio-party.mp3` | `/audio/bgm/patio-party.mp3` |
-| Créditos | **Patio Party** | `patio-party.mp3` | `/audio/bgm/patio-party.mp3` |
-| Carrera Infinita | **Just Kidding** | `just-kidding.mp3` | `/audio/bgm/just-kidding.mp3` |
-
-Archivos:
-
-```text
-public/audio/bgm/fixing-the-farmers-car.mp3
-public/audio/bgm/patio-party.mp3
-public/audio/bgm/just-kidding.mp3
-```
-
-## 6.2. Reglas BGM
-
-- La música solo debe iniciarse después de una interacción válida del usuario si el navegador todavía no ha desbloqueado audio.
-- `Fixing the Farmer's Car` continúa entre las pantallas de menú para evitar reinicios constantes.
-- Al entrar en Carrera Infinita:
-  - fade out del menú: ~300 ms;
-  - cambiar a `Just Kidding`;
-  - fade in: ~300 ms.
-- En pausa:
-  - mantener posición;
-  - reducir volumen aproximadamente un 30–40 %.
-- Al reanudar:
-  - restaurar volumen suavemente.
-- Laboratorio y créditos utilizan `Patio Party`.
-- Al volver a portada desde resultados/créditos/laboratorio, restaurar `Fixing the Farmer's Car`.
+| `ButtonPushClick PE1090101` | Button Masters | `public/audio/sfx/ui-move.wav` | menu selection movement |
+| `ButtonSpringSmlS SDT2039702` | Button Masters | `public/audio/sfx/feedback-positive.wav` | confirm, contextual-help appearance, pause open, checkpoint/pennant, score feedback |
+| `ButtonThinTurnOn SDT2039201` | Button Masters | `public/audio/sfx/feedback-toggle.wav` | back/cancel, stump trigger |
+| `el interface error 04 hpx` | UI Shaping | `public/audio/sfx/feedback-negative.wav` | disabled option, definitive cargo loss, last-object loss |
+| `ComputInterfa GFX045201` | UI Shaping | `public/audio/sfx/ui-notification.wav` | client text notification |
+| `BellPulsatingChime SE030302` | Sonic Crafting | `public/audio/sfx/client-call.wav` | client call |
+| `ImpactDrumDullLo SDT2016605` | Sonic Crafting | `public/audio/sfx/impact-dull-low.wav` | soft/hard landing, stump hit, pinecone hit |
+| `TURTLE, MOVEMENTS ON DIRT` | Animals: Reptiles | `public/audio/ambient/turtle-dry-movement.mp3` | dry locomotion on grass/rock |
+| `Foley: Feet Water Wade` | Water | `public/audio/ambient/turtle-water-movement.wav` | water locomotion/swimming |
+| `Water, Splash` | Water | `public/audio/sfx/water-splash-small.wav` | small water entry, water exit |
+| `WATER, SPLASH` | Water | `public/audio/sfx/water-splash-large.wav` | strong water entry |
+| `METAL, BEND` | Crash, Smash, Break! | `public/audio/sfx/cargo-impact-light.wav` | light cargo impact |
+| `DebrisWoodMetalWoo PE283301` | Crash, Smash, Break! | `public/audio/sfx/impact-debris-medium.wav` | medium cargo impact, branch break |
+| `Crash: Metal & Wood Crash With Debris` | Crash, Smash, Break! | `public/audio/sfx/cargo-impact-heavy.wav` | heavy cargo impact |
+| `DoorBreaksBreakDow FS022601` | Crash, Smash, Break! | `public/audio/sfx/trap-branch-creak.wav` | cracked-branch warning/creak |
+| `Flock Of Birds Taking Off, Wings Flapping, Foley` | Animals: Flock of Birds | `public/audio/sfx/trap-pinecone-rustle.mp3` | tree/pinecone warning rustle |
+| `WHOOSHES, TURBULENT SHOT` | Sonic Crafting | `public/audio/sfx/trap-pinecone-fall.wav` | pinecone fall |
+| `JungleAmbLightDayt APS10149` | Africa & Jungles | `public/audio/ambient/forest-ambience.wav` | light gameplay forest ambience |
 
 ---
 
-# 7. SFX — interfaz
+# 4. Critical distinction: physical assets vs. semantic events
 
-## 7.1. P0
+The names in section 3 are **physical files**.
 
-### `ui-move.mp3`
+Gameplay code should use semantic names. Several semantic names may resolve to the same physical file.
+
+For example:
 
 ```text
-public/audio/sfx/ui-move.mp3
-/audio/sfx/ui-move.mp3
+landingSoft ─────┐
+landingHard ─────┤
+stumpHit ────────┼──> impact-dull-low.wav
+pineconeHit ─────┘
 ```
 
-**Evento:** cambiar realmente la opción seleccionada.
+Do **not** create four copies of the WAV.
 
-**Buscar primero en:**
-
-1. `Button Masters`
-2. `UI Shaping`
-3. `Children & Play`
-
-**Perfil:** click/pop de 30–120 ms, agradable y poco tonal.
+The same rule applies to all aliases below.
 
 ---
 
-### `ui-confirm.mp3`
+# 5. Semantic audio manifest
 
-```text
-public/audio/sfx/ui-confirm.mp3
-/audio/sfx/ui-confirm.mp3
+Use one central manifest/module.
+
+Adapt its exact location/name to the architecture already present in the repository. If there is already an asset registry or public URL helper, extend it instead of creating a competing system.
+
+The example below uses `publicAssetUrl(...)` as a **placeholder name** for the project's existing BASE_URL-aware helper. Codex must locate and reuse the real helper rather than blindly introduce this exact function name.
+
+```ts
+export const AUDIO_FILES = {
+  bgm: {
+    menu: "audio/bgm/fixing-the-farmers-car.wav",
+    physicsLab: "audio/bgm/patio-party.wav",
+    credits: "audio/bgm/patio-party.wav",
+    endless: "audio/bgm/just-kidding.wav",
+  },
+
+  ui: {
+    move: "audio/sfx/ui-move.wav",
+
+    // Same physical file, intentional aliases:
+    confirm: "audio/sfx/feedback-positive.wav",
+    helpPop: "audio/sfx/feedback-positive.wav",
+    pauseOpen: "audio/sfx/feedback-positive.wav",
+
+    back: "audio/sfx/feedback-toggle.wav",
+    disabled: "audio/sfx/feedback-negative.wav",
+
+    notification: "audio/sfx/ui-notification.wav",
+    clientCall: "audio/sfx/client-call.wav",
+  },
+
+  scoring: {
+    checkpoint: "audio/sfx/feedback-positive.wav",
+    scorePop: "audio/sfx/feedback-positive.wav",
+  },
+
+  turtle: {
+    movementDry: "audio/ambient/turtle-dry-movement.mp3",
+    movementWater: "audio/ambient/turtle-water-movement.wav",
+
+    landingSoft: "audio/sfx/impact-dull-low.wav",
+    landingHard: "audio/sfx/impact-dull-low.wav",
+  },
+
+  cargo: {
+    impactLight: "audio/sfx/cargo-impact-light.wav",
+    impactMedium: "audio/sfx/impact-debris-medium.wav",
+    impactHeavy: "audio/sfx/cargo-impact-heavy.wav",
+
+    lost: "audio/sfx/feedback-negative.wav",
+    lastObjectLost: "audio/sfx/feedback-negative.wav",
+  },
+
+  water: {
+    entrySmall: "audio/sfx/water-splash-small.wav",
+    entryLarge: "audio/sfx/water-splash-large.wav",
+    exit: "audio/sfx/water-splash-small.wav",
+  },
+
+  hazards: {
+    branchCreak: "audio/sfx/trap-branch-creak.wav",
+    branchBreak: "audio/sfx/impact-debris-medium.wav",
+
+    stumpTrigger: "audio/sfx/feedback-toggle.wav",
+    stumpHit: "audio/sfx/impact-dull-low.wav",
+
+    pineconeRustle: "audio/sfx/trap-pinecone-rustle.mp3",
+    pineconeFall: "audio/sfx/trap-pinecone-fall.wav",
+    pineconeHit: "audio/sfx/impact-dull-low.wav",
+  },
+
+  ambient: {
+    forest: "audio/ambient/forest-ambience.wav",
+  },
+} as const;
 ```
 
-**Evento:** Enter/click sobre una opción válida.
+At the integration boundary, resolve these repository-relative public paths using the existing BASE_URL-aware asset helper.
 
-**Buscar:**
+Conceptually:
 
-1. `Button Masters`
-2. `UI Shaping`
-3. `Celebrations & Cartoons`
+```ts
+const url = publicAssetUrl(AUDIO_FILES.ui.confirm);
+```
 
-**Perfil:** corto, claramente positivo, sin sonar futurista.
+Not:
+
+```ts
+const url = "/audio/sfx/feedback-positive.wav";
+```
+
+The root-absolute form can break when deployed to a GitHub Pages repository subpath.
 
 ---
 
-### `ui-back.mp3`
+# 6. BGM behavior
+
+## 6.1 Title and menus
+
+Use:
 
 ```text
-public/audio/sfx/ui-back.mp3
-/audio/sfx/ui-back.mp3
+Fixing the Farmer's Car
+public/audio/bgm/fixing-the-farmers-car.wav
 ```
 
-**Evento:** Esc / volver atrás.
+Requirements:
 
-**Buscar:**
+- begin only after browser audio has been unlocked by a valid user interaction;
+- keep the track alive across menu screens when feasible;
+- do not restart it merely because the user moves between title/mode/difficulty menus.
 
-1. `Button Masters`
-2. `UI Shaping`
+## 6.2 Physics laboratory
 
-**Perfil:** más apagado/descendente que `ui-confirm`.
+Use:
+
+```text
+Patio Party
+public/audio/bgm/patio-party.wav
+```
+
+## 6.3 Credits
+
+Use the same physical track:
+
+```text
+Patio Party
+public/audio/bgm/patio-party.wav
+```
+
+Do not duplicate the file for Credits.
+
+## 6.4 Endless Run
+
+Use:
+
+```text
+Just Kidding
+public/audio/bgm/just-kidding.wav
+```
+
+Recommended transition from menu:
+
+```text
+menu music fade out: ~300 ms
+switch
+game music fade in: ~300 ms
+```
+
+This is tuning, not a hard gameplay constant.
+
+## 6.5 Pause
+
+When paused:
+
+- preserve BGM playback position;
+- lower music volume to about 60–70% of its normal game value;
+- stop generation of gameplay SFX/locomotion;
+- keep UI SFX available;
+- restore music smoothly on resume;
+- never queue paused gameplay sounds to play later.
 
 ---
 
-### `ui-disabled.mp3`
+# 7. UI and presentation events
+
+## 7.1 Move selection
+
+Semantic event:
 
 ```text
-public/audio/sfx/ui-disabled.mp3
-/audio/sfx/ui-disabled.mp3
+ui.move
 ```
 
-**Evento:** intentar activar `Nivel personalizado — Próximamente` u otra acción deshabilitada.
+Physical file:
 
-**Buscar:**
+```text
+public/audio/sfx/ui-move.wav
+```
 
-1. `Celebrations & Cartoons`
-2. `Children & Play`
-3. `Button Masters`
+Play only when the actual selected item changes.
 
-**Perfil:** pequeño “nope”, *bonk* o pop amable. Nunca buzzer agresivo.
+Do not play repeatedly when:
+
+- the user holds a key but selection cannot move farther;
+- focus remains on the same option.
+
+## 7.2 Confirm
+
+Semantic event:
+
+```text
+ui.confirm
+```
+
+Physical file:
+
+```text
+public/audio/sfx/feedback-positive.wav
+```
+
+Use for a valid confirmed action.
+
+## 7.3 Back / cancel
+
+Semantic event:
+
+```text
+ui.back
+```
+
+Physical file:
+
+```text
+public/audio/sfx/feedback-toggle.wav
+```
+
+## 7.4 Disabled option
+
+Semantic event:
+
+```text
+ui.disabled
+```
+
+Physical file:
+
+```text
+public/audio/sfx/feedback-negative.wav
+```
+
+Example:
+
+```text
+Nivel personalizado — Próximamente
+```
+
+Only fire when the player actually tries to activate the disabled option.
+
+## 7.5 Contextual help
+
+Semantic event:
+
+```text
+ui.helpPop
+```
+
+Physical file:
+
+```text
+public/audio/sfx/feedback-positive.wav
+```
+
+One playback when a contextual-help card appears.
+
+Do not loop or repeat during its 3–5 second display lifetime.
+
+## 7.6 Pause open
+
+Semantic event:
+
+```text
+ui.pauseOpen
+```
+
+Physical file:
+
+```text
+public/audio/sfx/feedback-positive.wav
+```
+
+One playback when the pause screen opens.
+
+Resume/back may use the ordinary confirm/back events rather than requiring another physical asset.
+
+## 7.7 Client text message
+
+Semantic event:
+
+```text
+ui.notification
+```
+
+Physical file:
+
+```text
+public/audio/sfx/ui-notification.wav
+```
+
+## 7.8 Client call
+
+Semantic event:
+
+```text
+ui.clientCall
+```
+
+Physical file:
+
+```text
+public/audio/sfx/client-call.wav
+```
+
+Use one short playback per grouped accident notification.
+
+Do not make it ring indefinitely.
 
 ---
 
-### `ui-notification.mp3`
+# 8. Checkpoints / pennants / score
+
+The pennant is the important perceived event.
+
+Semantic event:
 
 ```text
-public/audio/sfx/ui-notification.mp3
-/audio/sfx/ui-notification.mp3
+scoring.checkpoint
 ```
 
-**Evento:** mensaje de texto del cliente.
+Physical file:
 
-**Buscar:**
+```text
+public/audio/sfx/feedback-positive.wav
+```
 
-1. `Button Masters`
-2. `UI Shaping`
-3. `Essential Creator Toolkit`
+Trigger exactly once when the pennant crossing actually awards the score.
+
+`scorePop` may remain a semantic alias for future UI animation, but for the jam:
+
+> **Do not play checkpoint + scorePop simultaneously if both resolve to the same physical sample.**
+
+One positive sound per awarded pennant is enough.
 
 ---
 
-### `ui-call.mp3`
+# 9. Cargo loss
+
+## 9.1 Definitive loss only
+
+Semantic event:
 
 ```text
-public/audio/sfx/ui-call.mp3
-/audio/sfx/ui-call.mp3
+cargo.lost
 ```
 
-**Evento:** aparición de llamada del cliente.
+Physical file:
 
-**Buscar:**
+```text
+public/audio/sfx/feedback-negative.wav
+```
 
-1. `Household`
-2. `Essential Creator Toolkit`
-3. `Button Masters`
+Do not play it when an object merely becomes temporarily separated.
 
-**Perfil:** 1–2 timbres breves. No reproducir un ringtone largo.
+Only fire when game state confirms the equivalent of:
+
+```text
+temporary separation -> definitively lost
+```
+
+The exact names must follow the existing cargo-state implementation.
+
+## 9.2 Group simultaneous losses
+
+Several objects can be lost as part of one accident.
+
+Use the same accident grouping already used by client notifications.
+
+Starting audio grouping window:
+
+```text
+~250–400 ms
+```
+
+Example:
+
+```text
+TV lost
+lamp lost 90 ms later
+glass lost 130 ms later
+
+=> one negative sound
+=> one grouped client notification
+```
+
+Do not play one error sound per object.
+
+## 9.3 Last object / run end
+
+Semantic alias:
+
+```text
+cargo.lastObjectLost
+```
+
+Same physical file:
+
+```text
+public/audio/sfx/feedback-negative.wav
+```
+
+Do not layer the same sample twice for `lost` + `lastObjectLost`.
+
+When the final object ends the run, use one loss playback and let the game-state transition/results screen provide the additional weight.
 
 ---
 
-## 7.2. P1
+# 10. Cargo impacts
 
-### `ui-help-pop.mp3`
-
-```text
-public/audio/sfx/ui-help-pop.mp3
-```
-
-Al aparecer una ayuda contextual.
-
-**Pack:** `Children & Play` → `Celebrations & Cartoons`.
-
-### `ui-pause-open.mp3`
+Physical assets:
 
 ```text
-public/audio/sfx/ui-pause-open.mp3
+light  -> public/audio/sfx/cargo-impact-light.wav
+medium -> public/audio/sfx/impact-debris-medium.wav
+heavy  -> public/audio/sfx/cargo-impact-heavy.wav
 ```
 
-Puede reutilizar `ui-confirm` si no encontramos algo claramente mejor.
+## 10.1 Classification
 
-### `results-stamp.mp3`
+Use the most reliable physical magnitude already exposed by the current implementation:
+
+- contact impulse;
+- relative normal velocity;
+- or an existing equivalent impact metric.
+
+Do not introduce a second physics model just for sound.
+
+Conceptually:
 
 ```text
-public/audio/sfx/results-stamp.mp3
+below audible threshold -> silence
+light range             -> cargo.impactLight
+medium range            -> cargo.impactMedium
+heavy range             -> cargo.impactHeavy
 ```
 
-Golpe de sello/papel para resultados.
+Threshold values must be tuned against the game's real Rapier scale.
 
-**Pack:** `Household`.
+Do not hardcode arbitrary values from this document.
 
----
+## 10.2 Contact aggregation
 
-# 8. SFX — Don Tortuga y movimiento
+One visible crash may create many Rapier callbacks.
 
-## 8.1. Salto
-
-### `jump-charge.mp3` — P0
-
-```text
-public/audio/sfx/jump-charge.mp3
-```
-
-**Evento:** comenzar a mantener Espacio estando apoyado.
-
-**Buscar:**
-
-1. `Celebrations & Cartoons`
-2. `Children & Play`
-3. `Sonic Crafting`
-
-**Perfil:** pequeño sonido de tensión/preparación, no un loop.
-
-La animación/postura sigue comunicando la carga; el audio solo la refuerza.
-
----
-
-### `jump-release.mp3` — P0
-
-```text
-public/audio/sfx/jump-release.mp3
-```
-
-**Evento:** soltar Espacio y despegar.
-
-**Buscar:**
-
-1. `Celebrations & Cartoons`
-2. `Dynamic Swishes`
-3. `Children & Play`
-
-**Perfil:** impulso blando/cartoon. No “rocket”, no sonido de combate.
-
----
-
-## 8.2. Aterrizaje
-
-### `landing-soft.mp3` — P0
-
-```text
-public/audio/sfx/landing-soft.mp3
-```
-
-**Buscar:**
-
-1. `Crash, Smash, Break!`
-2. `Household`
-3. `Children & Play`
-
-Sonido pesado pero acolchado.
-
-### `landing-hard.mp3` — P0
-
-```text
-public/audio/sfx/landing-hard.mp3
-```
-
-**Buscar:**
-
-1. `Crash, Smash, Break!`
-2. `Household`
-
-Debe comunicar **energía transferida a la carga**, no dolor.
-
-### Regla
-
-Usar velocidad/impulso vertical para seleccionar:
-
-```text
-impact < softThreshold        -> nada o landing-soft a volumen bajo
-softThreshold..hardThreshold  -> landing-soft
-impact >= hardThreshold       -> landing-hard
-```
-
-Cooldown recomendado:
-
-```text
-~120–200 ms
-```
-
-para evitar múltiples disparos por rebotes de Rapier.
-
----
-
-# 9. AMBIENT — contacto con biomas
-
-Estos sonidos representan el desplazamiento de Don Tortuga sobre el terreno.
-
-**No conviene usar un loop MP3 continuo para cada material.**
-
-Para esta jam es preferible disparar **one-shots cortos alternados** según avance/distancia recorrida. Así:
-
-- evitamos seams de MP3;
-- variamos naturalmente la textura;
-- podemos cambiar de bioma de inmediato;
-- el sonido puede acelerar o espaciarse con la velocidad.
-
-## 9.1. Hierba — P0
-
-```text
-public/audio/ambient/grass-step-01.mp3
-public/audio/ambient/grass-step-02.mp3
-```
-
-Runtime:
-
-```text
-/audio/ambient/grass-step-01.mp3
-/audio/ambient/grass-step-02.mp3
-```
-
-**Buscar:**
-
-1. `Children & Play`
-2. `Africa & Jungles`
-3. `Household`
-4. si no aparece una pisada útil, utilizar los cupones/buscador general de Audio Hero con `grass footsteps`, `grass movement`, `rustle grass`.
-
-**Perfil:** roce vegetal suave. Don Tortuga es pesado pero lento.
-
----
-
-## 9.2. Roca — P0
-
-```text
-public/audio/ambient/rock-step-01.mp3
-public/audio/ambient/rock-step-02.mp3
-```
-
-**Buscar:**
-
-1. `Crash, Smash, Break!`
-2. `Household`
-3. búsqueda general: `stone footsteps`, `rock step`, `stone scrape`.
-
-**Perfil:** toque seco, corto, sin parecer un martillazo.
-
----
-
-## 9.3. Arena — P0 si el bioma está en la build de jam
-
-```text
-public/audio/ambient/sand-step-01.mp3
-public/audio/ambient/sand-step-02.mp3
-```
-
-**Buscar:**
-
-1. `Africa & Jungles`
-2. `Household`
-3. búsqueda general: `sand footsteps`, `sand movement`, `sand scrape`.
-
-**Perfil:** crujido/blando, con menos ataque que roca.
-
----
-
-## 9.4. Agua / nado — P0 si el agua está en la build
-
-```text
-public/audio/ambient/swim-01.mp3
-public/audio/ambient/swim-02.mp3
-```
-
-**Pack principal:** `Water`.
-
-**Perfil:** slosh pequeño, nunca sonido de alguien ahogándose.
-
-Se puede disparar por distancia/ritmo de natación, alternando variantes.
-
----
-
-# 10. SFX — agua
-
-## 10.1. Entrada
-
-### `water-entry-small.mp3` — P0
-
-```text
-public/audio/sfx/water-entry-small.mp3
-```
-
-Entrada suave o desde poca altura.
-
-### `water-entry-large.mp3` — P0
-
-```text
-public/audio/sfx/water-entry-large.mp3
-```
-
-Entrada con salto/caída importante.
-
-**Pack:** `Water`.
-
-Elegir variante según velocidad vertical al cruzar la superficie.
-
----
-
-## 10.2. Salida
-
-### `water-exit.mp3` — P0
-
-```text
-public/audio/sfx/water-exit.mp3
-```
-
-**Pack:** `Water`.
-
-Splash más corto y ligero que `water-entry-large`.
-
----
-
-## 10.3. Corriente profunda — P1
-
-```text
-public/audio/ambient/water-current.mp3
-```
-
-**Pack:** `Water`.
-
-Solo si existe una zona profunda/corriente claramente perceptible en la build.
-
-El volumen puede crecer suavemente con la profundidad.
-
----
-
-## 10.4. Ambiente acuático — P2
-
-```text
-public/audio/ambient/water-bed.mp3
-```
-
-Pack candidato:
-
-1. `Water`
-2. `Underground & Caves`
-
-No es necesario si `Just Kidding` + SFX ya llenan suficientemente la mezcla.
-
----
-
-# 11. SFX — carga y objetos
-
-Este es el sistema sonoro más importante después del agua.
-
-**No reproducir un SFX por cada manifold/contacto físico.**
-
-El audio debe representar **eventos perceptibles**, no el solver de Rapier.
-
----
-
-## 11.1. Impactos genéricos
-
-### `cargo-impact-light-01.mp3`
-### `cargo-impact-light-02.mp3`
-
-```text
-public/audio/sfx/cargo-impact-light-01.mp3
-public/audio/sfx/cargo-impact-light-02.mp3
-```
-
-Pequeños bamboleos/contactos.
-
-**Pack:**
-
-1. `Household`
-2. `Crash, Smash, Break!`
-
----
-
-### `cargo-impact-medium-01.mp3`
-### `cargo-impact-medium-02.mp3`
-
-```text
-public/audio/sfx/cargo-impact-medium-01.mp3
-public/audio/sfx/cargo-impact-medium-02.mp3
-```
-
-Choque claramente visible que todavía no implica desastre.
-
-**Pack principal:** `Crash, Smash, Break!`.
-
----
-
-### `cargo-impact-heavy-01.mp3`
-### `cargo-impact-heavy-02.mp3`
-
-```text
-public/audio/sfx/cargo-impact-heavy-01.mp3
-public/audio/sfx/cargo-impact-heavy-02.mp3
-```
-
-Golpe severo o reacción en cadena.
-
-**Pack:**
-
-1. `Crash, Smash, Break!`
-2. `Household`
-
----
-
-## 11.2. Regla de mezcla de impactos
-
-Agrupar colisiones dentro de una ventana aproximada:
+Recommended initial aggregation window:
 
 ```text
 80–150 ms
 ```
 
-y reproducir **un único sonido representativo del impacto más fuerte**.
+Within that window, emit at most the strongest meaningful cargo impact.
 
-Ejemplo:
+Example:
 
 ```text
-3 objetos chocan casi simultáneamente
-→ medir mayor impulso
-→ reproducir cargo-impact-medium-02
-→ no tres sonidos superpuestos
+light + light + medium + light
+=> play one medium
 ```
 
-Esto es fundamental para que una pila de muebles no se convierta en ruido blanco.
+## 10.3 Cooldown
+
+Starting point:
+
+```text
+~100–150 ms per impact family
+```
+
+This is only to prevent solver chatter and may be tuned by ear.
+
+## 10.4 No fake variation files
+
+There is only one physical file per impact tier.
+
+Do not create:
+
+```text
+cargo-impact-light-01.wav
+cargo-impact-light-02.wav
+...
+```
+
+If repetition becomes distracting, use subtle runtime variation instead.
+
+Suggested optional range:
+
+```text
+playbackRate ≈ 0.97–1.03
+small gain variation
+```
+
+Keep the variation restrained.
 
 ---
 
-# 12. SFX — materiales especiales de objetos
+# 11. Turtle landings
 
-P1: añadir únicamente si el objeto está realmente presente en la configuración inicial.
-
-## Cristal / vaso
+Both landing events use:
 
 ```text
-public/audio/sfx/object-glass-hit.mp3
-public/audio/sfx/object-glass-break.mp3
+public/audio/sfx/impact-dull-low.wav
 ```
 
-**Packs:**
+Semantic roles:
 
-1. `Crash, Smash, Break!`
-2. `Household`
+```text
+turtle.landingSoft
+turtle.landingHard
+```
 
-`object-glass-break` solo debe sonar si la presentación visual implica rotura.  
-Si el vaso simplemente se cae y desaparece de la carga, basta con `object-glass-hit` + `cargo-lost`.
+Starting mix:
+
+| Event | Relative gain | Optional playbackRate |
+|---|---:|---:|
+| soft landing | ~0.55 | ~1.03 |
+| hard landing | ~0.90 | ~0.98 |
+
+These values are tuning defaults only.
+
+A normal grounded movement contact is not a landing event.
+
+The landing detector should require a meaningful return to support after an airborne/falling state or equivalent existing state transition.
 
 ---
 
-## Madera / muebles
+# 12. Dry locomotion
+
+Physical file:
 
 ```text
-public/audio/sfx/object-wood-hit.mp3
+public/audio/ambient/turtle-dry-movement.mp3
 ```
 
-**Pack:** `Crash, Smash, Break!`.
+Original:
+
+```text
+TURTLE, MOVEMENTS ON DIRT
+```
+
+Jam use:
+
+```text
+grass
+rock
+```
+
+Sand is not part of the current jam biome set and has no dedicated jam audio requirement.
+
+The same physical file intentionally covers both current dry materials.
+
+## Activation
+
+Only audible while Don Tortuga is:
+
+- supported/grounded;
+- actually moving;
+- on dry terrain.
+
+Stop or fade it when:
+
+- airborne;
+- entering water;
+- physically blocked and no longer advancing;
+- gameplay pauses;
+- run ends.
+
+Do not trigger it directly from every contact callback.
+
+The implementation may use looping or distance/cadence playback depending on the actual sample duration. Prefer the simpler result that sounds natural in playtesting.
 
 ---
 
-## Metal
+# 13. Water
+
+## 13.1 Water movement
+
+Physical file:
 
 ```text
-public/audio/sfx/object-metal-hit.mp3
+public/audio/ambient/turtle-water-movement.wav
 ```
 
-**Pack:** `Crash, Smash, Break!` → `Household`.
+Semantic role:
 
-Solo si hay un objeto metálico identificable.
+```text
+turtle.movementWater
+```
+
+Active while Don Tortuga is meaningfully moving/swimming in water.
+
+Do not add breathing, drowning or distress audio. Don Tortuga cannot drown.
+
+## 13.2 Small entry
+
+Physical file:
+
+```text
+public/audio/sfx/water-splash-small.wav
+```
+
+Semantic role:
+
+```text
+water.entrySmall
+```
+
+Use for ordinary/low-energy water entry.
+
+## 13.3 Large entry
+
+Physical file:
+
+```text
+public/audio/sfx/water-splash-large.wav
+```
+
+Semantic role:
+
+```text
+water.entryLarge
+```
+
+Use for a clearly stronger fall/jump into water.
+
+The small/large threshold is tuning based on the existing physical velocity/impact scale.
+
+## 13.4 Exit
+
+Semantic role:
+
+```text
+water.exit
+```
+
+Reuse:
+
+```text
+public/audio/sfx/water-splash-small.wav
+```
+
+Do not copy this file as `water-exit.wav`.
+
+## 13.5 Surface jitter
+
+Water-state transitions must not spam splashes if the collider oscillates around the surface.
+
+Reuse or add a small transition debounce/hysteresis compatible with the current water-state implementation.
+
+One physical entry/exit should sound like one entry/exit.
 
 ---
 
-# 13. SFX — pérdida de objetos
+# 14. Hazards
 
-La pérdida definitiva es más importante que un simple choque y necesita firma sonora propia.
+Hazard SFX complement visual telegraphing. They never replace the required visual warning.
 
-## `cargo-lost.mp3` — P0
+## 14.1 Cracked branch
 
-```text
-public/audio/sfx/cargo-lost.mp3
-/audio/sfx/cargo-lost.mp3
-```
+### Warning / creak
 
-**Evento:** un objeto pasa definitivamente a `Perdido`.
-
-**Buscar:**
-
-1. `Celebrations & Cartoons`
-2. `Wacky World`
-3. `Children & Play`
-
-**Perfil:** pequeño descenso, plop o sting cómico. No sonido de “game over”.
-
-### Regla
-
-Si se pierden varios objetos dentro del intervalo de agrupación del accidente:
+Semantic event:
 
 ```text
-→ reproducir cargo-lost una sola vez
-→ lanzar una sola llamada/mensaje
+hazards.branchCreak
 ```
 
-coherente con la agrupación de avisos del GDD.
-
----
-
-## `cargo-last-object-lost.mp3` — P1
+Physical file:
 
 ```text
-public/audio/sfx/cargo-last-object-lost.mp3
+public/audio/sfx/trap-branch-creak.wav
 ```
 
-Marca el final de Carrera Infinita.
+Play once when the branch enters its warning/cracking phase.
 
-**Buscar:**
+### Break
 
-1. `Celebrations & Cartoons`
-2. `Wacky World`
-3. `Musical Elements`
-
-Debe ser gracioso y ligeramente resignado, no dramático.
-
-Si no encontramos uno perfecto, reutilizar `cargo-lost.mp3` y dejar que la transición visual comunique el final.
-
----
-
-# 14. SFX — banderines y puntuación
-
-## `checkpoint-flag.mp3` — P0
+Semantic event:
 
 ```text
-public/audio/sfx/checkpoint-flag.mp3
+hazards.branchBreak
 ```
 
-**Evento:** Don Tortuga cruza un conector y se despliega el banderín.
-
-**Buscar:**
-
-1. `Celebrations & Cartoons`
-2. `Celebration & Festivity`
-3. `Children & Play`
-4. `Essential Creator Toolkit`
-
-**Perfil:** micro-celebración de menos de ~0,7 s.
-
-No usar fanfarria larga: los banderines aparecen constantemente.
-
----
-
-## `score-pop.mp3` — P1
+Reuse:
 
 ```text
-public/audio/sfx/score-pop.mp3
+public/audio/sfx/impact-debris-medium.wav
 ```
 
-Pequeño acento al actualizar la puntuación.
+Play once when the support actually breaks/is removed.
 
-Puede omitirse si `checkpoint-flag` ya comunica el evento.
+Do not duplicate it as `trap-branch-break.wav`.
 
----
+## 14.2 Rising stump
 
-# 15. SFX — trampas de la jam
+### Trigger
 
-Las trampas nunca dependen exclusivamente del sonido para ser anticipadas.  
-El audio es una capa adicional de lectura y comedia.
-
----
-
-## 15.1. Rama resquebrajada
-
-### `trap-branch-creak.mp3` — P0
+Semantic event:
 
 ```text
-public/audio/sfx/trap-branch-creak.mp3
+hazards.stumpTrigger
 ```
 
-**Uso:** deformación/aviso inmediato al activarse.
-
-**Buscar:**
-
-1. `Crash, Smash, Break!`
-2. `Household`
-
-**Perfil:** madera crujiendo, reconocible.
-
-### `trap-branch-break.mp3` — P0
+Reuse:
 
 ```text
-public/audio/sfx/trap-branch-break.mp3
+public/audio/sfx/feedback-toggle.wav
 ```
 
-**Uso:** momento en que se retira el apoyo.
+One playback when the trap activates.
 
-**Pack:** `Crash, Smash, Break!`.
+### Hit / lift impact
 
----
-
-## 15.2. Trampilla + tocón elevador
-
-### `trap-stump-trigger.mp3` — P0
+Semantic event:
 
 ```text
-public/audio/sfx/trap-stump-trigger.mp3
+hazards.stumpHit
 ```
 
-**Buscar:**
-
-1. `Household`
-2. `Mechanical`
-3. `Sonic Crafting`
-
-**Perfil:** click/thunk de activación; evitar maquinaria industrial evidente.
-
-### `trap-stump-rise.mp3` — P1
+Reuse:
 
 ```text
-public/audio/sfx/trap-stump-rise.mp3
+public/audio/sfx/impact-dull-low.wav
 ```
 
-**Buscar:**
-
-1. `Dynamic Swishes`
-2. `Crash, Smash, Break!`
-3. `Mechanical`
-
-Puede omitirse y dejar solo activación + impacto.
-
-### `trap-stump-hit.mp3` — P0
+Recommended starting gain:
 
 ```text
-public/audio/sfx/trap-stump-hit.mp3
+~1.00
 ```
 
-**Pack:** `Crash, Smash, Break!`.
+Do not repeatedly trigger it while the kinematic mechanism remains in contact.
 
-Golpe de madera grave/redondo.
+There is no dedicated `stump-rise` file in the jam selection.
 
----
+## 14.3 Pinecone tree
 
-## 15.3. Árbol + piña
+### Warning / rustle
 
-### `trap-pinecone-rustle.mp3` — P0
+Semantic event:
+
+```text
+hazards.pineconeRustle
+```
+
+Physical file:
 
 ```text
 public/audio/sfx/trap-pinecone-rustle.mp3
 ```
 
-**Uso:** aviso inmediatamente previo a la caída.
+Play once during the visual pre-drop warning.
 
-**Buscar:**
+### Fall
 
-1. `Africa & Jungles`
-2. `Children & Play`
-3. `Household`
-
-Puede ser hojas/ramas moviéndose.
-
-### `trap-pinecone-fall.mp3` — P0
+Semantic event:
 
 ```text
-public/audio/sfx/trap-pinecone-fall.mp3
+hazards.pineconeFall
 ```
 
-**Pack principal:** `Dynamic Swishes`.
-
-Whoosh corto, suave y fácilmente localizable.
-
-### `trap-pinecone-hit.mp3` — P0
+Physical file:
 
 ```text
-public/audio/sfx/trap-pinecone-hit.mp3
+public/audio/sfx/trap-pinecone-fall.wav
 ```
 
-**Buscar:**
+Play once when the visible falling phase starts.
 
-1. `Crash, Smash, Break!`
-2. `Celebrations & Cartoons`
+Do not restart it every simulation tick.
 
-Puede inclinarse ligeramente hacia un *bonk* cartoon siempre que conserve sensación de peso.
+### Impact
+
+Semantic event:
+
+```text
+hazards.pineconeHit
+```
+
+Reuse:
+
+```text
+public/audio/sfx/impact-dull-low.wav
+```
+
+Starting gain:
+
+```text
+~0.75
+```
+
+Only the first meaningful impact needs the dedicated hit feedback. Ignore minor bounce chatter.
 
 ---
 
-# 16. Ambiente general de bosque
+# 15. Forest ambience
 
-## `forest-birds.mp3` — P1
+Physical file:
 
 ```text
-public/audio/ambient/forest-birds.mp3
+public/audio/ambient/forest-ambience.wav
 ```
 
-**Pack:** `Animals: Flock of Birds`.
+Original:
 
-Volumen muy bajo.
+```text
+JungleAmbLightDayt APS10149
+```
 
-La BGM debe seguir siendo dominante.
+Semantic role:
+
+```text
+ambient.forest
+```
+
+Use as a quiet background bed during gameplay if it improves the mix.
+
+Starting relative ambient level:
+
+```text
+~0.20–0.30
+```
+
+BGM should remain dominant.
+
+Do not restart the ambience at every procedural module boundary.
 
 ---
 
-## `forest-air.mp3` — P2
+# 16. Audio system implementation requirements
 
-```text
-public/audio/ambient/forest-air.mp3
-```
+## 16.1 First-interaction unlock
 
-**Pack:**
+Browsers may block autoplay.
 
-1. `Weather Wounds`
-2. `Africa & Jungles`
-
-Usar únicamente si aporta profundidad sin ensuciar la mezcla.
-
-No necesitamos un paisaje sonoro realista: el fondo es estilizado/cartoon.
-
----
-
-# 17. Pack `Animals: Reptiles`
-
-**Prioridad: P2 / curiosidad.**
-
-Aunque temáticamente sea irresistible por Don Tortuga, el pack contiene principalmente grabaciones de:
-
-- ranas;
-- serpientes;
-- cocodrilos/caimanes;
-- anfibios;
-- siseos y croares.
-
-No asignar automáticamente ningún sonido a Don Tortuga.
-
-**Regla de personaje:**
-
-> Don Tortuga no necesita “hacer ruido de tortuga”.
-
-Su personalidad se expresa mediante animación, peso, controles y constancia.
-
-Solo usar un clip de `Animals: Reptiles` si aparece una oportunidad genuinamente graciosa y coherente después de escucharlo.
-
----
-
-# 18. Qué descargar de cada pack
-
-La búsqueda inicial debe ser deliberadamente pequeña.
-
-## `Crash, Smash, Break!`
-
-Descargar candidatos para:
-
-```text
-2 × impacto ligero
-2 × impacto medio
-2 × impacto fuerte
-1 × madera crujiendo
-1 × madera rompiéndose
-1 × cristal
-1 × golpe de madera
-```
-
-Máximo inicial recomendado: **10 clips**.
-
----
-
-## `Water`
-
-```text
-1 × entrada pequeña
-1 × entrada grande
-1 × salida
-2 × slosh/nado
-1 × corriente opcional
-```
-
-Máximo: **6 clips**.
-
----
-
-## `Celebrations & Cartoons`
-
-```text
-1 × cargo-lost
-1 × checkpoint
-1 × ui-disabled
-1 × jump-charge
-1 × jump-release
-1 × bonk opcional
-1 × sting de fin opcional
-```
-
-Máximo: **7 clips**.
-
----
-
-## `Household`
-
-Buscar:
-
-```text
-1 × teléfono/ringtone
-1 × golpe doméstico suave
-1 × cristal
-1 × madera
-1 × papel/sello opcional
-1–2 × foley que encajen con objetos concretos
-```
-
-Máximo: **7 clips**.
-
----
-
-## `Button Masters` + `UI Shaping`
-
-Entre ambos necesitamos únicamente:
-
-```text
-1 × move
-1 × confirm
-1 × back
-1 × notification
-```
-
-Máximo combinado recomendado: **6–8 candidatos**, de los que conservaremos 4.
-
-`UI Shaping` contiene tonos, beeps, swells y button clicks; preferir los sonidos menos sci-fi para mantener la identidad de pequeño negocio del bosque.
-
----
-
-## `Dynamic Swishes`
-
-```text
-1 × pinecone fall
-1 × movement/fall alternative
-```
-
-Máximo: **3 clips**.
-
----
-
-## `Children & Play`
-
-Buscar alternativas suaves para:
-
-```text
-ui-help
-jump
-cargo-lost
-checkpoint
-```
-
-Máximo: **4 candidatos**.
-
----
-
-# 19. Inventario P0 propuesto
-
-Si queremos terminar rápido, el objetivo mínimo es este:
-
-## BGM — 3 archivos
-
-```text
-/audio/bgm/fixing-the-farmers-car.mp3
-/audio/bgm/patio-party.mp3
-/audio/bgm/just-kidding.mp3
-```
-
-## UI — 6 archivos
-
-```text
-/audio/sfx/ui-move.mp3
-/audio/sfx/ui-confirm.mp3
-/audio/sfx/ui-back.mp3
-/audio/sfx/ui-disabled.mp3
-/audio/sfx/ui-notification.mp3
-/audio/sfx/ui-call.mp3
-```
-
-## Tortuga — 4 archivos
-
-```text
-/audio/sfx/jump-charge.mp3
-/audio/sfx/jump-release.mp3
-/audio/sfx/landing-soft.mp3
-/audio/sfx/landing-hard.mp3
-```
-
-## Carga — 7 archivos
-
-```text
-/audio/sfx/cargo-impact-light-01.mp3
-/audio/sfx/cargo-impact-light-02.mp3
-/audio/sfx/cargo-impact-medium-01.mp3
-/audio/sfx/cargo-impact-medium-02.mp3
-/audio/sfx/cargo-impact-heavy-01.mp3
-/audio/sfx/cargo-impact-heavy-02.mp3
-/audio/sfx/cargo-lost.mp3
-```
-
-## Banderín — 1 archivo
-
-```text
-/audio/sfx/checkpoint-flag.mp3
-```
-
-## Trampas — 8 archivos
-
-```text
-/audio/sfx/trap-branch-creak.mp3
-/audio/sfx/trap-branch-break.mp3
-/audio/sfx/trap-stump-trigger.mp3
-/audio/sfx/trap-stump-hit.mp3
-/audio/sfx/trap-pinecone-rustle.mp3
-/audio/sfx/trap-pinecone-fall.mp3
-/audio/sfx/trap-pinecone-hit.mp3
-```
-
-`trap-stump-rise.mp3` queda P1.
-
-## Agua — 3 archivos + movimiento
-
-```text
-/audio/sfx/water-entry-small.mp3
-/audio/sfx/water-entry-large.mp3
-/audio/sfx/water-exit.mp3
-/audio/ambient/swim-01.mp3
-/audio/ambient/swim-02.mp3
-```
-
-## Superficies — 6 archivos
-
-```text
-/audio/ambient/grass-step-01.mp3
-/audio/ambient/grass-step-02.mp3
-/audio/ambient/rock-step-01.mp3
-/audio/ambient/rock-step-02.mp3
-/audio/ambient/sand-step-01.mp3
-/audio/ambient/sand-step-02.mp3
-```
-
-Si arena/agua no forman parte finalmente del subconjunto de biomas de la jam, sus sonidos dejan de ser P0.
-
----
-
-# 20. Audio manifest recomendado
-
-Codex debería centralizar las rutas. Evitar strings repartidos por todo el proyecto.
-
-Ejemplo conceptual:
-
-```ts
-export const AUDIO = {
-  bgm: {
-    menu: "/audio/bgm/fixing-the-farmers-car.mp3",
-    physicsLab: "/audio/bgm/patio-party.mp3",
-    credits: "/audio/bgm/patio-party.mp3",
-    endless: "/audio/bgm/just-kidding.mp3",
-  },
-
-  ui: {
-    move: "/audio/sfx/ui-move.mp3",
-    confirm: "/audio/sfx/ui-confirm.mp3",
-    back: "/audio/sfx/ui-back.mp3",
-    disabled: "/audio/sfx/ui-disabled.mp3",
-    notification: "/audio/sfx/ui-notification.mp3",
-    call: "/audio/sfx/ui-call.mp3",
-  },
-
-  turtle: {
-    jumpCharge: "/audio/sfx/jump-charge.mp3",
-    jumpRelease: "/audio/sfx/jump-release.mp3",
-    landingSoft: "/audio/sfx/landing-soft.mp3",
-    landingHard: "/audio/sfx/landing-hard.mp3",
-  },
-
-  cargo: {
-    impactLight: [
-      "/audio/sfx/cargo-impact-light-01.mp3",
-      "/audio/sfx/cargo-impact-light-02.mp3",
-    ],
-    impactMedium: [
-      "/audio/sfx/cargo-impact-medium-01.mp3",
-      "/audio/sfx/cargo-impact-medium-02.mp3",
-    ],
-    impactHeavy: [
-      "/audio/sfx/cargo-impact-heavy-01.mp3",
-      "/audio/sfx/cargo-impact-heavy-02.mp3",
-    ],
-    lost: "/audio/sfx/cargo-lost.mp3",
-  },
-
-  water: {
-    entrySmall: "/audio/sfx/water-entry-small.mp3",
-    entryLarge: "/audio/sfx/water-entry-large.mp3",
-    exit: "/audio/sfx/water-exit.mp3",
-    swim: [
-      "/audio/ambient/swim-01.mp3",
-      "/audio/ambient/swim-02.mp3",
-    ],
-  },
-
-  surfaces: {
-    grass: [
-      "/audio/ambient/grass-step-01.mp3",
-      "/audio/ambient/grass-step-02.mp3",
-    ],
-    rock: [
-      "/audio/ambient/rock-step-01.mp3",
-      "/audio/ambient/rock-step-02.mp3",
-    ],
-    sand: [
-      "/audio/ambient/sand-step-01.mp3",
-      "/audio/ambient/sand-step-02.mp3",
-    ],
-  },
-
-  hazards: {
-    branchCreak: "/audio/sfx/trap-branch-creak.mp3",
-    branchBreak: "/audio/sfx/trap-branch-break.mp3",
-    stumpTrigger: "/audio/sfx/trap-stump-trigger.mp3",
-    stumpHit: "/audio/sfx/trap-stump-hit.mp3",
-    pineconeRustle: "/audio/sfx/trap-pinecone-rustle.mp3",
-    pineconeFall: "/audio/sfx/trap-pinecone-fall.mp3",
-    pineconeHit: "/audio/sfx/trap-pinecone-hit.mp3",
-  },
-
-  scoring: {
-    checkpoint: "/audio/sfx/checkpoint-flag.mp3",
-  },
-} as const;
-```
-
-El nombre del módulo puede adaptarse a la arquitectura vigente (`audio.ts`, `assets.ts`, `soundManifest.ts`, etc.).
-
----
-
-# 21. Reglas de implementación para Codex
-
-## 21.1. Desbloqueo de audio
-
-Los navegadores pueden impedir reproducción automática.
-
-El primer:
+The first valid user interaction may initialize/resume audio:
 
 ```text
 click
 Enter
 Space
-tecla de navegación válida
+valid navigation key
 ```
 
-que corresponda a interacción del usuario puede utilizarse para desbloquear/inicializar el sistema de audio.
+No gameplay flow should fail because audio was initially locked.
 
-No asumir que la BGM puede sonar antes de la primera interacción.
+## 16.2 Do not add a heavy dependency by default
+
+For the jam, prefer:
+
+1. an existing project audio abstraction, if one exists;
+2. otherwise native browser audio with a small central manager.
+
+Do not add an audio library solely to implement features already achievable simply.
+
+## 16.3 Long WAV files and memory
+
+The jam build currently contains ~112 MB of audio, mostly WAV.
+
+Do not eagerly decode every WAV into Web Audio buffers during initial page load.
+
+Prefer lazy/on-demand loading and reuse cached/created elements.
+
+Long BGM/ambient assets should not force the title screen to wait for every gameplay SFX.
+
+## 16.4 Initial loading strategy
+
+Title-critical first:
+
+```text
+fixing-the-farmers-car.wav
+ui-move.wav
+feedback-positive.wav
+feedback-toggle.wav
+feedback-negative.wav
+```
+
+Gameplay audio may load during menu/difficulty flow or on demand.
+
+Before starting/while entering Endless, ensure the important gameplay files can be obtained without breaking the run.
+
+A missing/non-ready optional ambience must not block gameplay.
+
+## 16.5 Voice control
+
+Avoid unbounded creation of `Audio` instances.
+
+Use a small reusable pool or equivalent approach for overlapping SFX.
+
+Impact spam protection is more important than supporting a huge number of simultaneous voices.
 
 ---
 
-## 21.2. Categorías de volumen
+# 17. Logical buses and mix
 
-Mantener al menos:
+Maintain at least conceptual categories:
 
 ```text
-masterVolume
-musicVolume
-sfxVolume
-ambientVolume
+master
+music
+sfx
+ambient
 ```
 
-Valores iniciales orientativos:
+Recommended starting multipliers:
 
 ```text
 master  = 1.00
 music   = 0.45
 sfx     = 0.80
-ambient = 0.35
+ambient = 0.30
 ```
 
-Son puntos de partida, no valores de diseño cerrados.
+These are starting values, not approved final tuning.
 
----
-
-## 21.3. No sonificar cada contacto de Rapier
-
-Un evento `collision` no equivale automáticamente a un sonido.
-
-Implementar:
-
-- threshold mínimo de impulso;
-- agrupación temporal;
-- cooldown;
-- selección por intensidad;
-- máximo razonable de voces simultáneas.
-
-Especialmente importante para la torre de objetos.
-
----
-
-## 21.4. Variantes
-
-Para eventos repetitivos usar selección aleatoria entre variantes:
+Perceptual priority:
 
 ```text
-grass-step-01 / 02
-rock-step-01 / 02
-sand-step-01 / 02
-swim-01 / 02
-cargo-impact-*-01 / 02
-```
-
-Evitar repetir inmediatamente la misma variante cuando haya dos o más disponibles.
-
----
-
-## 21.5. Pitch y volumen
-
-P1, no necesario para el primer pase.
-
-Se puede aplicar una variación muy pequeña:
-
-```text
-pitch/playbackRate ≈ 0.96–1.04
-volume ± pequeño margen
-```
-
-para reducir repetición mecánica.
-
-No deformar las muestras hasta convertirlas en un efecto distinto.
-
----
-
-## 21.6. Prioridades de mezcla
-
-Orden conceptual:
-
-```text
-UI crítica / pérdida
+critical UI / cargo loss
 >
-trampas e impactos importantes
+hazards / strong impacts
 >
-movimiento
+ordinary impacts
 >
-ambiente
+locomotion
+>
+ambience
 >
 BGM
 ```
 
-La música nunca debe ocultar:
+The music should not hide:
 
-- una rama rompiéndose;
-- una piña cayendo;
-- un objeto perdido;
-- un banderín;
-- una notificación de cliente.
-
----
-
-## 21.7. Pausa
-
-Al abrir pausa:
-
-- congelar lógica que genera nuevos sonidos de gameplay;
-- reducir BGM;
-- detener/evitar nuevos sonidos de movimiento/ambiente;
-- permitir SFX de UI.
-
-Al continuar:
-
-- no reproducir sonidos acumulados durante la pausa;
-- restablecer ambiente según el estado actual;
-- restaurar BGM suavemente.
+- a breaking branch;
+- the pinecone warning/fall;
+- a definitive cargo loss;
+- a client notification;
+- a checkpoint award.
 
 ---
 
-## 21.8. Cambio de bioma
+# 18. Suggested semantic AudioManager API
 
-Los sonidos de superficie dependen del material actualmente soportando a Don Tortuga.
+Exact names may be adapted to current architecture.
 
-No utilizar el bioma del módulo como aproximación si el módulo contiene varios materiales.
+Prefer semantic calls such as:
 
----
+```ts
+audio.playUI("move");
+audio.playUI("confirm");
+audio.playUI("back");
 
-## 21.9. Separación temporal vs. pérdida
+audio.playCargoImpact("light", strength);
+audio.playCargoImpact("medium", strength);
+audio.playCargoImpact("heavy", strength);
 
-No reproducir `cargo-lost.mp3` cuando un objeto entra en `SeparacionTemporal`.
+audio.playLanding("soft");
+audio.playLanding("hard");
 
-Solo al confirmarse:
+audio.setDryMovement(active);
+audio.setWaterMovement(active);
 
-```text
-SeparacionTemporal -> Perdido
+audio.playWaterEntry("small");
+audio.playWaterEntry("large");
+audio.playWaterExit();
+
+audio.playHazard("branchCreak");
+audio.playHazard("branchBreak");
+audio.playHazard("stumpTrigger");
+audio.playHazard("stumpHit");
+audio.playHazard("pineconeRustle");
+audio.playHazard("pineconeFall");
+audio.playHazard("pineconeHit");
+
+audio.notifyCargoLoss({ isLastObject, groupedCount });
+
+audio.setMusicContext("menu");
+audio.setMusicContext("physicsLab");
+audio.setMusicContext("credits");
+audio.setMusicContext("endless");
 ```
 
-Esto preserva la incertidumbre visual del bamboleo y evita feedback falso.
+Gameplay systems should not know the Audio Hero titles.
+
+Ideally they should not know physical filenames either.
 
 ---
 
-# 22. Flujo de implementación recomendado
+# 19. Suggested centralized tuning
 
-## Paso 1 — BGM + UI
+Keep audio tuning in one place instead of scattering constants.
 
-Implementar:
+Example:
 
-```text
-3 BGM
-ui-move
-ui-confirm
-ui-back
-ui-disabled
+```ts
+export const AUDIO_TUNING = {
+  masterVolume: 1.0,
+  musicVolume: 0.45,
+  sfxVolume: 0.8,
+  ambientVolume: 0.3,
+
+  musicFadeMs: 300,
+  pauseMusicMultiplier: 0.65,
+
+  impactGroupWindowMs: 120,
+  impactCooldownMs: 120,
+  cargoLossGroupWindowMs: 300,
+
+  landingSoftGain: 0.55,
+  landingHardGain: 0.9,
+
+  stumpHitGain: 1.0,
+  pineconeHitGain: 0.75,
+
+  variationPlaybackRateMin: 0.97,
+  variationPlaybackRateMax: 1.03,
+} as const;
 ```
 
-Con esto se valida el sistema de audio y autoplay.
+Do not treat these numbers as physics constants.
 
-## Paso 2 — física fundamental
+Impact thresholds should be tuned against real observed values from the existing implementation.
 
-Añadir:
+---
+
+# 20. Explicitly absent jam assets
+
+The following concepts appeared in the earlier sound-design plan but **do not have dedicated physical files in the final jam selection**:
 
 ```text
 jump-charge
 jump-release
-landing-soft
-landing-hard
-cargo-impact light/medium/heavy
-cargo-lost
-```
-
-## Paso 3 — biomas
-
-Añadir únicamente los que estén en la build final de jam:
-
-```text
-grass-step
-rock-step
-sand-step
-water-entry
-water-exit
-swim
-```
-
-## Paso 4 — trampas
-
-Añadir los sonidos asociados a:
-
-```text
-rama
-tocón
-piña
-```
-
-## Paso 5 — presentación
-
-Añadir:
-
-```text
-checkpoint-flag
-ui-notification
-ui-call
-forest-birds
+trap-stump-rise
+water-current
 results-stamp
-otros P1
+
+separate grass/rock movement files
+separate impact variants -01/-02
+separate swim variants -01/-02
+
+dedicated cargo-lost file
+dedicated last-object-lost file
+dedicated checkpoint file
+dedicated score-pop file
+dedicated help-pop file
+dedicated pause-open file
+dedicated water-exit file
+dedicated branch-break file
+dedicated stump-hit file
+dedicated pinecone-hit file
 ```
 
----
+This is intentional.
 
-# 23. Checklist de selección manual en Audio Hero
+Codex must not introduce 404 references or silent placeholder assets for them.
 
-Cuando se escuche un candidato, comprobar:
+Where a semantic alias exists, use the mapped physical file from this document.
 
-- [ ] ¿Se entiende en menos de un segundo?
-- [ ] ¿Encaja con una estética cartoon infantil?
-- [ ] ¿Tiene demasiado reverb incorporado?
-- [ ] ¿Tiene una cola demasiado larga?
-- [ ] ¿Suena excesivamente cinematográfico?
-- [ ] ¿Suena violento?
-- [ ] ¿Tiene ruido de fondo innecesario?
-- [ ] ¿Se distingue de otros sonidos del mismo sistema?
-- [ ] ¿Sigue funcionando a volumen bajo?
-- [ ] ¿Podría repetirse muchas veces sin resultar irritante?
-- [ ] ¿El MP3 proporcionado suena suficientemente limpio?
-- [ ] ¿Necesitamos realmente este sonido o ya cubrimos el evento con otro?
+Where no mapping exists (`jump-charge`, `jump-release`, `stump-rise`, etc.), ship without that sound for the jam.
 
 ---
 
-# 24. Criterio de poda
+# 21. Integration order for Codex
 
-Si dos sonidos cumplen la misma función, conservar el más:
+## P0-A — infrastructure
 
-1. corto;
-2. legible;
-3. amable;
-4. menos cinematográfico;
-5. menos irritante al repetirse;
-6. pequeño en bytes, si la diferencia sonora es mínima.
+- [ ] Inspect existing asset URL helper and reuse it for `public/audio`.
+- [ ] Add/extend one central audio manifest.
+- [ ] Add/extend one central audio manager.
+- [ ] Implement first-interaction audio unlock.
+- [ ] Ensure WAV and MP3 both load correctly.
+- [ ] Avoid eager loading/decoding of the full ~112 MB audio set.
+- [ ] Ensure pause/run-end cannot accumulate delayed SFX.
 
-**La jam no necesita demostrar cuántos sonidos hemos comprado.**
+## P0-B — BGM and menus
 
-Necesita demostrar que cada sonido elegido mejora el juego.
+- [ ] menu BGM: `fixing-the-farmers-car.wav`.
+- [ ] laboratory BGM: `patio-party.wav`.
+- [ ] credits BGM: `patio-party.wav`.
+- [ ] Endless BGM: `just-kidding.wav`.
+- [ ] menu move / confirm / back / disabled.
+- [ ] preserve menu BGM between menu screens where possible.
 
----
+## P0-C — gameplay fundamentals
 
-# 25. Nota de licencia y repositorio
+- [ ] cargo impact light / medium / heavy.
+- [ ] impact aggregation and cooldown.
+- [ ] soft / hard landing aliases.
+- [ ] definitive cargo-loss feedback only.
+- [ ] group simultaneous cargo losses.
+- [ ] client call/text SFX.
 
-Los ficheros de Audio Hero:
+## P0-D — terrain and water
 
-- conservan el copyright de sus titulares;
-- se utilizan bajo la licencia de Audio Hero asociada al bundle;
-- no deben declararse bajo la misma licencia open-source que el código;
-- deben quedar identificados en la documentación/licencia de terceros del proyecto.
+- [ ] dry movement.
+- [ ] water movement.
+- [ ] small / large water entry.
+- [ ] water exit alias.
+- [ ] suppress water-surface jitter spam.
 
-Conservar fuera del flujo normal del repositorio:
+## P0-E — hazards and scoring
 
-```text
-- recibo/orden de Humble Bundle
-- copia del EULA vigente
-- relación de assets de Audio Hero utilizados
-- nombre original del archivo descargado
-- nombre local asignado en el juego
-- pack de procedencia
-```
+- [ ] cracked branch warning + break.
+- [ ] stump trigger + hit.
+- [ ] pinecone warning + fall + hit.
+- [ ] pennant/checkpoint positive feedback once per award.
 
-Ejemplo de inventario privado:
+## P1 — polish if time remains
 
-```text
-source-pack: Crash, Smash, Break!
-original-file: <nombre original>
-local-file: cargo-impact-heavy-01.mp3
-runtime-path: /audio/sfx/cargo-impact-heavy-01.mp3
-use: impacto fuerte de la carga
-```
-
----
-
-# 26. Tabla maestra de assets
-
-| Ruta runtime | Evento | Pack recomendado | Prioridad |
-|---|---|---|---:|
-| `/audio/bgm/fixing-the-farmers-car.mp3` | menú | pista seleccionada | P0 |
-| `/audio/bgm/patio-party.mp3` | laboratorio/créditos | pista seleccionada | P0 |
-| `/audio/bgm/just-kidding.mp3` | Carrera Infinita | pista seleccionada | P0 |
-| `/audio/sfx/ui-move.mp3` | mover selección | Button Masters | P0 |
-| `/audio/sfx/ui-confirm.mp3` | confirmar | Button Masters / UI Shaping | P0 |
-| `/audio/sfx/ui-back.mp3` | volver | Button Masters / UI Shaping | P0 |
-| `/audio/sfx/ui-disabled.mp3` | opción bloqueada | Celebrations & Cartoons | P0 |
-| `/audio/sfx/ui-notification.mp3` | mensaje cliente | Button Masters / UI Shaping | P0 |
-| `/audio/sfx/ui-call.mp3` | llamada cliente | Household | P0 |
-| `/audio/sfx/jump-charge.mp3` | iniciar carga | Celebrations & Cartoons | P0 |
-| `/audio/sfx/jump-release.mp3` | salto | Celebrations & Cartoons / Dynamic Swishes | P0 |
-| `/audio/sfx/landing-soft.mp3` | aterrizaje suave | Crash, Smash, Break! | P0 |
-| `/audio/sfx/landing-hard.mp3` | aterrizaje fuerte | Crash, Smash, Break! | P0 |
-| `/audio/sfx/cargo-impact-light-01.mp3` | impacto leve | Household | P0 |
-| `/audio/sfx/cargo-impact-light-02.mp3` | impacto leve | Household | P0 |
-| `/audio/sfx/cargo-impact-medium-01.mp3` | impacto medio | Crash, Smash, Break! | P0 |
-| `/audio/sfx/cargo-impact-medium-02.mp3` | impacto medio | Crash, Smash, Break! | P0 |
-| `/audio/sfx/cargo-impact-heavy-01.mp3` | impacto fuerte | Crash, Smash, Break! | P0 |
-| `/audio/sfx/cargo-impact-heavy-02.mp3` | impacto fuerte | Crash, Smash, Break! | P0 |
-| `/audio/sfx/cargo-lost.mp3` | pérdida definitiva | Celebrations & Cartoons / Wacky World | P0 |
-| `/audio/sfx/checkpoint-flag.mp3` | banderín | Celebrations & Cartoons | P0 |
-| `/audio/sfx/water-entry-small.mp3` | entrada suave en agua | Water | P0* |
-| `/audio/sfx/water-entry-large.mp3` | entrada fuerte en agua | Water | P0* |
-| `/audio/sfx/water-exit.mp3` | salir del agua | Water | P0* |
-| `/audio/ambient/swim-01.mp3` | nado | Water | P0* |
-| `/audio/ambient/swim-02.mp3` | nado | Water | P0* |
-| `/audio/ambient/grass-step-01.mp3` | hierba | foley / búsqueda bundle | P0* |
-| `/audio/ambient/grass-step-02.mp3` | hierba | foley / búsqueda bundle | P0* |
-| `/audio/ambient/rock-step-01.mp3` | roca | Crash / Household | P0* |
-| `/audio/ambient/rock-step-02.mp3` | roca | Crash / Household | P0* |
-| `/audio/ambient/sand-step-01.mp3` | arena | foley / búsqueda bundle | P0* |
-| `/audio/ambient/sand-step-02.mp3` | arena | foley / búsqueda bundle | P0* |
-| `/audio/sfx/trap-branch-creak.mp3` | rama avisa | Crash, Smash, Break! | P0 |
-| `/audio/sfx/trap-branch-break.mp3` | rama rompe | Crash, Smash, Break! | P0 |
-| `/audio/sfx/trap-stump-trigger.mp3` | tocón se activa | Household / Mechanical | P0 |
-| `/audio/sfx/trap-stump-hit.mp3` | tocón impacta | Crash, Smash, Break! | P0 |
-| `/audio/sfx/trap-pinecone-rustle.mp3` | árbol/piña avisa | Africa & Jungles / foley | P0 |
-| `/audio/sfx/trap-pinecone-fall.mp3` | piña cae | Dynamic Swishes | P0 |
-| `/audio/sfx/trap-pinecone-hit.mp3` | piña golpea | Crash / Cartoons | P0 |
-| `/audio/ambient/forest-birds.mp3` | bosque | Animals: Flock of Birds | P1 |
-| `/audio/ambient/water-current.mp3` | corriente profunda | Water | P1 |
-| `/audio/sfx/results-stamp.mp3` | resultados | Household | P1 |
-| `/audio/sfx/cargo-last-object-lost.mp3` | fin de run | Wacky World / Cartoons | P1 |
-| `/audio/sfx/trap-stump-rise.mp3` | movimiento tocón | Dynamic Swishes | P1 |
-| `/audio/sfx/ui-help-pop.mp3` | ayuda contextual | Children & Play | P1 |
-
-`P0*`: solo si el bioma correspondiente forma parte del subconjunto implementado en la entrega de jam.
+- [ ] forest ambience.
+- [ ] subtle playbackRate/gain variation.
+- [ ] refine crossfades.
+- [ ] refine per-event gains by human playtesting.
 
 ---
 
-# 27. Resultado esperado
+# 22. Acceptance checklist
 
-La capa sonora mínima debe conseguir que, con los ojos en Don Tortuga y la carga, el jugador pueda reconocer auditivamente:
+The jam audio implementation is acceptable when:
 
-```text
-he navegado por el menú
-he saltado
-he aterrizado fuerte
-la carga acaba de recibir un golpe importante
-he perdido algo
-he entrado en agua
-estoy avanzando sobre otro material
-una trampa se ha activado
-la piña viene hacia mí
-he cruzado otro banderín
-la run ha terminado
-```
-
-Sin que el juego deje de sentirse ligero, amable y deliberadamente absurdo.
+1. [ ] production build has no audio 404s;
+2. [ ] both WAV and MP3 assets play in the target browsers used for submission testing;
+3. [ ] Pages/subpath asset URLs are resolved through the existing BASE_URL-safe mechanism;
+4. [ ] no physical asset is duplicated merely to provide another semantic name;
+5. [ ] the title/menu does not wait for all ~112 MB before becoming usable;
+6. [ ] browser autoplay restrictions do not break navigation or game start;
+7. [ ] menu music does not restart unnecessarily between menu screens;
+8. [ ] Endless switches to `Just Kidding`;
+9. [ ] laboratory/credits use `Patio Party`;
+10. [ ] one physical crash does not become a machine-gun burst of Rapier contact sounds;
+11. [ ] small cargo wobble is usually silent;
+12. [ ] light/medium/heavy impacts are perceptibly differentiated;
+13. [ ] temporary cargo separation does not play loss feedback;
+14. [ ] definitive cargo loss does;
+15. [ ] grouped simultaneous losses create one readable audio event;
+16. [ ] entering/exiting water cannot spam splash sounds around the surface boundary;
+17. [ ] dry locomotion stops when airborne/blocked/in water;
+18. [ ] water movement stops after leaving water;
+19. [ ] each hazard phase fires once at its meaningful transition;
+20. [ ] a checkpoint/pennant awards one positive sound, not duplicate alias playback;
+21. [ ] pause prevents new gameplay SFX but keeps UI feedback;
+22. [ ] resume does not replay events that happened while paused;
+23. [ ] run end does not layer duplicate `lost` and `lastObjectLost` samples;
+24. [ ] BGM/ambience do not mask hazard warnings or cargo-loss feedback;
+25. [ ] no code references obsolete planned filenames from the previous `SOUNDS.md`.
 
 ---
 
-# 28. Regla final
+# 23. Provenance / licensing record
 
-> **No sonificar la simulación. Sonificar la historia física que el jugador percibe.**
+The Audio Hero assets remain third-party copyrighted assets used under the Audio Hero/bundle license.
 
-Rapier puede generar docenas de contactos.
+They are not relicensed under the source-code license.
 
-El jugador solo necesita oír los que convierten la mudanza en una pequeña catástrofe memorable.
+Preserve:
+
+- Humble Bundle purchase/receipt;
+- applicable Audio Hero license/EULA;
+- original Audio Hero title;
+- source pack;
+- canonical local filename;
+- gameplay use.
+
+This document provides the current title/pack/local-path mapping for the 18 SFX/ambient assets.
+
+Renaming a file for project clarity does not replace provenance tracking.
+
+---
+
+# 24. Post-jam optimization
+
+The current mixed WAV/MP3 set is intentionally accepted for the jam to avoid last-minute conversion risk.
+
+Post-jam backlog work should:
+
+1. convert WAV runtime assets to appropriately compressed MP3 (or reconsider a better web delivery format if desired at that time);
+2. update manifest extensions atomically;
+3. remove obsolete WAV runtime copies after verification;
+4. compare audible quality;
+5. verify loops/transitions;
+6. measure deployed-size reduction;
+7. preserve the provenance mapping.
+
+Until that task is completed, **the `.wav` and `.mp3` extensions in this document are authoritative**.
+
+---
+
+# 25. Final implementation rule
+
+> **One physical recording, one physical file. Many gameplay meanings may alias it.**
+
+And:
+
+> **The player should hear decisions, accidents and state changes — not Rapier doing mathematics.**
