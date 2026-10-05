@@ -18,7 +18,8 @@ export const WATER_CARGO_RESPONSE = {
 } as const;
 /** Gentle physical recovery of a connected, calm stack; no position/angle locks. */
 export const CARGO_BALANCE_RESPONSE = {
-  positionGain: 4, maximumAcceleration: 1.2, deadZone: 0.04,
+  positionGain: 16, maximumAcceleration: 9, deadZone: 0.02,
+  frictionResponseDistance: 0.06,
   maximumShellAngle: 0.35, maximumRelativeSpeed: 0.8, maximumAngularSpeed: 0.6,
 } as const;
 /** Gentle grass motion: radians/seconds; separate from manual shell compensation. */

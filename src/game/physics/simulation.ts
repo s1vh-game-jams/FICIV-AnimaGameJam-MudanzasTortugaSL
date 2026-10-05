@@ -302,7 +302,9 @@ export class PhysicsSimulation {
         trap.body = this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased()
           .setTranslation(placement.x, placement.y - H.stumpHeight / 2));
         trap.solid = this.world.createCollider(RAPIER.ColliderDesc.cuboid(H.stumpWidth / 2, H.stumpHeight / 2)
-          .setFriction(this.tuning.cargoFriction).setCollisionGroups(groups(TERRAIN, TURTLE | CARGO_GROUP | LOST | PROJECTILE)), trap.body);
+          // The stump launches the carrier; its rising edge must not supply
+          // an independent second impact to cargo already sharing that jump.
+          .setFriction(this.tuning.cargoFriction).setCollisionGroups(groups(TERRAIN, TURTLE | LOST | PROJECTILE)), trap.body);
         // The closed hatch is visual ground. A buried duplicate cuboid can
         // falsely present a convex side to the KCC before the stump rises.
         trap.solid.setEnabled(false);
@@ -368,8 +370,7 @@ export class PhysicsSimulation {
     this.world.propagateModifiedBodyPositionsToColliders();
   }
 
-  private updateHazards(dt: number, position: RAPIER.Vector): { lift: number; launch: boolean } {
-    let liftDelta = 0;
+  private updateHazards(dt: number, position: RAPIER.Vector): { launch: boolean } {
     let launch = false;
     for (const chunk of this.chunks.values()) for (const trap of chunk.traps) {
       const p = trap.placement;
@@ -404,14 +405,13 @@ export class PhysicsSimulation {
         const above = Math.abs(position.x - p.x) < H.stumpWidth / 2 + G.turtleHalfWidth &&
           position.y + this.bodyOffsetY - G.turtleHalfHeight >= p.y + previous - 0.12 &&
           position.y + this.bodyOffsetY - G.turtleHalfHeight <= p.y + previous + 0.3;
-        // Position-based KCC receives the upward swept support displacement explicitly.
-        if (above && trap.lift > previous) {
-          liftDelta = Math.max(liftDelta, trap.lift - previous);
+        // The charged-jump path owns the entire launch, including subsequent
+        // flight ticks. Adding stump displacement later accelerates the shell
+        // again and lets its kinematic contact fling cargo above the carrier.
+        if (above && trap.lift > previous && !trap.launchedTurtle) {
           trap.liftingTurtle = true;
-          if (!trap.launchedTurtle) {
-            launch = true;
-            trap.launchedTurtle = true;
-          }
+          launch = true;
+          trap.launchedTurtle = true;
         }
         trap.body?.setNextKinematicTranslation({ x: p.x, y: p.y - H.stumpHeight / 2 + trap.lift });
         if (elapsed >= H.stumpRiseSeconds + H.stumpHoldSeconds + H.stumpRetractSeconds) {
@@ -431,8 +431,7 @@ export class PhysicsSimulation {
         }
       }
     }
-    // Takeoff already clears the moving support; do not add lift to jump speed.
-    return { lift: launch ? 0 : liftDelta, launch };
+    return { launch };
   }
 
   private shellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY) {
@@ -728,7 +727,6 @@ export class PhysicsSimulation {
       this.biome = surfaces[0]?.biome ?? this.biome;
     }
     const hazard = this.updateHazards(dt, position);
-    const hazardLift = hazard.lift;
     const depth = region && this.water ? Math.max(0, region.surface - bodyY) : 0;
     const current = region && this.water ? t.waterCurrent * clamp(depth / (region.surface - region.bottom), 0, 1) : 0;
     const screenX = position.x - this.cameraX;
@@ -780,7 +778,7 @@ export class PhysicsSimulation {
     const supportSlope = this.grounded && this.verticalSpeed <= 0 ? this.groundSlope : 0;
     const movementVerticalSpeed = this.verticalSpeed + (!this.grounded || launching ? gravityDisplacementCorrection : 0);
     const desiredMovement = { x: (this.speed - movementVerticalSpeed * supportSlope) * dt,
-      y: (movementVerticalSpeed + this.speed * supportSlope) * dt + hazardLift };
+      y: (movementVerticalSpeed + this.speed * supportSlope) * dt };
     this.controller.computeColliderMovement(this.turtleCollider, desiredMovement,
       RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
     let movement = this.controller.computedMovement();
@@ -821,7 +819,7 @@ export class PhysicsSimulation {
     }
     const requested = { x: position.x + movement.x, y: position.y + movement.y };
     let followedGround = false;
-    if (!this.water && this.grounded && this.verticalSpeed <= 0 && !launching && hazardLift === 0 &&
+    if (!this.water && this.grounded && this.verticalSpeed <= 0 && !launching &&
       (!grounded || supportSlope < -G.controllerNudge)) {
       // A shallow cast follows only nearby actual support after a grounded
       // departure. Preserve controller clearance; do not attach to deep drops,
@@ -884,15 +882,25 @@ export class PhysicsSimulation {
       if (connected.has(c.definition.id)) {
         const velocity = c.body.linvel();
         const offset = c.body.translation();
-        const localX = (offset.x - supportPose.x) * Math.cos(supportPose.angle) +
-          (offset.y - supportPose.y) * Math.sin(supportPose.angle);
+        // Measure cargo and support at the same simulation instant. The next
+        // support pose otherwise introduces a permanent forward target bias.
+        const currentSupport = this.shell.translation();
+        const currentAngle = this.shell.rotation();
+        const localX = (offset.x - currentSupport.x) * Math.cos(currentAngle) +
+          (offset.y - currentSupport.y) * Math.sin(currentAngle);
         const error = (this.cargoBalanceOffsets.get(c.definition.id) ?? c.definition.x) - localX;
         const quiet = t.gripAssistance > 0 && vertical === 0 && !launching && (this.grounded || this.water) ?
           clamp(1 - Math.abs(supportPose.angle) / E.maximumShellAngle, 0, 1) *
           clamp(1 - Math.abs(velocity.x - supportHorizontalSpeed) / E.maximumRelativeSpeed, 0, 1) *
           clamp(1 - Math.abs(c.body.angvel()) / E.maximumAngularSpeed, 0, 1) : 0;
         const correction = Math.sign(error) * Math.max(0, Math.abs(error) - E.deadZone);
-        const centering = clamp(correction * E.positionGain, -E.maximumAcceleration, E.maximumAcceleration) * quiet;
+        // A weak spring cannot recover a stack held in its displaced pose by
+        // static friction. Ramp up breakaway assistance over six centimetres;
+        // retain the acceleration bound and ordinary relative-velocity grip.
+        const frictionRecovery = Math.sign(correction) * t.cargoFriction * t.gravity *
+          Math.min(1, Math.abs(correction) / E.frictionResponseDistance);
+        const centering = clamp(correction * E.positionGain + frictionRecovery,
+          -E.maximumAcceleration, E.maximumAcceleration) * quiet;
         // Substep contact impulses can leave a tiny relative vertical speed
         // against a position-based carrier. Existing contact grip damps that
         // drift during flight; no root connection means no remote force.
