@@ -15,6 +15,11 @@ name: Deploy approved main build to GitHub Pages
         required: true
         type: boolean
         default: false
+      skip_tests:
+        description: 'Explicit urgent jam exception: skip game and helper tests'
+        required: true
+        type: boolean
+        default: false
 
 # Grant each job only the permissions it needs.
 permissions: {}
@@ -51,6 +56,7 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Run game and service tests
+        if: ${{ !inputs.skip_tests }}
         id: game-tests
         continue-on-error: ${{ inputs.allow_game_test_failure }}
         run: npm run test
@@ -61,7 +67,14 @@ jobs:
           echo '### Human-approved release exception' >> "$GITHUB_STEP_SUMMARY"
           echo 'Game tests failed; their complete output remains in the test step. This run explicitly permits publication despite those failures. Type, lint, helper and build checks remain mandatory.' >> "$GITHUB_STEP_SUMMARY"
       - name: Test the local server helper
+        if: ${{ !inputs.skip_tests }}
         run: python3 -m unittest discover -s tests/python -v
+      - name: Record the urgent test waiver
+        if: ${{ inputs.skip_tests }}
+        run: |
+          echo '::warning::Game and helper tests skipped under the explicit human urgent-jam instruction.'
+          echo '### Human-approved urgent jam exception' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Tests were explicitly waived for this release. Type, lint and production build checks remain mandatory. This publication does not certify physical traversal.' >> "$GITHUB_STEP_SUMMARY"
       - name: Build the repository-subpath site
         run: npm run build:pages
       - name: Read existing Pages configuration

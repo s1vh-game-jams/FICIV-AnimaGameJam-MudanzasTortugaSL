@@ -80,6 +80,7 @@ export class EndlessRenderer {
     this.viewport.addChild(this.backdrop, this.world);
     this.turtle = this.sprite(VISUALS.turtle.frames[0], VISUALS.turtle.width, VISUALS.turtle.height);
     this.shell = this.sprite(VISUALS.shell.path, VISUALS.shell.width, VISUALS.shell.height);
+    this.shell.anchor.set(VISUALS.shell.anchorX, VISUALS.shell.anchorY);
     this.world.addChild(this.terrain, this.water, this.hazards, this.pennants, this.turtle, this.shell);
     for (const item of CARGO) {
       const visual = VISUALS[item.id];
