@@ -4,9 +4,11 @@
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
-**Current work (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are implemented and agent-verified on `codex/slopes-water-controls`, from synchronized `dev` `b12913a`. GDD/README changes are explicitly authorized. Squash integration is the remaining handoff step; earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
+**Current handoff (2026-10-05):** descending support, shared underwater controls/cargo assistance, the visible secondary laboratory entry and the human-authored Credits dedication are integrated in `dev` as `6299f64`, from preserved `codex/slopes-water-controls`. GDD/README changes are explicitly authorized. Agent checks pass; human local review remains pending. Earlier downward-swimming traces are historical evidence. Final jam deployment remains a separate task.
 
 Preserved source commits: `13f5093` (shared physics/tuning/physical regressions), `aa24e5d` (laboratory/help/Credits), `0c1c228` (revised traversal evidence) and `2bf2a19` (design/implementation documentation). Agent checks pass **640 tests across 26 files**: 515 general cases plus the 125-case opt-in traversal file. The latter certifies all **1,152 complete physical trap compositions** and took 1,681.61 seconds; no source changed during the run.
+
+Certificate documentation is `acd123c`; squash `6299f64` matched that verified source tree exactly before this documentation-only integration record. Both detailed and integration histories are preserved; no `main` promotion or live deployment is part of this task.
 
 ---
 
@@ -436,20 +438,20 @@ Jam release on main
 
 ### PHYS-026 — Follow descending support and preserve physical terrain pitch
 - **Priority:** P0
-- **Status:** IN PROGRESS — branch `codex/slopes-water-controls`
+- **Status:** DONE — `6299f64`; source `13f5093`, preserved `codex/slopes-water-controls`
 - **Acceptance:** actual downhill support rotates body/shell/cargo like uphill support; preserve bounded clearance, dry jumps, departure pitch and freefalls. Shared simulation serves laboratory and Endless.
 - **Evidence:** the mirrored −0.3 slope previously had only 16.7% grounded ticks and a frozen −0.0203 rad body pitch. A shallow clearance-preserving Rapier support query yields 100% grounding and −0.29146 rad, with about 0.05 m foot separation. All eleven mirrored-load/jump/cliff cases pass. Native snapping was rejected because it interrupted ordinary forward travel.
 - **Regression provenance:** terrain-pitch adaptation was integrated in `e705e70`, but the exact introducing commit for this symptom has not been established by physical historical reproduction.
 
 ### PHYS-027 — Share underwater balance, Space ascent and bounded cargo assistance
 - **Priority:** P0
-- **Status:** IN PROGRESS — branch `codex/slopes-water-controls`
+- **Status:** DONE — `6299f64`; source `13f5093`, preserved `codex/slopes-water-controls`
 - **Acceptance:** arrows/W/S retain shell balance in water; held Space assists ascent without underwater/deferred jump; no commanded dive. Retained weight and entry momentum determine immersion. Stronger wet grip/friction/damping tolerate ordinary correction but extreme tilt/impacts can lose independent pieces; dry response returns on exit.
 - **Evidence:** five physical water-response cases cover partial correction, both extreme directions, violent individual impact, actual grace/loss and dry restoration. New controls and route traces share the canonical simulation. A guard-checked forward slide resolves the island ceiling hold exposed by removing downward swimming.
 
 ### PHYS-028 — Recertify water choices and module recovery under revised controls
 - **Priority:** P0
-- **Status:** IN PROGRESS — branch `codex/slopes-water-controls`
+- **Status:** DONE — `6299f64`; source traces `0c1c228`, certificate `acd123c`
 - **Depends on:** PHYS-026, PHYS-027
 - **Acceptance:** all six module routes/first landings, reachable partial loads and exhaustive compatible traps use current settings and keyboard-equivalent controls. A submerged route must be reached through natural load/entry response, without dive commands or avatar teleports; distinguish carrier escape from retained-load continuation.
 - **Implementation tuning:** the original AD underpass relied on commanded diving. After asking for an optional water-tuning/geometry preference and continuing independent work, Sol retained the geometry and selected configurable `waterDepthPerKg=0.25` and `waterSwimAcceleration=14` as the starting revision. These are not human-selected permanent values. Real traces retain the original 13.6 kg from a dry DA ledge through AD's natural underpass; full/sofa/empty Space routes use the surface alternative. Full DA three-second bank-jump traces separately retain the sofa beyond the module.
@@ -871,7 +873,7 @@ Jam release on main
 
 ### UX-012 — Expose the laboratory and synchronize water help and authored Credits
 - **Priority:** P0
-- **Status:** IN PROGRESS — branch `codex/slopes-water-controls`; integration hash pending
+- **Status:** DONE — `6299f64`; source `aa24e5d`, preserved `codex/slopes-water-controls`
 - **Depends on:** APP-001, UX-001, UX-004, UX-009, PHYS-027
 - **Authorization:** the human approved a visible secondary laboratory entry, shared underwater controls/help and the exact Credits dedication on 2026-10-05.
 - **Acceptance:**
@@ -1345,7 +1347,7 @@ Human follow-up remains TEST-005/TEST-006/TEST-012 for balance, partial-loss rec
 
 ### Shared slopes, water and Credits handoff — 2026-10-05
 
-The human requested the shared-game downhill fix, underwater balance/Space ascent, bounded wet cargo assistance and visible secondary laboratory access, then supplied the exact Credits dedication/link/signature/footer. Implementation is `13f5093` and `aa24e5d`, with revised route tests `0c1c228` and documentation `2bf2a19`, on preserved branch `codex/slopes-water-controls`. Root Sol owns the approved GDD synchronization; no module geometry, shapes, gravity, dry launch cap or camera corridor changed. Configurable starting depth/ascent are 0.25 m/kg and 14 m/s²; the revised partition is `endless-physics-2`.
+The human requested the shared-game downhill fix, underwater balance/Space ascent, bounded wet cargo assistance and visible secondary laboratory access, then supplied the exact Credits dedication/link/signature/footer. Implementation is `13f5093` and `aa24e5d`, with revised route tests `0c1c228`, documentation `2bf2a19` and certificate record `acd123c`, on preserved branch `codex/slopes-water-controls`. Squash integration is `6299f64` on `dev`; its tree matched the verified source exactly before documentation-only bookkeeping. Root Sol owns the approved GDD synchronization; no module geometry, shapes, gravity, dry launch cap or camera corridor changed. Configurable starting depth/ascent are 0.25 m/kg and 14 m/s²; the revised partition is `endless-physics-2`.
 
 Agent verification:
 
