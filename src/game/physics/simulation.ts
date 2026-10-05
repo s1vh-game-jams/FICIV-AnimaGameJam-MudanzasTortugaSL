@@ -1,5 +1,5 @@
 import RAPIER from '@dimforge/rapier2d';
-import { PHYSICS_GEOMETRY as G, validateTuning } from '../config/tuning';
+import { PHYSICS_GEOMETRY as G, WATER_CARGO_RESPONSE as W, validateTuning } from '../config/tuning';
 import type { Tuning } from '../config/tuning';
 import { CARGO } from '../content/cargo';
 import type { CargoDefinition, CargoKind } from '../content/cargo';
@@ -202,8 +202,8 @@ export class PhysicsSimulation {
     this.controller = this.world.createCharacterController(G.controllerOffset);
     this.controller.setNormalNudgeFactor(G.controllerNudge);
     this.controller.enableAutostep(G.stepHeight, G.stepMinWidth, false);
-    // Gravity provides ground following; snapping repeatedly erases the
-    // numerical clearance used by the controller at shallow contact angles.
+    // Native snapping erases numerical clearance. Bounded descending-support
+    // queries in step() preserve the same gap used by ordinary movement.
     // Tiny numerical tolerance does not expand the authored/pose slope limit.
     const climbTolerance = Math.atan(G.controllerNudge);
     this.controller.setMaxSlopeClimbAngle(tuning.shellMaxAngle + climbTolerance);
@@ -425,6 +425,25 @@ export class PhysicsSimulation {
     return this.water ? approach(this.bodyOffsetY, 0, maximumShift) : this.bodyOffsetY;
   }
 
+  private nearbyGround(position: RAPIER.Vector, distance: number): RAPIER.ColliderShapeCastHit | null {
+    return this.world.castShape({ x: position.x, y: position.y + G.controllerNudge }, Math.PI / 2,
+      { x: 0, y: -1 }, this.turtleCollider.shape, G.controllerOffset, distance + G.controllerNudge, true,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC,
+      groups(TURTLE, TERRAIN), undefined, undefined, collider => this.terrainSlopes.has(collider.handle));
+  }
+
+  private supportFromNormal(collider: RAPIER.Collider, normal: RAPIER.Vector): { angle: number; slope: number } | undefined {
+    if (normal.y <= 0) return;
+    const normalAngle = Math.atan2(-normal.x, normal.y);
+    const authoredSlope = this.terrainSlopes.get(collider.handle);
+    const authoredAngle = authoredSlope === undefined ? normalAngle : Math.atan(authoredSlope);
+    const agreesWithFace = Math.abs(normalAngle - authoredAngle) <= Math.atan(G.controllerNudge);
+    const angle = agreesWithFace ? authoredAngle : normalAngle;
+    if (Math.abs(angle) > this.tuning.shellMaxAngle + Math.atan(G.controllerNudge)) return;
+    return { angle: clamp(angle, -this.tuning.shellMaxAngle, this.tuning.shellMaxAngle),
+      slope: clamp(-normal.x / normal.y, -Math.tan(this.tuning.shellMaxAngle), Math.tan(this.tuning.shellMaxAngle)) };
+  }
+
   private castShellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY):
     { time_of_impact: number; normal1: RAPIER.Vector } | null {
     const next = this.shellPose(position, bodyAngle, manualAngle, bodyOffsetY);
@@ -526,7 +545,8 @@ export class PhysicsSimulation {
       collider => !separation(collider, envelope, current, 0) && filter(collider));
   }
 
-  private alignShell(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, grounded: boolean): RAPIER.Vector {
+  private alignShell(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, grounded: boolean,
+    desiredMovement: RAPIER.Vector): RAPIER.Vector {
     let fraction = 1;
     let accepted = false;
     for (let attempt = 0; attempt < POSE_CLEARANCE_SEARCH_STEPS; attempt++) {
@@ -576,6 +596,31 @@ export class PhysicsSimulation {
         const hit = this.castShellPose(candidate, this.bodyAngle, this.angle);
         if (!hit) { position = candidate; accepted = true; break; }
         const delta = { x: candidate.x - origin.x, y: candidate.y - origin.y };
+        if (delta.y > 0 && hit.normal1.y < 0) {
+          // SAT endpoint separation can select a diagonal hull axis at a
+          // ceiling seam. Cancel the blocked ascent and test actual forward
+          // clearance before projecting onto that ambiguous normal. Both the
+          // locomotion capsule and the complete shell path must permit it.
+          this.controller.computeColliderMovement(this.turtleCollider, { x: delta.x, y: 0 },
+            RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
+          const forward = this.controller.computedMovement();
+          const level = { x: origin.x + forward.x, y: origin.y + forward.y };
+          if (forward.x > 0 && !this.castShellPose(level, this.bodyAngle, this.angle)) {
+            position = level; accepted = true; break;
+          }
+        }
+        if (this.water && desiredMovement.y > 0 && hit.normal1.x < 0) {
+          // The capsule can turn upward intent into downward sliding at an
+          // island lip. Retry the original ascent without forward intent;
+          // retain the capsule's physical slide and the full shell clearance.
+          this.controller.computeColliderMovement(this.turtleCollider, { x: 0, y: desiredMovement.y },
+            RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
+          const upward = this.controller.computedMovement();
+          const rise = { x: origin.x + upward.x, y: origin.y + upward.y };
+          if (upward.y > 0 && !this.castShellPose(rise, this.bodyAngle, this.angle)) {
+            position = rise; accepted = true; break;
+          }
+        }
         const travel = Math.max(0, hit.time_of_impact - G.controllerNudge / Math.max(Math.hypot(delta.x, delta.y), G.controllerNudge));
         const remaining = { x: delta.x * (1 - travel), y: delta.y * (1 - travel) };
         const intoObstacle = Math.min(0, remaining.x * hit.normal1.x + remaining.y * hit.normal1.y);
@@ -643,30 +688,28 @@ export class PhysicsSimulation {
     const gravityDisplacementCorrection = this.water ? 0 :
       t.gravity * dt * (this.world.numSolverIterations - 1) / (2 * this.world.numSolverIterations);
     let launchVelocityChange = 0;
-    let desiredManualAngle: number;
     if (this.water && region) {
       // Keep the incoming physical velocity. Drag and over-speed cushioning
       // amortize entry instead of discarding momentum with an instant clamp.
       if (!previousWater) this.verticalSpeed = previousVerticalSpeed;
       const targetY = Math.max(region.bottom + G.turtleHalfHeight + G.waterBottomClearance, region.surface - t.waterBaseDepth - this.mass * t.waterDepthPerKg);
       const rise = (targetY - bodyY) * t.waterRiseAcceleration / (1 + this.mass * t.waterWeightInfluence);
-      const swim = vertical * t.waterSwimAcceleration / (1 + this.mass * t.waterSwimWeightInfluence);
+      // Space helps ascent; retained mass and entry momentum provide depth.
+      const swim = (input.jumpHeld ? 1 : 0) * t.waterSwimAcceleration / (1 + this.mass * t.waterSwimWeightInfluence);
       const incomingSpeed = this.verticalSpeed;
       this.verticalSpeed += (rise - this.verticalSpeed * t.waterDrag + swim) * dt;
       const limited = clamp(this.verticalSpeed, -t.waterMaxVerticalSpeed, t.waterMaxVerticalSpeed);
       this.verticalSpeed = Math.abs(incomingSpeed) <= t.waterMaxVerticalSpeed ? limited :
         this.verticalSpeed + (limited - this.verticalSpeed) * (1 - Math.exp(-t.waterEntryDamping * dt));
-      desiredManualAngle = approach(this.angle, 0, t.shellAngularSpeed * dt);
-      this.angularSpeed = 0;
     } else {
       if (launching) {
         this.verticalSpeed = jumpFraction * t.jumpMaxLaunchSpeed;
         launchVelocityChange = this.verticalSpeed - previousVerticalSpeed;
       }
       this.verticalSpeed -= t.gravity * dt;
-      const tilt = nextShellAngle(this.angle, this.angularSpeed, vertical, dt, t);
-      desiredManualAngle = tilt.angle; this.angularSpeed = tilt.speed;
     }
+    const tilt = nextShellAngle(this.angle, this.angularSpeed, vertical, dt, t);
+    const desiredManualAngle = tilt.angle; this.angularSpeed = tilt.speed;
     // Follow the last supporting contact tangent so the KCC does not reduce
     // horizontal intent by projecting it a second time along an uphill slope.
     const supportSlope = this.grounded && this.verticalSpeed <= 0 ? this.groundSlope : 0;
@@ -675,7 +718,23 @@ export class PhysicsSimulation {
       y: (movementVerticalSpeed + this.speed * supportSlope) * dt + hazardLift };
     this.controller.computeColliderMovement(this.turtleCollider, desiredMovement,
       RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
-    const movement = this.controller.computedMovement();
+    let movement = this.controller.computedMovement();
+    if (this.water && desiredMovement.y > 0 && movement.y <= 0) {
+      const facingLip = Array.from({ length: this.controller.numComputedCollisions() }, (_, i) =>
+        this.controller.computedCollision(i)).some(hit => hit && hit.normal1.x < 0 && hit.normal1.y < 0);
+      if (facingLip) {
+        // At a convex lip the capsule may project rising forward intent down
+        // the solid. Prefer an actually permitted ascent instead of undoing
+        // its previous tick. The shell still requires complete-path clearance.
+        this.controller.computeColliderMovement(this.turtleCollider, { x: 0, y: desiredMovement.y },
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
+        const upward = this.controller.computedMovement();
+        const rise = { x: position.x + upward.x, y: position.y + upward.y };
+        if (upward.y > 0 && !this.castShellPose(rise, this.bodyAngle, this.angle)) movement = upward;
+        else this.controller.computeColliderMovement(this.turtleCollider, desiredMovement,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, groups(TURTLE, TERRAIN));
+      }
+    }
     let grounded = this.controller.computedGrounded() && (this.water || this.verticalSpeed <= 0);
     if (!grounded) this.groundSlope = 0;
     let support: { angle: number; slope: number } | undefined;
@@ -687,29 +746,40 @@ export class PhysicsSimulation {
       // only when that actual contact normal agrees with the top face.
       if (collision.normal1.y <= 0 || !collision.collider) continue;
       if (!this.water) this.biome = this.terrainBiomes.get(collision.collider.handle) ?? this.biome;
-      const normalAngle = Math.atan2(-collision.normal1.x, collision.normal1.y);
-      const authoredSlope = this.terrainSlopes.get(collision.collider.handle);
-      const authoredAngle = authoredSlope === undefined ? normalAngle : Math.atan(authoredSlope);
-      const agreesWithFace = Math.abs(normalAngle - authoredAngle) <= Math.atan(G.controllerNudge);
-      const angle = agreesWithFace ? authoredAngle : normalAngle;
-      if (Math.abs(angle) <= t.shellMaxAngle + Math.atan(G.controllerNudge)) {
-        const candidate = { angle: clamp(angle, -t.shellMaxAngle, t.shellMaxAngle),
-          slope: clamp(-collision.normal1.x / collision.normal1.y,
-            -Math.tan(t.shellMaxAngle), Math.tan(t.shellMaxAngle)) };
+      const candidate = this.supportFromNormal(collision.collider, collision.normal1);
+      if (candidate) {
         // When bridging a join, prefer the flatter actual support. The signed
         // tie break keeps collision iteration order from choosing the posture.
         if (!support || Math.abs(candidate.angle) < Math.abs(support.angle) ||
           (Math.abs(candidate.angle) === Math.abs(support.angle) && candidate.angle < support.angle)) support = candidate;
       }
     }
+    const requested = { x: position.x + movement.x, y: position.y + movement.y };
+    let followedGround = false;
+    if (!this.water && this.grounded && this.verticalSpeed <= 0 && !launching && hazardLift === 0 &&
+      (!grounded || supportSlope < -G.controllerNudge)) {
+      // A shallow cast follows only nearby actual support after a grounded
+      // departure. Preserve controller clearance; do not attach to deep drops,
+      // an upward launch, water, or a face too steep for the controller.
+      const hit = this.nearbyGround(requested, G.stepHeight);
+      const candidate = hit && this.supportFromNormal(hit.collider, hit.normal1);
+      if (hit && candidate && candidate.angle < -Math.atan(G.controllerNudge)) {
+        requested.y += G.controllerNudge - hit.time_of_impact;
+        support = candidate; grounded = true; followedGround = true;
+        this.biome = this.terrainBiomes.get(hit.collider.handle) ?? this.biome;
+      }
+    }
     // Rapier can report grounded without a new sweep collision. Retain the
     // confirmed support instead of alternating its pitch with zero each tick.
     if (support) { this.groundAngle = support.angle; this.groundSlope = support.slope; }
-    const requested = { x: position.x + movement.x, y: position.y + movement.y };
     const desiredBodyAngle = this.water ? 0 : grounded ? this.groundAngle : this.bodyAngle;
-    const next = this.alignShell(requested, approach(this.bodyAngle, desiredBodyAngle, t.shellAngularSpeed * dt), desiredManualAngle, grounded);
+    const next = this.alignShell(requested, approach(this.bodyAngle, desiredBodyAngle, t.shellAngularSpeed * dt), desiredManualAngle, grounded, desiredMovement);
     movement.x = next.x - position.x; movement.y = next.y - position.y;
     grounded = this.controller.computedGrounded() && (this.water || this.verticalSpeed <= 0);
+    if (followedGround) {
+      const hit = this.nearbyGround(next, G.controllerNudge);
+      grounded ||= !!hit && !!this.supportFromNormal(hit.collider, hit.normal1);
+    }
     const landingDelta = grounded && !this.grounded && this.verticalSpeed < 0 ? -this.verticalSpeed : 0;
     this.grounded = grounded;
     if (grounded && this.verticalSpeed < 0) this.verticalSpeed = 0;
@@ -724,19 +794,23 @@ export class PhysicsSimulation {
     this.turtle.setNextKinematicTranslation(next);
     const connected = new Set(this.tracker.connectedIds());
     const landingDamping = this.biome === 'grass' ? t.grassLandingDamping : t.rockLandingDamping;
+    const grip = t.gripAssistance * (this.water ? W.gripMultiplier : 1);
+    if (this.water !== previousWater) this.shellCollider.setFriction(t.cargoFriction * (this.water ? W.frictionMultiplier : 1));
     for (const c of this.cargo) {
       if (c.retired) continue;
       c.body.resetForces(false);
       if (this.tracker.state(c.definition.id) === 'lost') continue;
       // World-space damping must not slow the stack's freefall while the
       // kinematic carrier falls with undamped gravity. Keep angular damping.
-      c.body.setLinearDamping(this.grounded || this.water ? t.cargoLinearDamping : 0);
+      c.body.setLinearDamping(this.water ? t.cargoLinearDamping * W.linearDampingMultiplier : this.grounded ? t.cargoLinearDamping : 0);
+      c.body.setAngularDamping(t.cargoAngularDamping * (this.water ? W.angularDampingMultiplier : 1));
+      if (this.water !== previousWater) for (const collider of c.colliders) collider.setFriction(t.cargoFriction * (this.water ? W.frictionMultiplier : 1));
       if (connected.has(c.definition.id)) {
         const velocity = c.body.linvel();
         // Substep contact impulses can leave a tiny relative vertical speed
         // against a position-based carrier. Existing contact grip damps that
         // drift during flight; no root connection means no remote force.
-        c.body.addForce({ x: c.definition.mass * (this.speed - velocity.x) * t.gripAssistance,
+        c.body.addForce({ x: c.definition.mass * (this.speed - velocity.x) * grip,
           y: !this.grounded && !this.water && !launching ?
             c.definition.mass * (this.verticalSpeed - velocity.y) * t.gripAssistance : 0 }, true);
         if (launching) {
