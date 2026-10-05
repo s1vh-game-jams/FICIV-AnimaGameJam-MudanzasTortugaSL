@@ -1,7 +1,5 @@
-# Inactive template: GitHub does not execute workflows stored under scripts/.
-# After final art/licenses and explicit release approval, review the action pins,
-# copy to .github/workflows/pages.yml on main, select GitHub Actions in Pages
-# settings, and restrict the github-pages environment to main.
+# Active Vite workflow; the Jekyll filename is historical.
+# Pages source is GitHub Actions; the github-pages environment permits main only.
 # Publication stays manual: dispatch this workflow from main after approval.
 # Pages serves the static Vite bundle; it cannot host an API/database service.
 # Verified against https://vite.dev/guide/static-deploy.html#github-pages
@@ -11,6 +9,12 @@ name: Deploy approved main build to GitHub Pages
 
 'on':
   workflow_dispatch:
+    inputs:
+      allow_game_test_failure:
+        description: 'Explicit release exception: publish despite failing game tests'
+        required: true
+        type: boolean
+        default: false
 
 # Grant each job only the permissions it needs.
 permissions: {}
@@ -31,7 +35,7 @@ jobs:
       - name: Check out the release branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -47,7 +51,15 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Run game and service tests
+        id: game-tests
+        continue-on-error: ${{ inputs.allow_game_test_failure }}
         run: npm run test
+      - name: Record the approved test exception
+        if: ${{ steps.game-tests.outcome == 'failure' && inputs.allow_game_test_failure }}
+        run: |
+          echo '::warning::Game tests failed. Publishing under the explicitly selected human release exception.'
+          echo '### Human-approved release exception' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Game tests failed; their complete output remains in the test step. This run explicitly permits publication despite those failures. Type, lint, helper and build checks remain mandatory.' >> "$GITHUB_STEP_SUMMARY"
       - name: Test the local server helper
         run: python3 -m unittest discover -s tests/python -v
       - name: Build the repository-subpath site

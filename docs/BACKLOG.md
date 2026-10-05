@@ -1152,10 +1152,10 @@ Jam release on main
 
 ### RELEASE-001 — Implement GitHub Pages workflow
 - **Priority:** P0
-- **Status:** TODO
+- **Status:** DONE — active workflow added by the human on `main` in `0e14828`
 - **Depends on:** stable Vite build
 - **Acceptance:** deployment action targets `main`; correct base path; no dev auto-release.
-- **Preparation:** inactive template is tracked separately as RELEASE-006. Activation remains pending final art/licenses and explicit release authorization.
+- **Implementation:** `.github/workflows/jekyll-gh-pages.yml` contains the Vite workflow despite its historical filename: manual dispatch, both jobs guarded to `main`, exact dispatched main commit checkout, pinned actions, existing checks and `build:pages`. On 2026-10-05 Sol changed the Pages source from legacy to GitHub Actions and verified the environment's exact `main` deployment policy. No automatic `dev` release. The later human-approved `allow_game_test_failure` input defaults false; an explicit true dispatch reports failed game tests but allows the jam publication. All other checks remain mandatory.
 
 ### RELEASE-006 — Prepare an inactive main-only Pages Actions template
 - **Priority:** P0
@@ -1177,14 +1177,16 @@ Jam release on main
 
 ### RELEASE-004 — Human authorization to promote `dev` to `main`
 - **Priority:** P0
-- **Status:** BLOCKED
-- **Blocked by:** completed candidate + human local verification
-- **Note:** agents cannot self-unblock this task.
+- **Status:** DONE — the human integrated the current UI candidate into `main` in `0e8900b` and requested its Pages deployment on 2026-10-05, explicitly requiring `main`
+- **Scope:** publish the already integrated main candidate; no additional gameplay changes are authorized by this release task.
 
 ### RELEASE-005 — Deploy jam release
 - **Priority:** P0
-- **Status:** BLOCKED
+- **Status:** IN PROGRESS — the human explicitly authorized modifying the workflow in `main` after reviewing the 51 failures; revised main-only publication pending
 - **Depends on:** RELEASE-004
+- **Evidence:** Pages source is GitHub Actions; HTTPS/no custom domain and the `github-pages` environment's `main` restriction verified. Local TypeScript, ESLint, root/Pages builds and 11 Python helper tests pass. Pages-subpath browser navigation, Normal game and laboratory initialization pass without console errors. Vitest: **645 passed / 51 failed, 29 files, 284.81 seconds**, matching the UX-013 baseline report; no gameplay or settings changes in this task. Local full report: ignored `artifacts/pages-tests.log`. The original workflow required a successful test exit; the revised workflow permits the explicitly selected release exception. Hosted/live success is not claimed yet.
+- **Authorization:** the human replied "Autorizo modificar el workflow en main" to the explicit choice to publish the current main despite recorded failures. Cancel the queued first attempt `37365860940`; use the revised workflow with `allow_game_test_failure=true` for this release. Tests still run and their failed outcome is reported. Default dispatches remain strict; no gameplay/settings changes.
+- **Follow-up:** reconcile regression traces/assertions with human tuning `82380b1` (2 s charge / 9.81 m/s launch and altered grip/damping/water). Thirty-seven failures assert historical numeric defaults; other physical response/recovery failures need investigation. Do not claim a current traversal certificate.
 ### TEST-010 — Cover the physical core with real Rapier invariants
 - **Priority:** P0
 - **Status:** DONE
