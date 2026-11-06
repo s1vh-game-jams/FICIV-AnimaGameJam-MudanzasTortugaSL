@@ -1,6 +1,6 @@
 import RAPIER from '@dimforge/rapier2d';
 import { PHYSICS_GEOMETRY as G, WATER_CARGO_RESPONSE as W, GRASS_SHELL_RESPONSE as B,
-  CARGO_BALANCE_RESPONSE as E, validateTuning } from '../config/tuning';
+  CARGO_BALANCE_RESPONSE as E, MAX_TERRAIN_ANGLE, validateTuning } from '../config/tuning';
 import type { Tuning } from '../config/tuning';
 import { CARGO } from '../content/cargo';
 import type { CargoDefinition, CargoKind } from '../content/cargo';
@@ -223,8 +223,8 @@ export class PhysicsSimulation {
     // queries in step() preserve the same gap used by ordinary movement.
     // Tiny numerical tolerance does not expand the authored/pose slope limit.
     const climbTolerance = Math.atan(G.controllerNudge);
-    this.controller.setMaxSlopeClimbAngle(tuning.shellMaxAngle + climbTolerance);
-    this.controller.setMinSlopeSlideAngle(tuning.shellMaxAngle + climbTolerance);
+    this.controller.setMaxSlopeClimbAngle(MAX_TERRAIN_ANGLE + climbTolerance);
+    this.controller.setMinSlopeSlideAngle(MAX_TERRAIN_ANGLE + climbTolerance);
     this.shell = this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased()
       .setTranslation(position.x, position.y + tuning.shellPivotY));
     const shellShape = RAPIER.ColliderDesc.convexHull(new Float32Array(G.shellVertices));
@@ -243,6 +243,13 @@ export class PhysicsSimulation {
       this.cargoBalanceOffsets.set(c.definition.id, c.body.translation().x - this.shell.translation().x);
       c.body.setLinvel({ x: tuning.baseSpeed, y: 0 }, true);
     }
+  }
+
+  /** Live laboratory adjustment: preserve world, elapsed time, cargo and terrain support. */
+  setShellMaxAngle(angle: number): void {
+    const candidate = { ...this.tuning, shellMaxAngle: angle };
+    validateTuning(candidate);
+    this.tuning.shellMaxAngle = angle;
   }
 
   private createCargo(d: CargoDefinition): void {
@@ -472,9 +479,9 @@ export class PhysicsSimulation {
     const authoredAngle = authoredSlope === undefined ? normalAngle : Math.atan(authoredSlope);
     const agreesWithFace = Math.abs(normalAngle - authoredAngle) <= Math.atan(G.controllerNudge);
     const angle = agreesWithFace ? authoredAngle : normalAngle;
-    if (Math.abs(angle) > this.tuning.shellMaxAngle + Math.atan(G.controllerNudge)) return;
-    return { angle: clamp(angle, -this.tuning.shellMaxAngle, this.tuning.shellMaxAngle),
-      slope: clamp(-normal.x / normal.y, -Math.tan(this.tuning.shellMaxAngle), Math.tan(this.tuning.shellMaxAngle)) };
+    if (Math.abs(angle) > MAX_TERRAIN_ANGLE + Math.atan(G.controllerNudge)) return;
+    return { angle: clamp(angle, -MAX_TERRAIN_ANGLE, MAX_TERRAIN_ANGLE),
+      slope: clamp(-normal.x / normal.y, -Math.tan(MAX_TERRAIN_ANGLE), Math.tan(MAX_TERRAIN_ANGLE)) };
   }
 
   private castShellPose(position: RAPIER.Vector, bodyAngle: number, manualAngle: number, bodyOffsetY = this.bodyOffsetY):

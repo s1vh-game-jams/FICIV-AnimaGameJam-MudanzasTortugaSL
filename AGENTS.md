@@ -130,6 +130,8 @@ This is a domain-specific precedence rule, not permission for focused documents 
 
 **Approved Credits addition (2026-10-05):** the human supplied the exact centred dedication, Argorias Svartha's ArtStation link, signature, return button and copyright footer. GDD 41.5.6 records this presentation contract; the jam title must include the Credits entry.
 
+**Scoped terrain-difficulty revision (2026-11-06):** the human authorizes module difficulty metadata, difficulty-aware Endless selection, additional hard modules with traversable slopes up to 36 degrees, and a live session-only laboratory shell-angle slider. Sol may synchronize affected documentation and squash/push to `dev`. Terrain capability remains fixed at 36 degrees when the manual rotation window changes; geometry/world state must not reset. Browser verification is explicitly assigned to the human for this task. Six-module references below describe the original jam scope; the current runtime pool has nine definitions.
+
 ---
 
 ## 4. Language policy
@@ -156,6 +158,7 @@ This table is mandatory project metadata.
 | `/README.md` | Spanish | Public repository cover; concise game overview; local setup/testing; simplified deployment; tester access to `physics-playground`. | Keep attractive and concise. Update when public setup, controls, modes, or top-level structure materially changes. |
 | `/CONTRIBUTING.md` | English | Development methodology; branch hierarchy; preserved auxiliary-branch history; squash workflow; testing; documentation; attribution. | Read before Git operations. Never delete auxiliary branches as routine cleanup. Never promote `dev` to `main` without explicit human authorization. |
 | `/LICENSE.md` | English | Final licensing notice and licensing boundaries. | Do not alter licensing intent without explicit approval. Check all third-party asset/audio licenses before inclusion. |
+| `/docs/HOWTOPLAY.md` | Spanish | Player guide: Endless rules, controls, difficulty, traps and scoring. | Keep consistent with the GDD and current player-facing behavior. |
 | `/docs/GDD.md` | Spanish | **Complete Game Design Document; source of truth for game design and UI/UX.** | Read before gameplay/player-facing changes, especially section 41 for UI/UX. Do not edit unless explicitly requested or an approved design change must be incorporated. |
 | `/docs/PRD.md` | English | Product/technical requirements: architecture, phase-specific scope, build stages, `physics-playground`, approved implementation clarifications, assets, service boundaries, acceptance criteria. | Read before implementation. Use it to determine what the current phase must build while preserving compatibility with the complete GDD. |
 | `/docs/BACKLOG.md` | English | Living task pool, priorities, dependencies, status, commit references, regression provenance, post-jam deferrals. | Updating it is part of development. Close tasks with commit hashes when known. Record suspected bug-introducing commits when useful and evidenced. |
@@ -527,9 +530,9 @@ Water must preserve the GDD's special relationship among retained mass, depth, b
 
 Endless Run and future designed levels consume the **same module pool**.
 
-The approved six-module closed pool is `AB BD DA / AD DB BA` with A=water, B=grass and D=rock. Endless uses all compatible certified definitions; future designed levels reuse them. Each jam module has three compatible trap sockets. The current pool uses single exits; AD's surface/submerged alternatives rejoin internally. Multi-exit modules require early unambiguous route selection and correct downstream alignment; otherwise use single exits.
+The original six-module pool is `AB BD DA / AD DB BA` with A=water, B=grass and D=rock. The approved 2026-11-06 extension adds `BD-hard`, `DB-hard` and `AB-hard`; Endless filters by selected difficulty and weights compatible permitted definitions, while future designed levels reuse the same pool. Each jam module has three compatible trap sockets. The current pool uses single exits; AD's surface/submerged alternatives rejoin internally. Multi-exit modules require early unambiguous route selection and correct downstream alignment; otherwise use single exits.
 
-Every proposed module must include real-physics full-charge jump traversal evidence for its mandatory routes and supported loads, using current settings (currently 8 m/s maximum launch). Repeat validation after relevant geometry, launch/gravity, shell-height, movement-margin or controller changes. An analytical height bound alone cannot certify traversal; camera waiting never excuses an impossible wall. See GDD 42.1 and PHYSICS for the diagnostic validator.
+Every proposed module must include real-physics full-charge jump traversal evidence for its mandatory routes and supported loads, using current settings (currently 9.81 m/s maximum launch). Repeat validation after relevant geometry, launch/gravity, shell-height, movement-margin or controller changes. An analytical height bound alone cannot certify traversal; camera waiting never excuses an impossible wall. See GDD 42.1 and PHYSICS for the diagnostic validator.
 
 The jam does not require examples of all sixteen abstract biome transition combinations.
 

@@ -36,7 +36,10 @@ const finite = (snapshot: SimulationSnapshot): boolean => [snapshot.tick, snapsh
 
 /** Original bodies/tuning throughout; input changes are normal player controls. */
 function authoredControls(snapshot: SimulationSnapshot, definition: EndlessModuleDefinition): Controls {
-  const target = snapshot.turtle.biome === 'water' ? 0 : -snapshot.turtle.bodyAngle;
+  // Hard slopes need partial compensation so the shell rim clears the real ground.
+  // This is an authored player-input trace; no pose/collider is overridden.
+  const target = snapshot.turtle.biome === 'water' ? 0 :
+    -snapshot.turtle.bodyAngle * (definition.difficulty === 'hard' ? 0.5 : 1);
   const difference = target - snapshot.turtle.angle;
   const vertical = difference > 0.015 ? 1 : difference < -0.015 ? -1 : 0;
   return { horizontal: definition.id === 'AD' && snapshot.turtle.biome === 'water' && snapshot.turtle.x < 18 ? -1 : 0,

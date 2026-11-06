@@ -6,9 +6,11 @@ The human approved a **static published catalog and browser-local Top 100** on 2
 
 `src/services/contracts.ts` owns serializable content and ranking contracts. `createJamServices` composes a validated `StaticLevelCatalog`, `LocalLeaderboardService` and `AnonymousSessionService`; `createBrowserJamServices` safely obtains browser storage. `src/app/services.ts` keeps one shared service instance for application screens. Bootstrap validates and reads public catalog/session data without sign-in. The current playground retains its diagnostics and does not submit scores.
 
-The seed `src/game/content/jamCatalog.ts` contains an official maintainer profile, references to existing body/cargo archetypes, one full-load turtle configuration derived from `CARGO`, the six shared grass/rock/water module definitions and three hazard definitions (`branch`, `stump`, `tree`). **There are no published designed levels.** Endless consumes that shared pool directly; a diagnostic or a procedural run does not become a fabricated designed level merely to populate this service.
+The seed `src/game/content/jamCatalog.ts` contains an official maintainer profile, references to existing body/cargo archetypes, one full-load turtle configuration derived from `CARGO`, nine current grass/rock/water module definitions, six historical module revisions and three hazard definitions (`branch`, `stump`, `tree`). **There are no published designed levels.** Endless consumes that shared pool directly; a diagnostic or a procedural run does not become a fabricated designed level merely to populate this service.
 
 ## Published content contract
+
+**Difficulty extension (2026-11-06):** `difficulty` accepts only `easy`, `normal` or `hard`. It is optional in the schema-1 service contract for historical content, and required in every current Endless definition. The original six definitions now have revision `2` with difficulty metadata; their unchanged revision `1` records remain available by exact reference. New hard modules start at revision `1`. No database or network storage is introduced. The runtime pool contains nine current definitions; the static catalog includes fifteen module revisions. Selection uses only the current pool.
 
 Catalog/content schema version starts at `1`, separately from the physics settings schema. IDs identify entities; exact `id`/`version` references identify immutable revisions. Repeating an ID with a different revision does not create a different level identity. Do not change the meaning of an existing published revision.
 

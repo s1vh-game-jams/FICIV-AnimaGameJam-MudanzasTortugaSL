@@ -4,6 +4,9 @@ import {
   type AdjustableSettings, type SettingsKey,
 } from './settingsCodec';
 
+/** Authored terrain capability is fixed; laboratory shell rotation never reshapes terrain. */
+export const MAX_TERRAIN_ANGLE = 36 * Math.PI / 180;
+
 /** Fixed scheduling and logical viewport metrics are not laboratory settings. */
 const FIXED_TUNING = {
   physicsHz: 60, maxFrameSeconds: 0.1, maxStepsPerFrame: 6,

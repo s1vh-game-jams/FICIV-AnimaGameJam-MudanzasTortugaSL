@@ -1,4 +1,6 @@
 import { ENDLESS } from '../../config/endless';
+import type { Difficulty } from '../../config/endless';
+import { CHALLENGE_MODULES } from './challengeModules';
 import type { Biome, Scenario, TerrainPoint, TerrainStrip, WaterRegion } from '../../content/scenarios';
 import type { TrapKind, TrapPlacement, WorldChunk } from '../../physics/worldContent';
 
@@ -7,6 +9,7 @@ export interface TrapSocket { id: string; x: number; y: number; compatible: read
 export interface ModuleJump { chargeAtX: number; landingX: number }
 export interface EndlessModuleDefinition {
   schemaVersion: 1; id: string; version: string; name: string; length: number;
+  difficulty: Difficulty;
   start: ModuleConnector; end: ModuleConnector;
   terrain: readonly TerrainStrip[]; water?: readonly WaterRegion[];
   sockets: readonly TrapSocket[];
@@ -29,8 +32,8 @@ const strip = (biome: 'grass' | 'rock', coordinates: readonly (readonly [number,
 const sockets = (coordinates: readonly (readonly [number, number])[]): TrapSocket[] =>
   coordinates.map(([x, y], i) => ({ id: `socket-${i + 1}`, x, y, compatible: ['branch', 'stump', 'tree'] }));
 
-/** One reusable pool for Endless and future authored levels. A=water, B=grass, D=rock. */
-export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
+/** Published revision-1 geometry; keep these records unchanged when authoring later revisions. */
+export const LEGACY_JAM_MODULES: readonly Omit<EndlessModuleDefinition, 'difficulty'>[] = [
   {
     schemaVersion: 1, id: 'BA', version: '1', name: 'Pradera y estanque', length: 80,
     start: { biome: 'grass', height: 0 }, end: { biome: 'water', height: -0.1 },
@@ -86,6 +89,13 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     water: [{ left: 0, right: 28.5, surface: 0, bottom: -5.2 }],
     sockets: sockets([[34, 0.3], [50, 0.6], [66, 0.15]]), jumps: [{ chargeAtX: 29.5, landingX: 36.5 }],
   },
+];
+
+/** One current pool for Endless and future authored levels. A=water, B=grass, D=rock. */
+export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
+  ...LEGACY_JAM_MODULES.map(module => ({ ...module, version: '2',
+    difficulty: module.id === 'DA' || module.id === 'AD' ? 'normal' as const : 'easy' as const })),
+  ...CHALLENGE_MODULES,
 ];
 
 /** Chosen branch covers get an underlying escapable recess; empty sockets retain ordinary ground. */

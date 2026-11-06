@@ -37,7 +37,7 @@ Antes de comenzar una Carrera Infinita puedes elegir:
 
 La física de Don Tortuga y la carga es la misma en las tres dificultades.
 
-Lo que cambia es principalmente la **frecuencia de las trampas** y cómo aumenta progresivamente durante la partida.
+Cambian la **topografía seleccionada** y la **frecuencia de las trampas**. Fácil utiliza módulos fáciles; Normal añade piezas intermedias; Difícil incorpora módulos exigentes con cuestas de hasta 36°. Pueden aparecer tramos más sencillos para recuperar el equilibrio. La frecuencia de trampas aumenta suavemente durante la partida.
 
 ---
 

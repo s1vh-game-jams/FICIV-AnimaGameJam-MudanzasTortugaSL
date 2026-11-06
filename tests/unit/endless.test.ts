@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ENDLESS_DIFFICULTIES } from '../../src/game/config/endless';
+import { ENDLESS_DIFFICULTIES, MODULE_DIFFICULTY_WEIGHT } from '../../src/game/config/endless';
 import type { Difficulty } from '../../src/game/config/endless';
-import { createTuning } from '../../src/game/config/tuning';
+import { createTuning, MAX_TERRAIN_ANGLE } from '../../src/game/config/tuning';
 import type { Biome } from '../../src/game/content/scenarios';
 import { CARGO } from '../../src/game/content/cargo';
 import { EndlessGenerator, expectedTrapCount, trapProbabilities, validateModulePool } from '../../src/game/modes/endless/generator';
@@ -67,8 +67,20 @@ describe('seeded Endless difficulty', () => {
 });
 
 describe('shared jam module pool', () => {
-  it('contains the six approved directed transitions, all valid sockets and no dead end', () => {
-    expect(ENDLESS_MODULES.map(module => module.id).sort()).toEqual(['AB', 'AD', 'BA', 'BD', 'DA', 'DB']);
+  it('authors hard ascents and descents at exactly 36 degrees within the fixed terrain ceiling', () => {
+    for (const module of ENDLESS_MODULES) {
+      const angles = module.terrain.flatMap(strip => strip.points.slice(1).map((point, i) =>
+        Math.atan2(point.y - strip.points[i].y, point.x - strip.points[i].x)));
+      expect(angles.every(angle => Math.abs(angle) <= MAX_TERRAIN_ANGLE + 1e-12)).toBe(true);
+      if (module.difficulty === 'hard') {
+        expect(Math.max(...angles)).toBeCloseTo(MAX_TERRAIN_ANGLE, 12);
+        expect(Math.min(...angles)).toBeCloseTo(-MAX_TERRAIN_ANGLE, 12);
+      }
+    }
+  });
+
+  it('contains the original six transitions and three harder pieces, all valid sockets and no dead end', () => {
+    expect(ENDLESS_MODULES.map(module => module.id).sort()).toEqual(['AB', 'AB-hard', 'AD', 'BA', 'BD', 'BD-hard', 'DA', 'DB', 'DB-hard']);
     expect(() => validateModulePool(ENDLESS_MODULES)).not.toThrow();
     expect(() => validateModulePool([ENDLESS_MODULES.find(module => module.id === 'BA')!])).toThrow('dead end');
   });
@@ -87,7 +99,38 @@ describe('shared jam module pool', () => {
       seen.add(module.definitionId);
       biome = module.exitBiome; height = module.endHeight; x = module.endX;
     }
-    expect([...seen].sort()).toEqual(['AB', 'AD', 'BA', 'BD', 'DA', 'DB']);
+    expect([...seen].sort()).toEqual(ENDLESS_MODULES.map(module => module.id).sort());
+  });
+
+  it.each(difficulties)('keeps a closed %s stream within the selected terrain tier', difficulty => {
+    const generator = new EndlessGenerator(createTuning(), difficulty, 'difficulty-pool');
+    const seen = new Set<string>();
+    let biome: Biome = 'grass';
+    for (let index = 1; index <= 1500; index++) {
+      const definition = generator.definition(index, biome);
+      expect(MODULE_DIFFICULTY_WEIGHT[definition.difficulty]).toBeLessThanOrEqual(MODULE_DIFFICULTY_WEIGHT[difficulty]);
+      seen.add(definition.id); biome = definition.end.biome;
+    }
+    expect([...seen].sort()).toEqual(ENDLESS_MODULES.filter(module =>
+      MODULE_DIFFICULTY_WEIGHT[module.difficulty] <= MODULE_DIFFICULTY_WEIGHT[difficulty]).map(module => module.id).sort());
+  });
+
+  it('prefers high-tier terrain in hard mode while keeping easier recovery pieces', () => {
+    const generator = new EndlessGenerator(createTuning(), 'hard', 'terrain-weight');
+    const counts = { easy: 0, normal: 0, hard: 0 };
+    for (let index = 1; index <= 6000; index++) counts[generator.definition(index, 'grass').difficulty]++;
+    expect(counts.hard / 6000).toBeGreaterThan(0.75);
+    expect(counts.easy).toBeGreaterThan(0);
+  });
+
+  it('rejects invalid difficulty metadata, excessive slopes and difficulty-specific dead ends', () => {
+    const source = ENDLESS_MODULES.find(module => module.id === 'BA')!;
+    expect(() => validateModulePool(ENDLESS_MODULES.map(module => module === source ?
+      { ...module, difficulty: 'extreme' as Difficulty } : module))).toThrow('metadata');
+    expect(() => validateModulePool(ENDLESS_MODULES.map(module => module === source ?
+      { ...module, terrain: [{ biome: 'grass', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }] } : module))).toThrow('36-degree');
+    const disconnected = ENDLESS_MODULES.map(module => module.start.biome === 'water' ? { ...module, difficulty: 'hard' as const } : module);
+    expect(() => new EndlessGenerator(createTuning(), 'easy', 'dead-end', disconnected)).toThrow('Difficulty-filtered');
   });
 
   it.each(ENDLESS_MODULES)('authors pit geometry only for selected branch sockets in $id', module => {

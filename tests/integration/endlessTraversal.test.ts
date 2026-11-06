@@ -6,11 +6,14 @@ import { HAZARD_TUNING } from '../../src/game/config/hazards';
 import { validateJumpTraversal } from '../../src/game/content/jumpValidation';
 import type { Scenario } from '../../src/game/content/scenarios';
 import type { Controls } from '../../src/game/core/input';
-import { ENDLESS_MODULES, placeModule, scenarioForModule } from '../../src/game/modes/endless/modules';
+import { ENDLESS_MODULES as CURRENT_MODULES, placeModule, scenarioForModule } from '../../src/game/modes/endless/modules';
 import type { EndlessModuleDefinition, SocketChoice } from '../../src/game/modes/endless/modules';
 import { PhysicsSimulation } from '../../src/game/physics/simulation';
 import type { LoadPreset, SimulationSnapshot } from '../../src/game/physics/simulation';
 import type { TrapKind } from '../../src/game/physics/worldContent';
+
+/** Original six-module control traces; hard routes are certified in challengeModules/challengeSeams. */
+const ENDLESS_MODULES = CURRENT_MODULES.filter(module => module.difficulty !== 'hard');
 
 /** Opt-in release certificate: 6 definitions × 64 placements × 3 initial loads. */
 const exhaustiveCompositions = process.env.ENDLESS_EXHAUSTIVE === '1';

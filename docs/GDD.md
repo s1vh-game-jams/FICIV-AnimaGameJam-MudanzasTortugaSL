@@ -455,7 +455,9 @@ El cuerpo de Don Tortuga y la orientación base del caparazón se inclinan de fo
 
 La inclinación manual del caparazón es relativa a esa postura: el jugador puede compensar una subida o bajada para mantener el apoyo de la mudanza más horizontal. El límite de 30°–45° corresponde a esta compensación manual; el ángulo total respecto al mundo combina terreno y compensación.
 
-La inclinación máxima del terreno transitable deberá coincidir con el máximo que la Tortuga pueda compensar razonablemente.
+La inclinación máxima del terreno transitable es de **36°**, igual al límite manual de referencia del caparazón. Las piezas pueden usar pendientes menores según su dificultad. Las caras de caída de una trampa no son pendientes transitables obligatorias: deben conservar una salida superable.
+
+En el laboratorio, el límite manual se puede ajustar entre 30° y 45° durante la sesión. Este ajuste solo cambia la ventana de rotación: no reconstruye módulos, reinicia la simulación ni altera el límite transitable de 36°. Los ajustes de referencia del juego permanecen sin cambios salvo modificación explícita.
 
 Esto evita situaciones en las que la geometría del escenario exija una orientación que el sistema de control no puede reproducir.
 
@@ -478,7 +480,7 @@ El control debe ser:
 
 Mantener pulsada la **barra espaciadora** carga el salto mientras Don Tortuga está apoyado en terreno seco. Don Tortuga salta **al soltarla**, manteniendo su avance hacia la derecha.
 
-- La intensidad de despegue aumenta linealmente con el tiempo de carga, hasta un máximo configurable de **3 segundos** por defecto.
+- La intensidad de despegue aumenta linealmente con el tiempo de carga, hasta un máximo configurable de **2 segundos** en los ajustes actuales.
 - Mantenerla más tiempo conserva la intensidad máxima; nunca dispara el salto antes de soltar.
 - La linealidad se aplica al impulso de despegue, no a la altura final de la trayectoria.
 - La fuerza máxima y la gravedad son parámetros de *tuning*. El salto debe sentirse suave y fácil de anticipar.
@@ -950,7 +952,9 @@ En la versión de Game Jam existe una única configuración inicial de Don Tortu
 
 El nivel se construye a partir de una seed.
 
-Antes de crear la seed, el jugador elige **Fácil, Normal o Difícil**. La configuración inicial de mudanza es la misma en las tres dificultades; la dificultad regula la frecuencia de trampas, no altera las físicas de Don Tortuga.
+Antes de crear la seed, el jugador elige **Fácil, Normal o Difícil**. La configuración inicial de mudanza es la misma en las tres dificultades. La dificultad regula tanto la frecuencia de trampas como la selección de topografía; no altera las físicas de Don Tortuga.
+
+Cada módulo declara una dificultad base: `easy`, `normal` o `hard`. Fácil admite solo piezas `easy`; Normal admite `easy` y `normal`; Difícil admite las tres. Entre las piezas compatibles se usan pesos respectivos de **1, 3 y 9**, conservando tramos más sencillos para recuperación. La seed resuelve la elección; la progresión temporal de trampas no modifica estos pesos ni la geometría. Cada subconjunto permitido debe tener continuación válida.
 
 La run empieza con un tramo llano y seguro, sin trampas ni agua alcanzable antes de completar las ayudas de velocidad, equilibrio y salto a la velocidad máxima permitida. Este tramo no pertenece al pool procedural ni concede un banderín puntuable. Después comienza el primer módulo puntuable.
 
@@ -1484,13 +1488,13 @@ Para permitir crecimiento futuro sin rediseñar el sistema, cada módulo podrá 
 - bioma final;
 - altura de entrada;
 - altura de salida;
-- dificultad estimada;
+- dificultad base (`easy`, `normal` o `hard`), obligatoria en el pool procedural actual;
 - trampas presentes;
 - presencia de bifurcación;
 - espacio vertical requerido;
 - longitud.
 
-Los metadatos adicionales no son necesarios para que funcione la primera versión del generador.
+La dificultad base interviene en la selección del generador actual. Los restantes metadatos adicionales pueden incorporarse al crecer el sistema.
 
 Las ubicaciones de trampa declaran posición local, tipos compatibles y espacio de activación/recuperación. Las piezas con varias salidas necesitan identificadores y zonas de selección inequívocas para cada una. La geometría base y las ubicaciones pertenecen a la definición; las trampas elegidas pertenecen a cada instancia generada.
 
@@ -2123,7 +2127,7 @@ Los objetos perdidos dejan de interferir con el desplazamiento precisamente para
 
 ## 42.1. Validación obligatoria de nuevos módulos
 
-**Cada propuesta de módulo de nivel debe probarse físicamente antes de incorporarse al pool.** Todas sus rutas obligatorias deben poder completarse con un salto al 100 % usando los valores actualizados de `settings.txt`: actualmente **8 m/s** de despegue máximo, junto con la gravedad y los restantes parámetros vigentes.
+**Cada propuesta de módulo de nivel debe probarse físicamente antes de incorporarse al pool.** Todas sus rutas obligatorias deben poder completarse con un salto al 100 % usando los valores actualizados de `settings.txt`: actualmente **9,81 m/s** de despegue máximo, junto con la gravedad y los restantes parámetros vigentes.
 
 - Probar las paredes, desniveles, huecos, techos, aproximaciones y aterrizajes con los colliders reales y la espera de cámara.
 - Cubrir las cargas previstas, incluida la ausencia de carga: perder objetos no puede volver obligatorio un salto imposible.
@@ -2161,7 +2165,7 @@ La Carrera Infinita es el objetivo principal del prototipo de jam aprobado el 20
 
 Debe cumplir:
 
-- utiliza todos los módulos compatibles disponibles;
+- utiliza los módulos compatibles admitidos por la dificultad seleccionada;
 - utiliza la única configuración inicial existente;
 - utiliza seed procedural;
 - ofrece dificultad Fácil, Normal y Difícil con las medias y progresión acotada de la sección 16.4;
@@ -2228,6 +2232,7 @@ CargoItem
 ```text
 Module
 ├── id
+├── difficulty
 ├── startBiome
 ├── endBiome
 ├── startHeight
