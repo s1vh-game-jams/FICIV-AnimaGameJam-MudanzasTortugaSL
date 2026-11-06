@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Six-module Endless prototype and selected jam audio integrated on `dev`; audio integration is `d803628`. Source branches remain preserved. Human playtesting and release approval follow.
+**Status:** Nine-module difficulty-rated Endless extension implemented on `codex/module-difficulty`, pending squash integration and human browser validation. Original jam/audio/release history remains below; source branches are preserved.
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -81,7 +81,10 @@ Therefore:
 - **Status:** IN PROGRESS — preserved branch `codex/module-difficulty`
 - **Authorization:** human request on 2026-11-06; integrate and synchronize `dev`, human performs browser verification.
 - **Scope:** nine rated modules; harder 36° terrain; seeded tier admission/weighting; fixed terrain capability separated from live session manual-angle adjustment; preserve exact historical catalog revisions.
-- **Verification:** current-settings physical route/composition/seam matrix and full automated checks in progress. Existing TEST-013 failures are compared with unchanged base `8ed9a05`; do not claim a clean historical suite.
+- **Verification:** TypeScript, ESLint, root/repository-subpath builds, whitespace checks and eleven Python helper tests pass. Final checked tree: **748 passed / 49 pre-existing failures out of 797 cases across 32 files**; changed-file reruns supersede the initial broad run. Every failing identity exactly matches independently tested pristine base `8ed9a05` (647 passed / 49 failed out of 696). No failure was introduced; TEST-013 remains separate.
+- **Physical evidence:** all **576** complete new-module trap arrangements pass (three modules × 64 socket/type arrangements × full/sofa/empty), plus nine base routes and nine full-charge first landings across the actual steep geometry. Exhaustive run: 27 cases in 1,254.68 s. Separate activated homogeneous arrangements exercise every socket/type to its spent phase. All 45 compatible new seams pass; all fifteen actual AB-hard partial-load requests survive initial grace and escape, with twelve retaining cargo at exit under the authored trace. Base full/sofa traces retain continuing cargo; losses remain possible. No whole-pool 1,728-route or loss-free human-play certificate is claimed.
+- **Evidence artifacts:** ignored `artifacts/challenge-traversal-exhaustive.json` preserves 585 observed routes / 576 distinct compositions and exact settings; `module-difficulty-verification.json` records the final combined differential. Hard routes use normal digital controls with partial compensation for real rim clearance; full compensation is not forced through solid terrain. Current source settings remain 2 s charge, 9.81 m/s launch and 36° manual default.
+- **Human handoff:** browser tests are explicitly omitted at the human's request. Validate the three difficulty choices, new terrain readability/feel, and live laboratory slider with keyboard/mouse, including paused adjustment. Source settings, dependencies and deployment configuration are unchanged.
 - **Provenance:** OpenAI Codex root implementation/contracts/docs/integration; `/root/steep_modules` authored/certified hard content; `/root/lab_slider` implemented slider and independently reviewed/verified joins.
 
 ### PHYS-028 — Launch from rising stumps and soften grass shell motion
@@ -1120,6 +1123,10 @@ Jam release on main
 - **Scope:** preserve human settings `82380b1`; remove historical 8 m/s / 3 s assertions, adapt physical fixture observation to slower angular response, bound float32 freefall arithmetic, preserve manual recovery from rejected grass sway and ascent beside walls. Candidate physics partition is `endless-physics-4`, not integrated or published.
 - **Evidence:** before core edits, settings/ordinary traversal passed 165 cases. Adapted slope/water fixtures passed 24 cases before the final core changes. Final focused flight/blocking/jump-validator checks passed 28 cases. Earlier TypeScript/ESLint passed before the final sway/version edit. These separate focused runs do not certify the final combined tree.
 - **Remaining:** review the complete diff; run type/lint/full suite and all 1,152 trap compositions with the final core; browser-check collision/control recovery; document final physics evidence before squash integration into `dev`. No `main` promotion is authorized for this unfinished bug work.
+
+#### Current unchanged-base differential — 2026-11-06
+
+A pristine tracked-source export of `8ed9a05` was run independently with the installed dependency set: 571 general cases give **558 passed / 13 failed**, and the original 125-case traversal file gives **89 passed / 36 failed**. Combined: **647 passed / 49 failed out of 696**. This is current baseline evidence, not the earlier release's 51-case result. The 36 traversal failures assert historical 8 m/s / 3 s defaults; the other thirteen remain in flight/blocking (4), jump validation (2), ordinary water controls (1), physics extensions (4), water cargo response (1), and settings (1). New terrain work preserves source settings and does not integrate the unfinished `codex/current-tuning-tests` branch. Ignored reports are `artifacts/module-pristine-baseline.json` and `artifacts/module-pristine-traversal.json`.
 
 #### Complete release failure inventory — 51 cases, seven files
 
