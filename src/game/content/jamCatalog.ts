@@ -1,17 +1,10 @@
 import { CARGO } from './cargo';
-import { CONTENT_SCHEMA_VERSION, type ContentCatalog, type ModuleDefinition } from '../../services/contracts';
-import { ENDLESS_MODULES } from '../modes/endless/modules';
+import { CONTENT_SCHEMA_VERSION, type ContentCatalog } from '../../services/contracts';
+import { ENDLESS_MODULES, LEGACY_JAM_MODULES } from '../modes/endless/modules';
 
 export const OFFICIAL_AUTHOR_ID = 'official-maintainer';
 export const OFFICIAL_TURTLE_CONFIGURATION_ID = 'official-full-load';
 export const INITIAL_CONTENT_VERSION = '1';
-
-// Keep exact published revision-1 references valid; difficulty metadata is revision 2.
-const originalModules: readonly ModuleDefinition[] = ENDLESS_MODULES.filter(module => module.version === '2').map(module => ({
-  schemaVersion: 1, id: module.id, version: '1', name: module.name, length: module.length,
-  start: module.start, end: module.end, terrain: module.terrain, water: module.water,
-  sockets: module.sockets, jumps: module.jumps,
-}));
 
 /** Public maintainer metadata and the existing load; no diagnostic is a published level. */
 export const JAM_CATALOG: ContentCatalog = {
@@ -28,7 +21,7 @@ export const JAM_CATALOG: ContentCatalog = {
       x: item.x, y: item.y, angle: 0,
     })),
   }],
-  modules: [...originalModules, ...ENDLESS_MODULES],
+  modules: [...LEGACY_JAM_MODULES, ...ENDLESS_MODULES],
   hazards: ['branch', 'stump', 'tree'].map(kind => ({ schemaVersion: CONTENT_SCHEMA_VERSION,
     id: kind, version: INITIAL_CONTENT_VERSION, kind, parameters: {} })),
   levels: [],
