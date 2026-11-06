@@ -1,6 +1,6 @@
 # Development Backlog — Mudanzas Tortuga, S.L.
 
-**Status:** Nine-module difficulty-rated Endless extension implemented on `codex/module-difficulty`, pending squash integration and human browser validation. Original jam/audio/release history remains below; source branches are preserved.
+**Status:** Nine-module difficulty-rated Endless extension integrated on `dev` as `5e57382`, from preserved `codex/module-difficulty` at `640b168`; human browser validation remains pending. Original jam/audio/release history remains below; source branches are preserved.
 **Source of game-design truth:** `/docs/GDD.md`  
 **Technical scope:** `/docs/PRD.md`
 
@@ -78,8 +78,9 @@ Therefore:
 
 ### ENDLESS-008 — Difficulty-rated terrain and live laboratory shell range
 - **Priority:** P1
-- **Status:** IN PROGRESS — preserved branch `codex/module-difficulty`
+- **Status:** DONE — `5e57382`, from preserved `codex/module-difficulty` at `640b168`; human browser validation pending
 - **Authorization:** human request on 2026-11-06; integrate and synchronize `dev`, human performs browser verification.
+- **Integration:** squash `5e57382` exactly matched the verified source tree before this documentation-only closure; implementation commits are `2432700` and `f695464`.
 - **Scope:** nine rated modules; harder 36° terrain; seeded tier admission/weighting; fixed terrain capability separated from live session manual-angle adjustment; preserve exact historical catalog revisions.
 - **Verification:** TypeScript, ESLint, root/repository-subpath builds, whitespace checks and eleven Python helper tests pass. Final checked tree: **748 passed / 49 pre-existing failures out of 797 cases across 32 files**; changed-file reruns supersede the initial broad run. Every failing identity exactly matches independently tested pristine base `8ed9a05` (647 passed / 49 failed out of 696). No failure was introduced; TEST-013 remains separate.
 - **Physical evidence:** all **576** complete new-module trap arrangements pass (three modules × 64 socket/type arrangements × full/sofa/empty), plus nine base routes and nine full-charge first landings across the actual steep geometry. Exhaustive run: 27 cases in 1,254.68 s. Separate activated homogeneous arrangements exercise every socket/type to its spent phase. All 45 compatible new seams pass; all fifteen actual AB-hard partial-load requests survive initial grace and escape, with twelve retaining cargo at exit under the authored trace. Base full/sofa traces retain continuing cargo; losses remain possible. No whole-pool 1,728-route or loss-free human-play certificate is claimed.
