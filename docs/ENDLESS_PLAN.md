@@ -10,6 +10,8 @@ This file owns the approved implementation sequence, initial tuning and verifica
 
 ## 1. Approved decisions and remaining plan assumptions
 
+**Approved extension (2026-11-06):** the current pool adds BD-hard, DB-hard and AB-hard, bringing it to nine definitions. BA/AB/BD/DB are easy; DA/AD normal; new pieces hard. Difficulty admits its tier and lower tiers, with compatible selection weights 1/3/9. Filtered pools must remain closed and start on grass. The existing probability law and protected prologue remain unchanged. Hard geometry has 4 m ramp runs with `4 * tan(36°)` rises/descents, plus recovery flats and three sockets. Terrain support stays capped at 36°; the laboratory manual-angle slider adjusts live over 30–45° without changing geometry. Pool/generator/physics revisions advance to `jam-nine-difficulty-2`, `seeded-terrain-2`, and `endless-physics-terrain-36-1`. Original six-module decisions and certificates below remain historical evidence; current verification is recorded in BACKLOG/PHYSICS.
+
 Approved by the human:
 
 - Endless Run replaces the designed level as the jam deliverable.

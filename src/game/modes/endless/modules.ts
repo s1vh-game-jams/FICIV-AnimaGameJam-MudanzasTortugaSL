@@ -1,4 +1,6 @@
 import { ENDLESS } from '../../config/endless';
+import type { Difficulty } from '../../config/endless';
+import { CHALLENGE_MODULES } from './challengeModules';
 import type { Biome, Scenario, TerrainPoint, TerrainStrip, WaterRegion } from '../../content/scenarios';
 import type { TrapKind, TrapPlacement, WorldChunk } from '../../physics/worldContent';
 
@@ -7,6 +9,7 @@ export interface TrapSocket { id: string; x: number; y: number; compatible: read
 export interface ModuleJump { chargeAtX: number; landingX: number }
 export interface EndlessModuleDefinition {
   schemaVersion: 1; id: string; version: string; name: string; length: number;
+  difficulty: Difficulty;
   start: ModuleConnector; end: ModuleConnector;
   terrain: readonly TerrainStrip[]; water?: readonly WaterRegion[];
   sockets: readonly TrapSocket[];
@@ -32,7 +35,7 @@ const sockets = (coordinates: readonly (readonly [number, number])[]): TrapSocke
 /** One reusable pool for Endless and future authored levels. A=water, B=grass, D=rock. */
 export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
   {
-    schemaVersion: 1, id: 'BA', version: '1', name: 'Pradera y estanque', length: 80,
+    schemaVersion: 1, id: 'BA', version: '2', difficulty: 'easy', name: 'Pradera y estanque', length: 80,
     start: { biome: 'grass', height: 0 }, end: { biome: 'water', height: -0.1 },
     terrain: [strip('grass', [[0, 0], [8, 0], [10, 0.35], [18, 0.35], [24, -0.2], [26, -0.2],
       [28, 0.15], [36, 0.15], [42, -0.25], [44, -0.25], [46, 0.05], [52, 0.05], [58, -3.4], [80, -3.4]])],
@@ -40,7 +43,7 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     sockets: sockets([[14, 0.35], [32, 0.15], [49, 0.05]]), jumps: [{ chargeAtX: 1, landingX: 8 }],
   },
   {
-    schemaVersion: 1, id: 'AB', version: '1', name: 'Orilla amable', length: 80,
+    schemaVersion: 1, id: 'AB', version: '2', difficulty: 'easy', name: 'Orilla amable', length: 80,
     start: { biome: 'water', height: 0 }, end: { biome: 'grass', height: 0.2 },
     terrain: [strip('grass', [[0, -3.3], [18, -3.3], [26, 0.2], [38, 0.2], [44, 0.45],
       [54, 0.45], [60, 0.1], [70, 0.1], [76, 0.2], [80, 0.2]])],
@@ -48,7 +51,7 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     sockets: sockets([[34, 0.2], [50, 0.45], [66, 0.1]]), jumps: [{ chargeAtX: 28, landingX: 35 }],
   },
   {
-    schemaVersion: 1, id: 'BD', version: '1', name: 'Colinas y cornisa', length: 72,
+    schemaVersion: 1, id: 'BD', version: '2', difficulty: 'easy', name: 'Colinas y cornisa', length: 72,
     start: { biome: 'grass', height: 0 }, end: { biome: 'rock', height: 0.6 },
     terrain: [
       strip('grass', [[0, 0], [8, 0], [10, 0.3], [18, 0.3], [24, 0.6], [28, 0.6]]),
@@ -58,7 +61,7 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     sockets: sockets([[14, 0.3], [35, 1.05], [54, 0.6]]), jumps: [{ chargeAtX: 20, landingX: 27 }],
   },
   {
-    schemaVersion: 1, id: 'DB', version: '1', name: 'Cornisa y claro', length: 72,
+    schemaVersion: 1, id: 'DB', version: '2', difficulty: 'easy', name: 'Cornisa y claro', length: 72,
     start: { biome: 'rock', height: 0 }, end: { biome: 'grass', height: -0.6 },
     terrain: [
       strip('rock', [[0, 0], [8, 0], [10, 0.25], [18, 0.25], [24, -0.35], [28, -0.35]]),
@@ -68,7 +71,7 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     sockets: sockets([[14, 0.25], [35, -0.6], [54, -0.6]]), jumps: [{ chargeAtX: 11.25, landingX: 18.25 }],
   },
   {
-    schemaVersion: 1, id: 'DA', version: '1', name: 'Roca y poza', length: 80,
+    schemaVersion: 1, id: 'DA', version: '2', difficulty: 'normal', name: 'Roca y poza', length: 80,
     start: { biome: 'rock', height: 0 }, end: { biome: 'water', height: -0.6 },
     terrain: [strip('rock', [[0, 0], [8, 0], [10, 0.4], [18, 0.4], [24, 0.1], [26, 0.1],
       [28, 0.25], [36, 0.25], [42, -0.15], [44, -0.15], [46, 0], [52, 0], [58, -3.9], [80, -3.9]])],
@@ -76,7 +79,7 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     sockets: sockets([[14, 0.4], [32, 0.25], [49, 0]]), jumps: [{ chargeAtX: 1, landingX: 8 }],
   },
   {
-    schemaVersion: 1, id: 'AD', version: '1', name: 'Isla y orilla rocosa', length: 80,
+    schemaVersion: 1, id: 'AD', version: '2', difficulty: 'normal', name: 'Isla y orilla rocosa', length: 80,
     start: { biome: 'water', height: 0 }, end: { biome: 'rock', height: 0.3 },
     terrain: [
       strip('rock', [[0, -3.3], [5, -5.2], [18, -5.2], [29, 0.3], [38, 0.3], [44, 0.6],
@@ -86,6 +89,7 @@ export const ENDLESS_MODULES: readonly EndlessModuleDefinition[] = [
     water: [{ left: 0, right: 28.5, surface: 0, bottom: -5.2 }],
     sockets: sockets([[34, 0.3], [50, 0.6], [66, 0.15]]), jumps: [{ chargeAtX: 29.5, landingX: 36.5 }],
   },
+  ...CHALLENGE_MODULES,
 ];
 
 /** Chosen branch covers get an underlying escapable recess; empty sockets retain ordinary ground. */

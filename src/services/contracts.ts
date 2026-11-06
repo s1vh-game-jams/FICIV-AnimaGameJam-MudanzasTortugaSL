@@ -32,6 +32,8 @@ export interface ModuleWater {
 }
 export interface ModuleDefinition extends VersionedContent {
   readonly name: string; readonly length: number;
+  /** Legacy schema-1 revisions may omit this authoring metadata. Runtime pool requires it. */
+  readonly difficulty?: 'easy' | 'normal' | 'hard';
   readonly start: ModuleConnector; readonly end: ModuleConnector;
   readonly terrain: readonly ModuleTerrain[]; readonly water?: readonly ModuleWater[];
   readonly hazards?: readonly ContentPlacement[];

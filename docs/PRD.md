@@ -6,6 +6,8 @@
 **Game-design authority:** `/docs/GDD.md`  
 **Operational entry point for agents:** `/AGENTS.md`
 
+**Approved extension (2026-11-06):** the current runtime pool expands to nine modules with mandatory `difficulty: easy | normal | hard`. BA/AB/BD/DB are easy, DA/AD normal, and BD-hard/DB-hard/AB-hard hard. Selected difficulty admits its own tier and lower tiers; stable compatible candidates have weights 1/3/9 respectively. Reject a filtered pool with no grass start or any dead-end exit. Trap probabilities/progression remain unchanged. The three new hard modules reach 36-degree ascending/descending slopes; authored traversable slopes are capped by fixed `MAX_TERRAIN_ANGLE`. The live 30–45-degree laboratory slider changes manual compensation only, preserving world, cargo, timers, pause and geometry. Browser checks are assigned to the human. Six-module milestones below describe the original jam delivery.
+
 **Scope revision (2026-10-04):** Endless Run is the required jam gameplay deliverable. The human approved [ENDLESS_PLAN.md](ENDLESS_PLAN.md) after committing the scope revision to `dev` as `cf0adc2`; implementation from preserved `codex/endless-jam` is integrated on `dev` as `5605d5c`.
 
 ---
@@ -76,7 +78,7 @@ Prototype 1 does **not** need the complete game flow, complete biome set, remote
 Primary deliverable:
 
 ```text
-one complete playable Endless Run with six reusable modules
+one complete playable Endless Run with nine reusable difficulty-rated modules
 ```
 
 It implements the **Game Jam scope** defined by this PRD, including the current UI/UX baseline.
@@ -519,7 +521,7 @@ The jam is considered functionally shippable when all requirements below are met
 
 Required:
 
-- a separate safe dry opening followed by a streamed six-module pool;
+- a separate safe dry opening followed by a streamed nine-module difficulty-rated pool;
 - difficulty selected before seed creation;
 - biome/height-compatible generation using every compatible module;
 - seeded trap counts, sockets and compatible types, with the approved bounded progression;
@@ -567,7 +569,7 @@ Required water behavior must preserve the GDD's special role:
 
 Require all three distinct types: cracked branch over an escapable pit, hatch with a rising stump, and a touch-triggered tree dropping a pinecone after a short delay.
 
-Each of the six modules has three authored sockets, each with a nonempty set of geometry-compatible types. Select sockets without replacement; at most one trap per socket. Count compatible **placements**, not decorations or ambient terrain, for difficulty. Validate all generable combinations, not only each trap in isolation.
+Each of the nine current modules has three authored sockets, each with a nonempty set of geometry-compatible types. Select sockets without replacement; at most one trap per socket. Count compatible **placements**, not decorations or ambient terrain, for difficulty. Validate all generable combinations, not only each trap in isolation.
 
 They must be readable/telegraphed and should attack cargo stability rather than health.
 
@@ -628,7 +630,7 @@ There is **one module pool**, not separate pools for designed and procedural con
 Workflow:
 
 ```text
-author and certify six useful modules
+author and certify nine useful difficulty-rated modules
       ↓
 jam Endless Run uses the full compatible pool
       ↓
@@ -655,7 +657,7 @@ Allowed:
 
 Required:
 
-- enough variety to make the six-module Endless pool interesting;
+- enough variety to make the nine-module Endless pool interesting;
 - no dead end in the required Endless pool;
 - every selectable module output must have at least one compatible next module input.
 
@@ -667,7 +669,7 @@ Do not maintain an arbitrary manually curated "procedural subset" that excludes 
 
 Adding modules after the jam should automatically enrich Endless Run if they satisfy the module contract.
 
-The approved three-biome pool is `AB BD DA / AD DB BA`, with A=water, B=grass and D=rock. The six definitions are shared static catalog content, with three compatible sockets each. All jam exits are single; the island's surface/submerged alternatives rejoin inside AD before its rocky bank. Water connector height means reference surface, with the bed described by terrain/water geometry. This does not redefine the GDD's four-biome domain or require all nine possible three-biome pairs.
+The current three-biome pool contains the original `AB BD DA / AD DB BA` plus `BD-hard`, `DB-hard` and `AB-hard`, with A=water, B=grass and D=rock. The nine definitions have explicit difficulty and three compatible sockets each. They are shared static catalog content; six unchanged historical revisions remain readable. All jam exits are single; the island's surface/submerged alternatives rejoin inside AD before its rocky bank. Water connector height means reference surface, with the bed described by terrain/water geometry. This does not redefine the GDD's four-biome domain or require all nine possible three-biome pairs.
 
 ### 10.3.1 Streaming, exits and geometry
 
@@ -687,7 +689,7 @@ The current data architecture should avoid making this impossible, but do not bu
 
 ### 10.5 Mandatory jump and blockage validation
 
-Every new module proposal must include authored real-Rapier traversal cases for each mandatory route and relevant supported load. Use the currently loaded settings, including `jumpMaxLaunchSpeed` (currently 8 m/s), gravity, charge cap, shell height, physical camera corridor and controller behavior. Demonstrate a full-charge release, clearance of the actual obstacle geometry and the first grounded landing at or beyond the authored reachable target. Walking onward after landing short cannot certify the jump. Validate the approach, room to charge, headroom, joins and recovery from a wall at the rear margin.
+Every new module proposal must include authored real-Rapier traversal cases for each mandatory route and relevant supported load. Use the currently loaded settings, including `jumpMaxLaunchSpeed` (currently 9.81 m/s), gravity, charge cap, shell height, physical camera corridor and controller behavior. Demonstrate a full-charge release, clearance of the actual obstacle geometry and the first grounded landing at or beyond the authored reachable target. Walking onward after landing short cannot certify the jump. Validate the approach, room to charge, headroom, joins and recovery from a wall at the rear margin.
 
 The shared `validateJumpTraversal` helper in `src/game/content/jumpValidation.ts` exercises an authored scenario and returns observed pass/outcome (including `landing-short`), launch, charge, first landing and settings evidence. A passing script certifies that route/load case only; a failed script blocks certification of that case and does not prove that all possible control sequences fail. Future modules must supply the full route/load matrix rather than relying on one successful diagnostic.
 
@@ -753,7 +755,7 @@ Charged jump:
 - press/hold Space while dry and grounded;
 - launch once on release with linear charge fraction capped at `jumpMaxChargeSeconds` (default 3 s);
 - holding beyond the cap never auto-launches;
-- `jumpMaxLaunchSpeed` describes maximum upward launch speed in m/s for the kinematic carrier (currently 8 m/s); trajectory height is not linear in charge;
+- `jumpMaxLaunchSpeed` describes maximum upward launch speed in m/s for the kinematic carrier (currently 9.81 m/s); trajectory height is not linear in charge;
 - preserve forward momentum and shared carrier/cargo gravity;
 - pause, focus loss, reset, water entry or loss of ground eligibility cancels charge and pending release;
 - an invalid press in air/water must not arm a later jump;
@@ -986,7 +988,7 @@ RemoteLeaderboardService → external API/backend
 
 Do not let `ScoreSystem` know which persistence implementation is active.
 
-The implemented designed-level local service caps each exact version partition at 100 and permits anonymous entries. The shared catalog now includes the six jam modules and three hazard definitions; there are no published designed levels. Endless scoring/results are implemented without routing runs through designed-level rankings. Optional local Endless records remain separate deferred work. [BACKEND.md](BACKEND.md) owns concrete schemas, persistence fallback and non-destructive remote/auth migration.
+The implemented designed-level local service caps each exact version partition at 100 and permits anonymous entries. The shared catalog includes nine current modules, six historical revisions and three hazard definitions; there are no published designed levels. Endless scoring/results are implemented without routing runs through designed-level rankings. Optional local Endless records remain separate deferred work. [BACKEND.md](BACKEND.md) owns concrete schemas, persistence fallback and non-destructive remote/auth migration.
 
 ### 15.3 Security note
 
@@ -1179,7 +1181,7 @@ Exit criterion:
 
 ### Build 4 — Endless generation and score
 
-- separate protected opening and six-module certified pool;
+- separate protected opening and nine-module difficulty-rated pool with current route evidence;
 - seeded compatible streaming and difficulty progression;
 - route-specific visual pennants and cumulative score;
 - timer;

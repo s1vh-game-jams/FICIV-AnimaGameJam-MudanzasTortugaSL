@@ -54,6 +54,8 @@ Este proyecto es nuestro juego para la [Anima Valencia Game Jam 2026](https://ra
 
 Consulta [`HOWTOPLAY.md`](docs/HOWTOPLAY.md) para aprender a jugar, conocer los controles y entender las reglas básicas de la Carrera Infinita.
 
+La Carrera Infinita utiliza nueve módulos: Fácil selecciona piezas fáciles; Normal añade las intermedias; Difícil incorpora cuestas de hasta 36°. Las piezas más exigentes tienen mayor peso de selección. En el laboratorio puedes ajustar en vivo la rotación máxima del caparazón entre 30° y 45°, sin reiniciar ni modificar el terreno.
+
 **Autores:**
 
 - **Mike Fieldins** — <https://github.com/s1vh>

@@ -69,7 +69,10 @@ function connector(value: unknown, path: string): RecordValue {
   finite(record.height, path + '.height'); return record;
 }
 function moduleGeometry(value: unknown, path: string, hazards: Map<string, RecordValue>): RecordValue {
-  const record = versioned(value, path, ['name', 'length', 'start', 'end', 'terrain', 'water', 'hazards', 'sockets', 'jumps']);
+  const record = versioned(value, path, ['name', 'length', 'difficulty', 'start', 'end', 'terrain', 'water', 'hazards', 'sockets', 'jumps']);
+  if (record.difficulty !== undefined && !['easy', 'normal', 'hard'].includes(record.difficulty as string)) {
+    fail(path + '.difficulty', 'must be easy, normal or hard');
+  }
   text(record.name, path + '.name', 80); finite(record.length, path + '.length');
   if (record.length <= 0) fail(path + '.length', 'must be positive');
   const start = connector(record.start, path + '.start'), end = connector(record.end, path + '.end');

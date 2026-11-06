@@ -76,6 +76,14 @@ Therefore:
 
 ## 2. Current critical path
 
+### ENDLESS-008 — Difficulty-rated terrain and live laboratory shell range
+- **Priority:** P1
+- **Status:** IN PROGRESS — preserved branch `codex/module-difficulty`
+- **Authorization:** human request on 2026-11-06; integrate and synchronize `dev`, human performs browser verification.
+- **Scope:** nine rated modules; harder 36° terrain; seeded tier admission/weighting; fixed terrain capability separated from live session manual-angle adjustment; preserve exact historical catalog revisions.
+- **Verification:** current-settings physical route/composition/seam matrix and full automated checks in progress. Existing TEST-013 failures are compared with unchanged base `8ed9a05`; do not claim a clean historical suite.
+- **Provenance:** OpenAI Codex root implementation/contracts/docs/integration; `/root/steep_modules` authored/certified hard content; `/root/lab_slider` implemented slider and independently reviewed/verified joins.
+
 ### PHYS-028 — Launch from rising stumps and soften grass shell motion
 - **Priority:** P1
 - **Status:** DONE — `58e1b49`, from preserved `codex/stump-grass-physics` at `5592551`; local integration only

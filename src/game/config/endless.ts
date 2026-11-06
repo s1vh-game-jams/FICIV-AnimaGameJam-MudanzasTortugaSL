@@ -1,6 +1,9 @@
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export type TrapProbabilityVector = readonly [number, number, number, number];
 
+/** Higher modes admit lower tiers as recovery pieces, with a preference for harder terrain. */
+export const MODULE_DIFFICULTY_WEIGHT: Readonly<Record<Difficulty, number>> = { easy: 1, normal: 3, hard: 9 };
+
 /** Counts are sampled statistically; no short-run quotas alter these probabilities. */
 export const ENDLESS_DIFFICULTIES: Readonly<Record<Difficulty, {
   label: string; base: TrapProbabilityVector; limit: TrapProbabilityVector;
@@ -11,7 +14,7 @@ export const ENDLESS_DIFFICULTIES: Readonly<Record<Difficulty, {
 };
 
 export const ENDLESS = {
-  poolVersion: 'jam-six-1', generatorVersion: 'seeded-log-1', physicsVersion: 'endless-physics-urgent-2',
+  poolVersion: 'jam-nine-difficulty-2', generatorVersion: 'seeded-terrain-2', physicsVersion: 'endless-physics-terrain-36-1',
   safeModulesMin: 5, safeModulesMax: 10, progressionScaleModules: 10,
   prologueMetres: 40, prologueBackMetres: 12,
   preloadReachMarginMetres: 14, retirementMarginMetres: 10,

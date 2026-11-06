@@ -40,10 +40,13 @@ function fixture(): Mutable<ContentCatalog> {
 }
 
 describe('StaticLevelCatalog', () => {
-  it('publishes the shared six-module pool and three hazards without inventing designed levels', async () => {
+  it('publishes nine difficulty-rated modules and preserves six historical revisions', async () => {
     const service = new StaticLevelCatalog(JAM_CATALOG);
     expect(await service.listPublishedLevels()).toEqual([]);
-    expect(JAM_CATALOG.modules.map(module => module.id).sort()).toEqual(['AB', 'AD', 'BA', 'BD', 'DA', 'DB']);
+    expect(JAM_CATALOG.modules.filter(module => module.difficulty).map(module => module.id).sort())
+      .toEqual(['AB', 'AB-hard', 'AD', 'BA', 'BD', 'BD-hard', 'DA', 'DB', 'DB-hard']);
+    expect(JAM_CATALOG.modules.filter(module => !module.difficulty)).toHaveLength(6);
+    expect((await service.getModule({ id: 'AD', version: '2' }))?.difficulty).toBe('normal');
     expect(JAM_CATALOG.hazards.map(hazard => hazard.id).sort()).toEqual(['branch', 'stump', 'tree']);
     expect((await service.getModule({ id: 'AD', version: '1' }))?.sockets).toHaveLength(3);
     const turtle = await service.getTurtleConfiguration({ id: OFFICIAL_TURTLE_CONFIGURATION_ID, version: '1' });
@@ -51,6 +54,16 @@ describe('StaticLevelCatalog', () => {
       instanceId: item.id + '-1', archetype: { id: item.id, version: '1' }, x: item.x, y: item.y, angle: 0,
     })));
     expect(await service.getAuthor(OFFICIAL_AUTHOR_ID)).toEqual({ id: OFFICIAL_AUTHOR_ID, displayName: 'Mudanzas Tortuga, S.L.' });
+  });
+
+  it('validates optional legacy-compatible difficulty values', () => {
+    const catalog = fixture();
+    catalog.modules[0].difficulty = 'hard';
+    expect(() => validateCatalog(catalog)).not.toThrow();
+    (catalog.modules[0] as unknown as { difficulty: string }).difficulty = 'extreme';
+    expect(() => validateCatalog(catalog)).toThrow('difficulty');
+    delete catalog.modules[0].difficulty;
+    expect(() => validateCatalog(catalog)).not.toThrow();
   });
 
   it('reads published content anonymously and resolves every exact-version definition', async () => {

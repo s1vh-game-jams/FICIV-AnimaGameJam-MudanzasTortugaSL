@@ -2,6 +2,7 @@ import './styles/main.css';
 import { getJamServices } from './app/services';
 import { createTuning, exportSettings, TUNING_FIELDS, withTuning } from './game/config/tuning';
 import type { Tuning } from './game/config/tuning';
+import { SETTINGS_RULES } from './game/config/settingsCodec';
 import { createLevelCameraFraming } from './game/config/cameraFraming';
 import { FixedLoop } from './game/core/fixedLoop';
 import { isInteractiveTarget, KeyboardInput } from './game/core/input';
@@ -140,7 +141,13 @@ async function showPlayground(): Promise<void> {
         <select id="scenario">${SCENARIOS.map(s => '<option value="' + s.id + '">' + s.label + '</option>').join('')}</select>
         <label for="load">Carga inicial</label><select id="load"><option value="full">Mudanza completa</option><option value="light">Solo sofá · comparación de peso</option><option value="empty">Sin carga · flotabilidad</option></select>
         <label class="help-preview"><input id="help-preview" type="checkbox"> Previsualizar ayudas</label>
-        <details open><summary>Parámetros de prueba</summary><p class="hint">Cambiar un valor reinicia el tramo. La pausa se conserva. Los márgenes se miden en % desde la izquierda de esta escena, cuya escala es fija. La zona muerta reserva ese porcentaje a cada lado en un nivel normal.</p>
+        <details open><summary>Parámetros de prueba</summary>
+        <label class="shell-angle-control" for="shell-max-angle">Rotación máxima del caparazón
+          <output id="shell-max-angle-value" for="shell-max-angle"></output>
+          <input id="shell-max-angle" type="range" min="${Math.round(SETTINGS_RULES.shellMaxAngle.min * 180 / Math.PI)}" max="${Math.round(SETTINGS_RULES.shellMaxAngle.max * 180 / Math.PI)}" step="1" aria-describedby="shell-max-angle-hint">
+        </label>
+        <p id="shell-max-angle-hint" class="hint">Se aplica en vivo a esta sesión, sin reiniciar ni cambiar el terreno.</p>
+        <p class="hint">Los campos numéricos reinician el tramo. La pausa se conserva. Los márgenes se miden en % desde la izquierda de esta escena, cuya escala es fija. La zona muerta reserva ese porcentaje a cada lado en un nivel normal.</p>
         <div class="fields">${TUNING_FIELDS.map(f => '<label class="tuning-field">' + f.label +
           '<input type="number" data-tuning="' + f.key + '" min="' + f.min + '" max="' + f.max + '" step="' + f.step + '"></label>').join('')}</div>
         <p id="tuning-error" class="tuning-error" role="status" hidden></p>
@@ -170,6 +177,8 @@ async function showPlayground(): Promise<void> {
   const sound = new GameplayAudio(audio);
   const helpPreview = document.querySelector<HTMLInputElement>('#help-preview')!;
   const tuningError = document.querySelector<HTMLElement>('#tuning-error')!;
+  const shellMaxAngle = document.querySelector<HTMLInputElement>('#shell-max-angle')!;
+  const shellMaxAngleValue = document.querySelector<HTMLOutputElement>('#shell-max-angle-value')!;
   let scenario = SCENARIOS[0];
   let load: LoadPreset = 'full';
   let debug = true;
@@ -221,6 +230,10 @@ async function showPlayground(): Promise<void> {
       loop.paused ? 'En pausa' : 'En marcha';
   }
   function updateFields(): void {
+    const degrees = tuning.shellMaxAngle * 180 / Math.PI;
+    shellMaxAngle.value = String(degrees);
+    shellMaxAngleValue.value = '±' + degrees.toFixed(1).replace(/\.0$/, '') + '°';
+    shellMaxAngle.setAttribute('aria-valuetext', shellMaxAngleValue.value + ' por lado');
     for (const field of document.querySelectorAll<HTMLInputElement>('[data-tuning]')) {
       const key = TUNING_FIELDS.find(f => f.key === field.dataset.tuning)!.key;
       field.value = String(tuning[key]);
@@ -283,6 +296,19 @@ async function showPlayground(): Promise<void> {
     load = (event.target as HTMLSelectElement).value as LoadPreset; reset(); host.focus();
   });
   helpPreview.addEventListener('change', () => { help.reset(); sound.showHelp(undefined); input.clear(); simulation.cancelJump(); render(); host.focus(); });
+  shellMaxAngle.addEventListener('input', () => {
+    try {
+      const candidate = withTuning(tuning, { shellMaxAngle: shellMaxAngle.valueAsNumber * Math.PI / 180 });
+      simulation.setShellMaxAngle(candidate.shellMaxAngle);
+      tuning = candidate;
+      tuningError.hidden = true;
+    } catch (error) {
+      tuningError.textContent = error instanceof Error ? error.message : String(error);
+      tuningError.hidden = false;
+    }
+    updateFields();
+    lastReadout = -1; render();
+  });
   for (const field of document.querySelectorAll<HTMLInputElement>('[data-tuning]')) {
     const applyField = () => {
       const definition = TUNING_FIELDS.find(f => f.key === field.dataset.tuning)!;
